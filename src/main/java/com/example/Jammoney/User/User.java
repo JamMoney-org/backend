@@ -1,5 +1,8 @@
-package com.example.Jammoney.StockApp.entity;
-import com.example.Jammoney.StockApp.entity.Enums.Role;
+package com.example.Jammoney.User;
+import com.example.Jammoney.StockApp.Stock.entity.Cash;
+import com.example.Jammoney.StockApp.Stock.entity.InterestedStock;
+import com.example.Jammoney.StockApp.Stock.entity.Order;
+import com.example.Jammoney.StockApp.Stock.entity.StockHolding;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,15 +31,14 @@ public class User {
     @Column(nullable = false, unique = true, length = 30)
     private String nickname;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;  // USER / ADMIN
+    private boolean isActive;
 
-    @Column(nullable = false)
-    private boolean isActive; // 계정 활성 여부
-    private Long cash;          // 현재 보유 현금
+    @OneToOne(mappedBy="user", cascade = CascadeType.ALL)
+    private Cash cash;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserInterestStock> interestStocks = new ArrayList<>();
+    private List<InterestedStock> interestedStocks = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders = new ArrayList<>();
