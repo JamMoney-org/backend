@@ -1,5 +1,6 @@
-package com.example.Jammoney.StockApp.kis;
+package com.example.Jammoney.StockApp.kis.api;
 
+import com.example.Jammoney.StockApp.kis.auth.KisAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;

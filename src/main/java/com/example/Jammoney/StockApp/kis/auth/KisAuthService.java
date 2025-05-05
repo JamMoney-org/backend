@@ -1,5 +1,8 @@
-package com.example.Jammoney.StockApp.kis;
+package com.example.Jammoney.StockApp.kis.auth;
 
+import com.example.Jammoney.StockApp.kis.entity.KisToken;
+import com.example.Jammoney.StockApp.kis.repository.KisTokenRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class KisAuthService {
 
     @Value("${kis.app.key}")
@@ -24,17 +28,20 @@ public class KisAuthService {
     @Value("${kis.base-url}")
     private String baseUrl;
 
-    private String accessToken;
-    private LocalDateTime expiredAt;
+    private final KisTokenRepository kisTokenRepository;
 
     public String getAccessToken() {
-        if (accessToken == null || expiredAt.isBefore(LocalDateTime.now())) {
-            requestNewToken();
+        KisToken token = kisTokenRepository.findById(1L).orElse(null);
+
+        // 토큰이 없거나 만료되었을 때만 재발급
+        if (token == null || token.getExpiredAt().isBefore(LocalDateTime.now())) {
+            return requestNewToken(); // 저장하고 반환
         }
-        return accessToken;
+
+        return token.getToken();
     }
 
-    private void requestNewToken() {
+    private String requestNewToken() {
         String url = baseUrl + "/oauth2/tokenP";
 
         HttpHeaders headers = new HttpHeaders();
@@ -51,9 +58,16 @@ public class KisAuthService {
         ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
         Map<String, Object> result = response.getBody();
 
-        this.accessToken = (String) result.get("access_token");
+        String newToken = (String) result.get("access_token");
         int expiresIn = (int) result.get("expires_in");
-        this.expiredAt = LocalDateTime.now().plusSeconds(expiresIn);
+
+        KisToken token = KisToken.builder()
+                .id(1L)
+                .token(newToken)
+                .expiredAt(LocalDateTime.now().plusSeconds(expiresIn))
+                .build();
+
+        kisTokenRepository.save(token);
+        return newToken;
     }
 }
-
