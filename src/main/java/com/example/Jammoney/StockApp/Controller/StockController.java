@@ -1,6 +1,6 @@
 package com.example.Jammoney.StockApp.Controller;
 
-import com.example.Jammoney.StockApp.kis.api.KisStockService;
+import com.example.Jammoney.StockApp.kis.api.ApiCallService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,10 +13,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class StockController {
 
-    private final KisStockService kisStockService;
+    private final ApiCallService apiCallService;
 
     @GetMapping("/price/{code}")
-    public ResponseEntity<?> getStockPrice(@PathVariable String code) {
-        return ResponseEntity.ok(kisStockService.getCurrentPrice(code));
+    public ResponseEntity<?> getPrice(@PathVariable String code) {
+        return ResponseEntity.ok(apiCallService.getCurrentPrice(code));
+    }
+
+    @GetMapping("/asbi/{code}")
+    public ResponseEntity<?> getAskingPrice(@PathVariable String code) {
+        return ResponseEntity.ok(apiCallService.getStockAsbi(code));
+    }
+
+    @GetMapping("/min/{code}/{time}")
+    public ResponseEntity<?> getMin(@PathVariable String code, @PathVariable String time) {
+        return ResponseEntity.ok(apiCallService.getStockMin(code, time));
     }
 }
