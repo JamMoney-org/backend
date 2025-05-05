@@ -20,7 +20,7 @@ public class Company{
     private String korName;
 
     @OneToOne(mappedBy = "company", cascade = CascadeType.ALL)
-    private StockAsBi stockAsBi;
+    private StockAskingPrice stockAskingPrice;
 
     @OneToOne(mappedBy = "company", cascade = CascadeType.ALL)
     private StockInf stockInf;
