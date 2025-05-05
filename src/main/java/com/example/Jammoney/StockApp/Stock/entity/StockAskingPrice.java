@@ -7,7 +7,7 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
-public class StockAsBi {
+public class StockAskingPrice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long stockAsBiId;
