@@ -1,5 +1,4 @@
-package com.example.Jammoney.StockApp.kis.api;
-import com.example.Jammoney.StockApp.kis.auth.KisAuthService;
+package com.example.Jammoney.StockApp.kis.service;
 import com.example.Jammoney.StockApp.kis.dto.StockAskingPriceDto;
 import com.example.Jammoney.StockApp.kis.dto.StockMinDto;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +34,9 @@ public class ApiCallService {
 
     @Value("${kis.url.price}")
     private String stockPriceUrl;
+
+    @Value("${kis.url.kospi}")
+    private String kospiUrl;
 
     /**
      * 실시간 시세 호출 (현재가)

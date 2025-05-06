@@ -1,4 +1,4 @@
-package com.example.Jammoney.StockApp.Stock.entity;
+package com.example.Jammoney.StockApp.stock.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -23,7 +23,7 @@ public class Company{
     private StockAskingPrice stockAskingPrice;
 
     @OneToOne(mappedBy = "company", cascade = CascadeType.ALL)
-    private StockInf stockInf;
+    private StockInfo stockInfo;
 
 }
 

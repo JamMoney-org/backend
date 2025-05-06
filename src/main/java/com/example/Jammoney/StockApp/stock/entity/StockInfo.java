@@ -1,4 +1,4 @@
-package com.example.Jammoney.StockApp.Stock.entity;
+package com.example.Jammoney.StockApp.stock.entity;
 
 
 import jakarta.persistence.*;
@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class StockInf {
+public class StockInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long stockInfoId;

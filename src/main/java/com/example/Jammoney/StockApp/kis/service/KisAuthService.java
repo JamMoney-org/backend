@@ -1,4 +1,4 @@
-package com.example.Jammoney.StockApp.kis.auth;
+package com.example.Jammoney.StockApp.kis.service;
 
 import com.example.Jammoney.StockApp.kis.entity.KisToken;
 import com.example.Jammoney.StockApp.kis.repository.KisTokenRepository;

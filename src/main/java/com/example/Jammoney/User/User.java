@@ -1,8 +1,8 @@
 package com.example.Jammoney.User;
-import com.example.Jammoney.StockApp.Stock.entity.Cash;
-import com.example.Jammoney.StockApp.Stock.entity.InterestedStock;
-import com.example.Jammoney.StockApp.Stock.entity.Order;
-import com.example.Jammoney.StockApp.Stock.entity.StockHolding;
+import com.example.Jammoney.StockApp.stock.entity.Cash;
+import com.example.Jammoney.StockApp.stock.entity.InterestingStock;
+import com.example.Jammoney.StockApp.stock.entity.Order;
+import com.example.Jammoney.StockApp.stock.entity.HoldingStock;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,12 +38,12 @@ public class User {
     private Cash cash;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InterestedStock> interestedStocks = new ArrayList<>();
+    private List<InterestingStock> interestingStocks = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<StockHolding> stockHoldings = new ArrayList<>();
+    private List<HoldingStock> holdingStocks = new ArrayList<>();
 }
 

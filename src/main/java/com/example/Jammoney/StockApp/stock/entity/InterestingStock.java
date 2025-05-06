@@ -1,4 +1,4 @@
-package com.example.Jammoney.StockApp.Stock.entity;
+package com.example.Jammoney.StockApp.stock.entity;
 import com.example.Jammoney.User.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,10 +11,10 @@ import org.hibernate.annotations.OnDeleteAction;
 @Getter
 @Setter
 @NoArgsConstructor
-public class InterestedStock{
+public class InterestingStock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long interestedStockId;
+    private long interestingStockId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "MEMBER_ID")
