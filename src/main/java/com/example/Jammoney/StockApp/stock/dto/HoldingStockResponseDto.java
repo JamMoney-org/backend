@@ -6,13 +6,17 @@ import lombok.Getter;
 @Builder
 @Getter
 public class HoldingStockResponseDto {
-    private long stockHoldId;
-    private long memberId;
-    private long companyId;
     private String companyKorName;
+    //보유 수량
     private int stockCount;
-    private long totalPrice;
-    private double percentage;
-    private long stockReturn;
-    private long reserveSellStockCount;
+    //현재가
+    private long currentPrice;
+    //평가금
+    private long evaluationAmount;
+    //수익 금액 (평가금 - 매입금)
+    private long profitAmount;
+    //수익률 (수익금/매입금)*100
+    private double profitRate;
+    //전체 자산 대비 비중
+    private double portfoliRatio;
 }
