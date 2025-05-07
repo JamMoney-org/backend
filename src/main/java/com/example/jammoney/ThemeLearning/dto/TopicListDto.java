@@ -1,4 +1,4 @@
-package com.example.jammoney.dto;
+package com.example.jammoney.ThemeLearning.dto;
 
 public class TopicListDto {
     private Long topicId;
