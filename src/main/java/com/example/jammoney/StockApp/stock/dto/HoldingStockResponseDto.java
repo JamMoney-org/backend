@@ -18,5 +18,5 @@ public class HoldingStockResponseDto {
     //수익률 (수익금/매입금)*100
     private double profitRate;
     //전체 자산 대비 비중
-    private double portfoliRatio;
+    private double portfolioRatio;
 }
