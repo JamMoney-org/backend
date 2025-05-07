@@ -7,11 +7,9 @@ import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "holding_stock")
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Data
 public class HoldingStock {
 
     @Id
@@ -27,10 +25,10 @@ public class HoldingStock {
     @JoinColumn(name = "COMPANY_ID")
     private Company company;
 
+    //보유 수량
     private int stockCount;
 
-    private int reserveStockCount;
-
-    private long price;
+    //총 매입 금액
+    private long totalPrice;
 }
 
