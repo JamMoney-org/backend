@@ -1,5 +1,6 @@
 package com.example.jammoney.models;
 
+import com.example.jammoney.User.User;
 import jakarta.persistence.*;
 import lombok.*;
 
