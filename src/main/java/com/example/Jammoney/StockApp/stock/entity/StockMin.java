@@ -24,16 +24,16 @@ public class StockMin {
     //주식 체결 시간(문자열)
     private String stck_cntg_hour;
 
-    //주식 현재가
+    //주식 종가
     private String stck_prpr;
 
     //주식 시가
     private String stck_oprc;
 
-    //주식 최고가
+    //주식 고가
     private String stck_hgpr;
 
-    //주식 최저가
+    //주식 저가
     private String stck_lwpr;
 
     //체결 거래량

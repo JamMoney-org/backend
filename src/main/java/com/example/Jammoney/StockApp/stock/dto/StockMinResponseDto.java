@@ -13,7 +13,7 @@ public class StockMinResponseDto {
     private LocalDateTime stockTradeTime;  // 변환된 시간 정보
 
     private String stckCntgHour;  // 체결 시간 HHMMSS
-    private String stckPrpr;       // 현재가
+    private String stckPrpr;       // 종가
     private String stckOprc;       // 시가
     private String stckHgpr;       // 고가
     private String stckLwpr;       // 저가
