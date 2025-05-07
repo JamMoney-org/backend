@@ -1,4 +1,4 @@
-package com.example.jammoney.dto;
+package com.example.jammoney.News.dto;
 
 public class NewsTermDto {
     private Long termId;
