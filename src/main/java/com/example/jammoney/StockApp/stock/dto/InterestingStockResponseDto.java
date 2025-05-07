@@ -1,7 +1,12 @@
 package com.example.jammoney.StockApp.stock.dto;
 
+import lombok.Builder;
+import lombok.Getter;
+
+@Builder
+@Getter
 public class InterestingStockResponseDto {
-    private long companyId;
+    private long interestingStockId;
     private String companyName;
     private String currentPrice;
     private String priceChange;
