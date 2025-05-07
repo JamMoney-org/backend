@@ -1,4 +1,4 @@
-package com.example.Jammoney;
+package com.example.jammoney;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
