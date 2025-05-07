@@ -24,4 +24,5 @@ public class Item {
     private int price;                          // 가상 머니 가격
     private String imageUrl;                    // 착용 이미지 (투명 PNG 등)
     private String previewUrl;                  // 상점용 미리보기 썸네일
+    private String position;
 }
