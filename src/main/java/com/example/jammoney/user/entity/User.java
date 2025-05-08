@@ -1,4 +1,4 @@
-package com.example.jammoney.User;
+package com.example.jammoney.user.entity;
 import com.example.jammoney.StockApp.stock.entity.Cash;
 import com.example.jammoney.StockApp.stock.entity.InterestingStock;
 import com.example.jammoney.StockApp.stock.entity.Order;
