@@ -1,6 +1,6 @@
-package com.example.jammoney.repository;
+package com.example.jammoney.ThemeLearning.repository;
 
-import com.example.jammoney.models.Theme;
+import com.example.jammoney.ThemeLearning.models.Theme;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
