@@ -1,4 +1,4 @@
-package com.example.jammoney.dto;
+package com.example.jammoney.News.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;

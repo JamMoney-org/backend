@@ -1,29 +1,30 @@
-package com.example.jammoney.models;
+package com.example.jammoney.financeTerm.models;
 
-import com.example.jammoney.User.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
-@Table(name = "user_term_learnings")
+@Table(name = "financial_term_quizzes")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserTermLearning {
+public class FinancialTermQuiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    private String question;
+    private String correctAnswer;
+
+    @ElementCollection
+    private List<String> choices;
 
     @ManyToOne
     @JoinColumn(name = "term_id")
     private FinancialTerm term;
-
-    private boolean learned;
 }
