@@ -1,8 +1,8 @@
 package com.example.jammoney.User;
-import com.example.jammoney.StockApp.stock.entity.Cash;
-import com.example.jammoney.StockApp.stock.entity.InterestingStock;
-import com.example.jammoney.StockApp.stock.entity.Order;
-import com.example.jammoney.StockApp.stock.entity.HoldingStock;
+import com.example.jammoney.stockApp.stock.entity.Cash;
+import com.example.jammoney.stockApp.stock.entity.InterestingStock;
+import com.example.jammoney.stockApp.stock.entity.Order;
+import com.example.jammoney.stockApp.stock.entity.HoldingStock;
 import jakarta.persistence.*;
 import lombok.*;
 
