@@ -1,8 +1,6 @@
 package com.example.jammoney.user.entity;
-import com.example.jammoney.StockApp.stock.entity.Cash;
-import com.example.jammoney.StockApp.stock.entity.InterestingStock;
-import com.example.jammoney.StockApp.stock.entity.Order;
-import com.example.jammoney.StockApp.stock.entity.HoldingStock;
+import com.example.jammoney.stockApp.stock.entity.*;
+import com.example.jammoney.user.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,6 +34,9 @@ public class User {
 
     @OneToOne(mappedBy="user", cascade = CascadeType.ALL)
     private Cash cash;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InterestingStock> interestingStocks = new ArrayList<>();

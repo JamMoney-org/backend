@@ -1,5 +1,5 @@
-package com.example.jammoney.StockApp.stock.entity;
-import com.example.jammoney.User.User;
+package com.example.jammoney.stockApp.stock.entity;
+import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
