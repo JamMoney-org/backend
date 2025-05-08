@@ -10,9 +10,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CustomeUserDetails extends User implements UserDetails {
+public class CustomUserDetails extends User implements UserDetails {
     private List<GrantedAuthority> authorities;
-    public CustomeUserDetails(User user) {
+    public CustomUserDetails(User user) {
         setId(user.getId());
         setEmail(user.getEmail());
         setPassword(user.getPassword());
