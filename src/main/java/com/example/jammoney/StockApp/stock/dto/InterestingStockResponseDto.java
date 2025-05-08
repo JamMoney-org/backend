@@ -1,4 +1,4 @@
-package com.example.jammoney.StockApp.stock.dto;
+package com.example.jammoney.stockApp.stock.dto;
 
 public class InterestingStockResponseDto {
     private long companyId;
