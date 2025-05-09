@@ -1,8 +1,13 @@
 package com.example.jammoney.auth.controller;
 
 import com.example.jammoney.auth.dto.TokenResponseDto;
+import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
+import com.example.jammoney.auth.service.RefreshTokenService;
 import com.example.jammoney.user.dto.LoginRequestDto;
+import com.example.jammoney.user.dto.UserRequestDto;
+import com.example.jammoney.user.entity.User;
+import com.example.jammoney.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,17 +23,33 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
+    private final UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginRequestDto requestDto) {
 
+        // 1. 인증 시도
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword())
         );
 
-        String accessToken = jwtTokenProvider.generateAccessToken(requestDto.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(requestDto.getEmail());
+        // 2. 인증된 사용자 정보 가져오기
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userDetails.toUser();
 
-        return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshToken));
+        // 3. AccessToken 생성
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
+
+        // 4. RefreshToken 생성 및 저장
+
+        // 5. 클라이언트에 응답
+        return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshTokenService.createRefreshToken(user).getToken()));
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<String> signup(@Valid @RequestBody UserRequestDto requestDto) {
+        userService.signup(requestDto);
+        return ResponseEntity.ok("회원가입 성공!");
     }
 }
