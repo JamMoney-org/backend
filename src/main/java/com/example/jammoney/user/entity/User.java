@@ -12,8 +12,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class User {
 
     @Id
@@ -46,5 +44,16 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HoldingStock> holdingStocks = new ArrayList<>();
+
+    @Builder
+    public User(Long id, String email, String password, String nickname, Role role, boolean active) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.role = role;
+        this.isActive = active;
+    }
+
 }
 
