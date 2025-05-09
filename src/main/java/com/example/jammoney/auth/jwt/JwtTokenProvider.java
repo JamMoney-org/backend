@@ -24,8 +24,11 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.token-validity-in-seconds}")
-    private long tokenValidityInSeconds;
+    @Value("${jwt.access-token-validity-in-seconds}")
+    private long accessValidity;
+
+    @Value("${jwt.refresh-token-validity-in-seconds}")
+    private long refreshValidity;
 
     private SecretKey key;
 
@@ -36,17 +39,17 @@ public class JwtTokenProvider {
 
     //토큰 생성
     public String generateAccessToken(String email) {
-        return generateToken(email, tokenValidityInSeconds);
+        return generateToken(email, accessValidity);
     }
 
     public String generateRefreshToken(String email) {
-        long refreshTokenValidityInSeconds = tokenValidityInSeconds * 14; // 예: 2주
+        long refreshTokenValidityInSeconds = refreshValidity; // 예: 2주
         return generateToken(email, refreshTokenValidityInSeconds);
     }
 
     private String generateToken(String email, long validityInSeconds) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + validityInSeconds * 1000);
+        Date expiry = new Date(now.getTime() + validityInSeconds*1000);
 
         return Jwts.builder()
                 .subject(email)
