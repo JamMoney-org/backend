@@ -47,6 +47,14 @@ public class AuthController {
         return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshTokenService.createRefreshToken(user).getToken()));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String bearerToken) {
+        String token = bearerToken.replace("Bearer ", "");
+        String email = jwtTokenProvider.getEmailFromToken(token);
+        refreshTokenService.deleteByEmail(email); // DB에서 삭제
+        return ResponseEntity.ok("로그아웃 완료");
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@Valid @RequestBody UserRequestDto requestDto) {
         userService.signup(requestDto);
