@@ -1,4 +1,4 @@
-package com.example.jammoney.security;
+package com.example.jammoney.auth;
 
 import com.example.jammoney.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;

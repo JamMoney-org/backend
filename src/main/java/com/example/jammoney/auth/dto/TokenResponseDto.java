@@ -1,4 +1,4 @@
-package com.example.jammoney.security.dto;
+package com.example.jammoney.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

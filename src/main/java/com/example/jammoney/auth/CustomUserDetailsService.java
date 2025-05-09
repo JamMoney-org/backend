@@ -1,4 +1,4 @@
-package com.example.jammoney.security;
+package com.example.jammoney.auth;
 
 import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;

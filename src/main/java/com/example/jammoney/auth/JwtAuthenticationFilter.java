@@ -1,4 +1,4 @@
-package com.example.jammoney.security;
+package com.example.jammoney.auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

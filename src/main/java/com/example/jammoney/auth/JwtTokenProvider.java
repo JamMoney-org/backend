@@ -1,4 +1,4 @@
-package com.example.jammoney.security;
+package com.example.jammoney.auth;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
