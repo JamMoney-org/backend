@@ -8,16 +8,28 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CustomUserDetails extends User implements UserDetails {
-    private List<GrantedAuthority> authorities;
+    private final List<GrantedAuthority> authorities;
+
     public CustomUserDetails(User user) {
-        setId(user.getId());
-        setEmail(user.getEmail());
-        setPassword(user.getPassword());
-        List<String> roles = Collections.singletonList(user.getRole().name());
-        authorities = roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        super(user.getId(), user.getEmail(), user.getPassword(), user.getNickname(), user.getRole(), user.isActive());
+        this.authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return super.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return super.getEmail();
     }
 
     @Override
@@ -40,18 +52,10 @@ public class CustomUserDetails extends User implements UserDetails {
         return true;
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
-    }
-
-    @Override
-    public String getPassword() {
-        return "";
-    }
-
-    @Override
-    public String getUsername() {
-        return "";
+    public User toUser() {
+        return new User(getId(), getEmail(), getPassword(), getNickname(), getRole(), isActive());
     }
 }
+
+
+
