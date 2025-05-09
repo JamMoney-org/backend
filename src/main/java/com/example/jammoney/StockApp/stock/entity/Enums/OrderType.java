@@ -1,4 +1,4 @@
-package com.example.jammoney.StockApp.stock.entity.Enums;
+package com.example.jammoney.stockApp.stock.entity.Enums;
 
 public enum OrderType {
     BUY,

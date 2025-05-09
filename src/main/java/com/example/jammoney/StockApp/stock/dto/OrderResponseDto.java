@@ -1,7 +1,7 @@
-package com.example.jammoney.StockApp.stock.dto;
+package com.example.jammoney.stockApp.stock.dto;
 
-import com.example.jammoney.StockApp.stock.entity.Enums.OrderStatus;
-import com.example.jammoney.StockApp.stock.entity.Enums.OrderType;
+import com.example.jammoney.stockApp.stock.entity.Enums.OrderStatus;
+import com.example.jammoney.stockApp.stock.entity.Enums.OrderType;
 import lombok.Builder;
 import lombok.Getter;
 

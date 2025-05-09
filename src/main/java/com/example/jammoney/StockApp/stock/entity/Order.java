@@ -1,7 +1,6 @@
 package com.example.jammoney.stockApp.stock.entity;
 
-import com.example.jammoney.StockApp.stock.entity.Enums.OrderStatus;
-import com.example.jammoney.StockApp.stock.entity.Enums.OrderType;
+import com.example.jammoney.stockApp.stock.entity.Enums.*;
 import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
