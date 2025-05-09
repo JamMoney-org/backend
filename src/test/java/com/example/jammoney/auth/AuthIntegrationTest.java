@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -199,6 +200,29 @@ class AuthIntegrationTest {
 
         String response = result.andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).get("accessToken").asText();
+    }
+    @Test
+    @DisplayName("로그아웃 시 RefreshToken 삭제")
+    void logout_should_delete_refresh_token() throws Exception {
+        // 1. 회원가입 및 로그인
+        String email = signup();
+        ResultActions loginResult = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequestDto(email, password))))
+                .andExpect(status().isOk());
+
+        String response = loginResult.andReturn().getResponse().getContentAsString();
+        TokenResponseDto tokenDto = objectMapper.readValue(response, TokenResponseDto.class);
+
+        // 2. 로그아웃 요청
+        mockMvc.perform(post("/auth/logout")
+                        .header("Authorization", "Bearer " + tokenDto.getAccessToken()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("로그아웃 완료"));
+
+        // 3. RefreshToken이 실제로 삭제되었는지 확인
+        boolean exists = refreshTokenRepository.findByToken(tokenDto.getRefreshToken()).isPresent();
+        assertFalse(exists);
     }
 }
 
