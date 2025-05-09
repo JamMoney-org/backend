@@ -35,9 +35,18 @@ public class JwtTokenProvider {
     }
 
     //토큰 생성
-    public String generateToken(String email) {
+    public String generateAccessToken(String email) {
+        return generateToken(email, tokenValidityInSeconds);
+    }
+
+    public String generateRefreshToken(String email) {
+        long refreshTokenValidityInSeconds = tokenValidityInSeconds * 14; // 예: 2주
+        return generateToken(email, refreshTokenValidityInSeconds);
+    }
+
+    private String generateToken(String email, long validityInSeconds) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + tokenValidityInSeconds * 1000);
+        Date expiry = new Date(now.getTime() + validityInSeconds * 1000);
 
         return Jwts.builder()
                 .subject(email)
