@@ -1,5 +1,6 @@
-package com.example.jammoney.auth;
+package com.example.jammoney.auth.service;
 
+import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,5 @@
 package com.example.jammoney.config;
-import com.example.jammoney.auth.JwtAuthenticationFilter;
+import com.example.jammoney.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

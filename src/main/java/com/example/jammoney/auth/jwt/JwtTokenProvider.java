@@ -1,5 +1,6 @@
-package com.example.jammoney.auth;
+package com.example.jammoney.auth.jwt;
 
+import com.example.jammoney.auth.service.CustomUserDetailsService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;

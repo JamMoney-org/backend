@@ -1,5 +1,6 @@
-package com.example.jammoney.auth;
+package com.example.jammoney.auth.jwt;
 
+import com.example.jammoney.auth.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
