@@ -4,6 +4,7 @@ import com.example.jammoney.user.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,6 +45,12 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HoldingStock> holdingStocks = new ArrayList<>();
+
+    private boolean isVerified = false;
+
+    private String emailVerificationToken;
+
+    private LocalDateTime tokenExpiryTime;
 
     @Builder
     public User(Long id, String email, String password, String nickname, Role role, boolean active) {
