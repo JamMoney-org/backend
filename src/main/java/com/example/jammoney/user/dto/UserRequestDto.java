@@ -26,6 +26,9 @@ public class UserRequestDto {
     )
     private String password;
 
+    @NotBlank(message = "비밀번호 재입력은 필수입니다.")
+    private String confirmPassword;
+
     @NotBlank(message = "닉네임은 필수 입력 값입니다.")
     private String nickname;
 
