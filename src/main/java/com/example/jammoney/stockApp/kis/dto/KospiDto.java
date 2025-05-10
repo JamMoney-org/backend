@@ -1,4 +1,4 @@
-package com.example.jammoney.StockApp.kis.dto;
+package com.example.jammoney.stockApp.kis.dto;
 
 import lombok.Data;
 import java.time.LocalDate;

@@ -1,4 +1,4 @@
-package com.example.jammoney.StockApp.kis.entity;
+package com.example.jammoney.stockApp.kis.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

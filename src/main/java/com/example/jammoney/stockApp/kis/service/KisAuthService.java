@@ -1,7 +1,7 @@
-package com.example.jammoney.StockApp.kis.service;
+package com.example.jammoney.stockApp.kis.service;
 
-import com.example.jammoney.StockApp.kis.entity.KisToken;
-import com.example.jammoney.StockApp.kis.repository.KisTokenRepository;
+import com.example.jammoney.stockApp.kis.entity.KisToken;
+import com.example.jammoney.stockApp.kis.repository.KisTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

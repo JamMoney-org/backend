@@ -1,6 +1,6 @@
-package com.example.jammoney.StockApp.stock.Controller;
+package com.example.jammoney.stockApp.stock.Controller;
 
-import com.example.jammoney.StockApp.kis.service.ApiCallService;
+import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

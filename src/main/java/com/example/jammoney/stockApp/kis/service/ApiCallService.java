@@ -1,6 +1,6 @@
-package com.example.jammoney.StockApp.kis.service;
-import com.example.jammoney.StockApp.kis.dto.StockAskingPriceDto;
-import com.example.jammoney.StockApp.kis.dto.StockMinDto;
+package com.example.jammoney.stockApp.kis.service;
+import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
+import com.example.jammoney.stockApp.kis.dto.StockMinDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
