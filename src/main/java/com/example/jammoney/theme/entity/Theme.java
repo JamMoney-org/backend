@@ -1,26 +1,21 @@
-package com.example.jammoney.ThemeLearning.models;
+package com.example.jammoney.theme.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "learning_topics")
+@Table(name = "themes")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LearningTopic {
+public class Theme {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String title;
-    private String description;
-
-    @ManyToOne
-    @JoinColumn(name = "theme_id")
-    private Theme theme;
+    private String name;
 }

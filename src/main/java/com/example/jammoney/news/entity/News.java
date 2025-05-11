@@ -1,6 +1,6 @@
-package com.example.jammoney.News.models;
+package com.example.jammoney.news.entity;
 
-import com.example.jammoney.financeTerm.models.FinancialTerm;
+import com.example.jammoney.financeTerm.entity.FinancialTerm;
 import jakarta.persistence.*;
 import lombok.*;
 

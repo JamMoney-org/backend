@@ -1,4 +1,4 @@
-package com.example.jammoney.News.dto;
+package com.example.jammoney.news.dto;
 
 import java.util.List;
 
