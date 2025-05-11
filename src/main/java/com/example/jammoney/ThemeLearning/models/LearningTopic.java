@@ -18,6 +18,9 @@ public class LearningTopic {
 
     @Column(nullable = false, unique = true)
     private String title;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @ManyToOne
