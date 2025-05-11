@@ -1,4 +1,4 @@
-package com.example.jammoney.News.models;
+package com.example.jammoney.financeTerm.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,13 +6,13 @@ import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "news_quizzes")
+@Table(name = "financial_term_quizzes")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NewsQuiz {
+public class FinancialTermQuiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +25,6 @@ public class NewsQuiz {
     private List<String> choices;
 
     @ManyToOne
-    @JoinColumn(name = "news_id")
-    private News news;
+    @JoinColumn(name = "term_id")
+    private FinancialTerm term;
 }

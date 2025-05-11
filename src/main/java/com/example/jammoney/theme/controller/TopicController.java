@@ -1,9 +1,8 @@
-package com.example.jammoney.ThemeLearning.controller;
+package com.example.jammoney.theme.controller;
 
-import com.example.jammoney.ThemeLearning.dto.ThemeDto;
-import com.example.jammoney.ThemeLearning.dto.TopicDetailDto;
-import com.example.jammoney.ThemeLearning.dto.TopicListDto;
-import com.example.jammoney.ThemeLearning.service.LearningTopicService;
+import com.example.jammoney.theme.dto.TopicDetailDto;
+import com.example.jammoney.theme.dto.TopicListDto;
+import com.example.jammoney.theme.service.LearningTopicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -1,11 +1,9 @@
 package com.example.jammoney.ThemeLearningTest;
 
-import com.example.jammoney.ThemeLearning.controller.ThemeController;
-import com.example.jammoney.ThemeLearning.controller.TopicController;
-import com.example.jammoney.ThemeLearning.dto.TopicDetailDto;
-import com.example.jammoney.ThemeLearning.dto.TopicListDto;
-import com.example.jammoney.ThemeLearning.service.LearningTopicService;
-import com.example.jammoney.ThemeLearning.service.ThemeService;
+import com.example.jammoney.theme.controller.TopicController;
+import com.example.jammoney.theme.dto.TopicDetailDto;
+import com.example.jammoney.theme.dto.TopicListDto;
+import com.example.jammoney.theme.service.LearningTopicService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -1,4 +1,4 @@
-package com.example.jammoney.financeTerm.models;
+package com.example.jammoney.financeTerm.entity;
 
 import com.example.jammoney.User.User;
 import jakarta.persistence.*;

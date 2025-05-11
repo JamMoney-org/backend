@@ -1,11 +1,10 @@
 package com.example.jammoney.ThemeLearningTest;
 
-import com.example.jammoney.ThemeLearning.controller.ThemeController;
-import com.example.jammoney.ThemeLearning.dto.ThemeDto;
-import com.example.jammoney.ThemeLearning.service.ThemeService;
+import com.example.jammoney.theme.controller.ThemeController;
+import com.example.jammoney.theme.dto.ThemeDto;
+import com.example.jammoney.theme.service.ThemeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 

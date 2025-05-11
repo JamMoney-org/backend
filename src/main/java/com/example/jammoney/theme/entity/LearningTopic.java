@@ -1,4 +1,4 @@
-package com.example.jammoney.ThemeLearning.models;
+package com.example.jammoney.theme.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

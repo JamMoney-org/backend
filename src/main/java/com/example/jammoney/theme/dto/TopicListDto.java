@@ -1,13 +1,12 @@
-package com.example.jammoney.ThemeLearning.dto;
+package com.example.jammoney.theme.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class TopicDetailDto {
+public class TopicListDto {
     private Long topicId;
     private String title;
-    private String description;
 }
 

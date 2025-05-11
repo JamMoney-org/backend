@@ -1,15 +1,14 @@
 package com.example.jammoney.ThemeLearningTest;
 
-import com.example.jammoney.ThemeLearning.dto.TopicDetailDto;
-import com.example.jammoney.ThemeLearning.dto.TopicListDto;
-import com.example.jammoney.ThemeLearning.models.LearningTopic;
-import com.example.jammoney.ThemeLearning.models.Theme;
-import com.example.jammoney.ThemeLearning.repository.LearningTopicRepository;
-import com.example.jammoney.ThemeLearning.repository.ThemeRepository;
-import com.example.jammoney.ThemeLearning.service.LearningTopicService;
+import com.example.jammoney.theme.dto.TopicDetailDto;
+import com.example.jammoney.theme.dto.TopicListDto;
+import com.example.jammoney.theme.entity.LearningTopic;
+import com.example.jammoney.theme.entity.Theme;
+import com.example.jammoney.theme.repository.LearningTopicRepository;
+import com.example.jammoney.theme.repository.ThemeRepository;
+import com.example.jammoney.theme.service.LearningTopicService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.List;
