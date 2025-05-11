@@ -1,4 +1,4 @@
-package com.example.jammoney.stockApp.stock.Controller;
+package com.example.jammoney.stockApp.stock.controller;
 
 import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import lombok.RequiredArgsConstructor;

@@ -9,7 +9,9 @@ import org.hibernate.annotations.OnDeleteAction;
 @Table(name = "holding_stock")
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
+@Builder
 public class HoldingStock {
 
     @Id
@@ -30,5 +32,12 @@ public class HoldingStock {
 
     //총 매입 금액
     private long totalPrice;
+
+    public HoldingStock(User user, Company company, int stockCount, int totalPrice) {
+        this.user = user;
+        this.company = company;
+        this.stockCount = stockCount;
+        this.totalPrice = totalPrice;
+    }
 }
 

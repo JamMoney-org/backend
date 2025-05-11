@@ -1,6 +1,7 @@
 package com.example.jammoney.stockApp.kis.service;
 import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
 import com.example.jammoney.stockApp.kis.dto.StockMinDto;
+import com.example.jammoney.stockApp.kis.dto.StockPriceDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -41,14 +45,25 @@ public class ApiCallService {
     /**
      * 실시간 시세 호출 (현재가)
      */
-    public Object getCurrentPrice(String stockCode) {
+    public long getCurrentPrice(String stockCode) {
         HttpHeaders headers = createHeaders("FHKST01010100");
         String uri = UriComponentsBuilder.fromHttpUrl(baseUrl + stockPriceUrl)
-                .queryParam("fid_cond_mrkt_div_code", "J")  // KOSPI
+                .queryParam("fid_cond_mrkt_div_code", "J")  // 시장 구분 (KOSPI 등)
                 .queryParam("fid_input_iscd", stockCode)
                 .toUriString();
 
-        return sendGet(uri, headers, Object.class);
+        StockPriceDto response = sendGet(uri, headers, StockPriceDto.class);
+        String priceStr = Objects.requireNonNull(response).getOutput().getStck_prpr();
+
+        if (priceStr == null || priceStr.isBlank()) {
+            throw new RuntimeException("현재가 정보가 비어 있습니다.");
+        }
+
+        try {
+            return Long.parseLong(priceStr);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("현재가 형식이 잘못되었습니다: " + priceStr);
+        }
     }
 
     /**
