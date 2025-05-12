@@ -1,5 +1,6 @@
 package com.example.jammoney.theme.service;
 
+import com.example.jammoney.theme.dto.TopicCreateDto;
 import com.example.jammoney.theme.dto.TopicDetailDto;
 import com.example.jammoney.theme.dto.TopicListDto;
 import com.example.jammoney.theme.entity.LearningTopic;
@@ -40,5 +41,18 @@ public class LearningTopicService {
         dto.setTitle(topic.getTitle());
         dto.setDescription(topic.getDescription());
         return dto;
+    }
+
+    public void createTopic(TopicCreateDto dto) {
+        Theme theme = themeRepository.findById(dto.getThemeId())
+                .orElseThrow(() -> new RuntimeException("해당 테마가 없습니다"));
+
+        LearningTopic topic = LearningTopic.builder()
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .theme(theme)
+                .build();
+
+        topicRepository.save(topic);
     }
 }

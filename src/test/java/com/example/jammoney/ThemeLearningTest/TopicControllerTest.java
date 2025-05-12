@@ -1,12 +1,15 @@
 package com.example.jammoney.ThemeLearningTest;
 
 import com.example.jammoney.theme.controller.TopicController;
+import com.example.jammoney.theme.dto.TopicCreateDto;
 import com.example.jammoney.theme.dto.TopicDetailDto;
 import com.example.jammoney.theme.dto.TopicListDto;
 import com.example.jammoney.theme.service.LearningTopicService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -14,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,12 +25,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class TopicControllerTest {
     private MockMvc mockMvc;
     private LearningTopicService topicService;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setup() {
         topicService = Mockito.mock(LearningTopicService.class);
         TopicController controller = new TopicController(topicService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        objectMapper = new ObjectMapper();
     }
 
     @Test
@@ -65,4 +71,21 @@ public class TopicControllerTest {
                 .andExpect(jsonPath("$.title").value("첫 월급 관리법: 저축 vs 투자"))
                 .andExpect(jsonPath("$.description").value("첫 월급은 단순한 수입이 아니라, 평생을 이어갈 재정 습관의 시작점입니다."));
     }
+
+    @Test
+    void createTopicReturnOk() throws Exception {
+        TopicCreateDto dto = new TopicCreateDto();
+        dto.setThemeId(1L);
+        dto.setTitle("청소년을 위한 금융기초");
+        dto.setDescription("청소년 눈높이에 맞춘 소비와 저축의 기초");
+
+        String json = objectMapper.writeValueAsString(dto);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/api/themes/topics")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
+
 }

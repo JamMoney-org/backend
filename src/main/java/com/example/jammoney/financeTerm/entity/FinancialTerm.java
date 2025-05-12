@@ -25,6 +25,8 @@ public class FinancialTerm {
 
     private String category;
 
+    private int dayIndex;
+
     @ElementCollection
     @OrderColumn(name = "sequence")
     private List<String> exampleSentences;

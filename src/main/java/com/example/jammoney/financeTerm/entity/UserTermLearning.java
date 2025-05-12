@@ -6,7 +6,9 @@ import lombok.*;
 
 
 @Entity
-@Table(name = "user_term_learnings")
+@Table(name = "user_term_learnings", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "term_id"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,4 +31,6 @@ public class UserTermLearning {
     private FinancialTerm term;
 
     private boolean learned;
+
+    private boolean expGiven;
 }
