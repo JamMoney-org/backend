@@ -12,7 +12,7 @@ public class PetService {
 
     private final PetRepository petRepository;
 
-    public void renamePet(User user, String newName) {
+    public void renamePet(User user, String newName) { //이름 설정
         Pet pet = petRepository.findByUserId(user.getId());
 
         if (newName == null || newName.trim().isEmpty()) {
