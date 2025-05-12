@@ -1,5 +1,6 @@
 package com.example.jammoney.pet.entity;
 
+import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 

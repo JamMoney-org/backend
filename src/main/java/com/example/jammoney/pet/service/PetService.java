@@ -2,6 +2,7 @@ package com.example.jammoney.pet.service;
 import com.example.jammoney.pet.dto.PetStatusResponseDTO;
 import com.example.jammoney.pet.entity.Pet;
 import com.example.jammoney.pet.repository.PetRepository;
+import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

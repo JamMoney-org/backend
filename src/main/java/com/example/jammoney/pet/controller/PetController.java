@@ -1,10 +1,11 @@
 package com.example.jammoney.pet.controller;
 
-import com.example.jammoney.User.UserRepository;
 import com.example.jammoney.exception.ApiResponse;
 import com.example.jammoney.pet.dto.PetRenameRequestDTO;
 import com.example.jammoney.pet.dto.PetStatusResponseDTO;
 import com.example.jammoney.pet.service.PetService;
+import com.example.jammoney.user.entity.User;
+import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

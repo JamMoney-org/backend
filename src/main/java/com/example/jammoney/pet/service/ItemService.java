@@ -8,6 +8,7 @@ import com.example.jammoney.pet.entity.Pet;
 import com.example.jammoney.pet.repository.InventoryItemRepository;
 import com.example.jammoney.pet.repository.ItemRepository;
 import com.example.jammoney.pet.repository.PetRepository;
+import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,16 +1,22 @@
 package com.example.jammoney.user.entity;
-import com.example.jammoney.stockApp.stock.entity.*;
+
+import com.example.jammoney.pet.entity.Pet;
+import com.example.jammoney.stockApp.stock.entity.Cash;
+import com.example.jammoney.stockApp.stock.entity.HoldingStock;
+import com.example.jammoney.stockApp.stock.entity.InterestingStock;
+import com.example.jammoney.stockApp.stock.entity.Order;
 import com.example.jammoney.user.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "user")
 public class User {
@@ -34,18 +40,21 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    // 관계 매핑 생략
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Cash cash;
 
-    @Builder
-    public User(String email, String password, String nickname, Role role, boolean active) {
-        this.email = email;
-        this.password = password;
-        this.nickname = nickname;
-        this.role = role;
-        this.isActive = active;
-    }
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Pet pet;
 
-    // 테스트용 생성자 추가
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InterestingStock> interestingStocks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HoldingStock> holdingStocks = new ArrayList<>();
+
     public User(Long id, String email, String password, String nickname, Role role, boolean active) {
         this.id = id;
         this.email = email;
