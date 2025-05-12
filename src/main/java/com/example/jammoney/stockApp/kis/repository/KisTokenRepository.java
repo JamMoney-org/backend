@@ -1,5 +1,5 @@
-package com.example.jammoney.StockApp.kis.repository;
-import com.example.jammoney.StockApp.kis.entity.KisToken;
+package com.example.jammoney.stockApp.kis.repository;
+import com.example.jammoney.stockApp.kis.entity.KisToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
