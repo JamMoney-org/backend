@@ -1,4 +1,4 @@
-package com.example.jammoney.financeQuiz;
+package com.example.jammoney.financeQuiz.entity;
 
 
 public enum Difficulty {
