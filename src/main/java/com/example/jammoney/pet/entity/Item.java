@@ -1,4 +1,4 @@
-package com.example.jammoney.pet;
+package com.example.jammoney.pet.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -21,7 +21,7 @@ public class Item {
     @Enumerated(EnumType.STRING)
     private ItemType type;                      // HAT, BACKGROUND, ACCESSORY 등
 
-    private int price;                          // 가상 머니 가격
+    private long price;                          // 가상 머니 가격
     private String imageUrl;                    // 착용 이미지 (투명 PNG 등)
     private String previewUrl;                  // 상점용 미리보기 썸네일
     private String position;
