@@ -1,5 +1,6 @@
 package com.example.jammoney.financeTerm.entity;
 
+import com.example.jammoney.User.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,11 +17,11 @@ public class UserSavedTerm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /*
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    */
+
 
     @ManyToOne
     @JoinColumn(name = "term_id")

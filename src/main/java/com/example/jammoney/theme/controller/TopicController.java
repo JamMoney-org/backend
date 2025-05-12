@@ -1,12 +1,12 @@
 package com.example.jammoney.theme.controller;
 
+import com.example.jammoney.theme.dto.TopicCreateDto;
 import com.example.jammoney.theme.dto.TopicDetailDto;
 import com.example.jammoney.theme.dto.TopicListDto;
+import com.example.jammoney.theme.entity.LearningTopic;
 import com.example.jammoney.theme.service.LearningTopicService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,5 +23,10 @@ public class TopicController {
     @GetMapping("/api/themes/{themeId}/topics/{topicId}/details")
     public TopicDetailDto getDetails(@PathVariable long topicId) {
         return topicService.getTopicDetail(topicId);
+    }
+
+    @PostMapping("/api/themes/topics")
+    public void createTopic(@RequestBody TopicCreateDto createDto) {
+        topicService.createTopic(createDto);
     }
 }
