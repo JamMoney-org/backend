@@ -82,7 +82,7 @@ public class JwtTokenProvider {
         }
     }
 
-    // ✅ 인증 객체 반환
+    // 인증 객체 반환
     public Authentication getAuthentication(String token) {
         String email = getEmailFromToken(token);
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
