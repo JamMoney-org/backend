@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "user")
 @Getter
 @Setter
 @NoArgsConstructor
+@Entity
+@Table(name = "user")
 public class User {
 
     @Id
@@ -31,23 +31,21 @@ public class User {
     @Column(nullable = false)
     private boolean isActive;
 
-    @OneToOne(mappedBy="user", cascade = CascadeType.ALL)
-    private Cash cash;
-
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InterestingStock> interestingStocks = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<HoldingStock> holdingStocks = new ArrayList<>();
-
+    // 관계 매핑 생략
 
     @Builder
+    public User(String email, String password, String nickname, Role role, boolean active) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.role = role;
+        this.isActive = active;
+    }
+
+    // 테스트용 생성자 추가
     public User(Long id, String email, String password, String nickname, Role role, boolean active) {
         this.id = id;
         this.email = email;
@@ -56,6 +54,4 @@ public class User {
         this.role = role;
         this.isActive = active;
     }
-
 }
-
