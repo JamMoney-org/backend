@@ -46,6 +46,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HoldingStock> holdingStocks = new ArrayList<>();
 
+    private boolean isVerified = false;
+
+    private String emailVerificationToken;
+
+    private LocalDateTime tokenExpiryTime;
 
     @Builder
     public User(Long id, String email, String password, String nickname, Role role, boolean active) {
