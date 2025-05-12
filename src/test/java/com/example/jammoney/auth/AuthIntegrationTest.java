@@ -1,6 +1,5 @@
 package com.example.jammoney.auth;
 
-
 import com.example.jammoney.auth.dto.TokenResponseDto;
 import com.example.jammoney.auth.entity.RefreshToken;
 import com.example.jammoney.auth.repository.RefreshTokenRepository;
@@ -38,11 +37,11 @@ class AuthIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-
     private String password = "Test1234!";
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
+
     @Test
     @DisplayName("회원가입 → 로그인 → 보호 API 접근")
     void signup_then_login_then_access_protected_api() throws Exception {
@@ -82,13 +81,7 @@ class AuthIntegrationTest {
 
         String response = loginResult.andReturn().getResponse().getContentAsString();
         TokenResponseDto tokenDto = objectMapper.readValue(response, TokenResponseDto.class);
-        List<RefreshToken> tokens = refreshTokenRepository.findAll();
-        System.out.println("🔍 토큰 개수: " + tokens.size());
-        tokens.forEach(rt -> {
-            System.out.println("Token: " + rt.getToken());
-            System.out.println("Expiry: " + rt.getExpiryDate());
-            System.out.println("User Email: " + rt.getUser().getEmail());
-        });
+
         mockMvc.perform(post("/auth/refresh")
                         .param("refreshToken", tokenDto.getRefreshToken()))
                 .andExpect(status().isOk())
@@ -96,20 +89,37 @@ class AuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("회원가입 실패: 중복 이메일")
+    @DisplayName("회원가입 실패: 중복 이메일 → EmailAlreadyExistsException 발생")
     void signup_fail_duplicate_email() throws Exception {
         String email = signup();
-        UserRequestDto duplicateDto = new UserRequestDto(email, password, "Tester2", Role.ROLE_USER);
+        UserRequestDto duplicateDto = new UserRequestDto(
+                email, password, password, "Tester2", Role.ROLE_USER);
+
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(duplicateDto)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error").value("DuplicateKeyError"));
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("EMAIL_ALREADY_EXISTS"))
+                .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."));
     }
-
     @Test
     @DisplayName("RefreshToken 만료 시 AccessToken 재발급 실패")
     void refresh_token_expired() throws Exception {
+        String email = signup();
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequestDto(email, password))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/auth/refresh")
+                        .param("refreshToken", "expired-refresh-token-value"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("RefreshToken 만료 임박 시 새로 발급됨 (Sliding Expiration)")
+    void refresh_token_near_expiry_sliding_renewal() throws Exception {
         String email = signup();
         ResultActions loginResult = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,30 +129,11 @@ class AuthIntegrationTest {
         String response = loginResult.andReturn().getResponse().getContentAsString();
         TokenResponseDto tokenDto = objectMapper.readValue(response, TokenResponseDto.class);
 
-        mockMvc.perform(post("/auth/refresh")
-                        .param("refreshToken", "expired-refresh-token-value"))
-                .andExpect(status().isUnauthorized());
-    }
-    @Test
-    @DisplayName("RefreshToken 만료 임박 시 새로 발급됨 (Sliding Expiration)")
-    void refresh_token_near_expiry_sliding_renewal() throws Exception {
-        // 1. 회원가입 및 로그인
-        String email1 = signup();
-        ResultActions loginResult = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequestDto(email1, password))))
-                .andExpect(status().isOk());
-
-        String response = loginResult.andReturn().getResponse().getContentAsString();
-        TokenResponseDto tokenDto = objectMapper.readValue(response, TokenResponseDto.class);
-
-        // 2. 기존 RefreshToken의 만료 시간을 강제로 2일 후로 변경 (3일 이하)
         List<RefreshToken> tokens = refreshTokenRepository.findAll();
         RefreshToken original = tokens.get(0);
         original.setExpiryDate(LocalDateTime.now().plusDays(2));
         refreshTokenRepository.save(original);
 
-        // 3. 리프레시 요청
         ResultActions refreshResult = mockMvc.perform(post("/auth/refresh")
                         .param("refreshToken", tokenDto.getRefreshToken()))
                 .andExpect(status().isOk())
@@ -152,14 +143,15 @@ class AuthIntegrationTest {
         String newResponse = refreshResult.andReturn().getResponse().getContentAsString();
         TokenResponseDto newTokenDto = objectMapper.readValue(newResponse, TokenResponseDto.class);
 
-        // 4. 새로 발급된 refreshToken이 기존 것과 다른지 확인
         assert !newTokenDto.getRefreshToken().equals(tokenDto.getRefreshToken());
     }
 
     @Test
     @DisplayName("회원가입 실패: 잘못된 이메일 형식")
     void signup_fail_invalid_email_format() throws Exception {
-        UserRequestDto dto = new UserRequestDto("invalid-email", password, "Tester", Role.ROLE_USER);
+        UserRequestDto dto = new UserRequestDto(
+                "invalid-email", password, password, "Tester", Role.ROLE_USER);
+
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
@@ -170,7 +162,9 @@ class AuthIntegrationTest {
     @Test
     @DisplayName("회원가입 실패: 비밀번호 형식 불일치")
     void signup_fail_invalid_password_format() throws Exception {
-        UserRequestDto dto = new UserRequestDto("newuser@example.com", "weakpass", "Tester", Role.ROLE_USER);
+        UserRequestDto dto = new UserRequestDto(
+                "newuser@example.com", "weakpass", "weakpass", "Tester", Role.ROLE_USER);
+
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
@@ -178,10 +172,32 @@ class AuthIntegrationTest {
                 .andExpect(jsonPath("$.message").value(Matchers.containsString("비밀번호는 8~20자")));
     }
 
+    @Test
+    @DisplayName("로그아웃 시 RefreshToken 삭제")
+    void logout_should_delete_refresh_token() throws Exception {
+        String email = signup();
+        ResultActions loginResult = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequestDto(email, password))))
+                .andExpect(status().isOk());
+
+        String response = loginResult.andReturn().getResponse().getContentAsString();
+        TokenResponseDto tokenDto = objectMapper.readValue(response, TokenResponseDto.class);
+
+        mockMvc.perform(post("/auth/logout")
+                        .header("Authorization", "Bearer " + tokenDto.getAccessToken()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("로그아웃 완료"));
+
+        boolean exists = refreshTokenRepository.findByToken(tokenDto.getRefreshToken()).isPresent();
+        assertFalse(exists);
+    }
+
     private String signup() throws Exception {
         String uniqueEmail = "test" + System.nanoTime() + "@example.com";
         String uniqueNickname = "Tester" + System.nanoTime();
-        UserRequestDto dto = new UserRequestDto(uniqueEmail, password, uniqueNickname, Role.ROLE_USER);
+        UserRequestDto dto = new UserRequestDto(
+                uniqueEmail, password, password, uniqueNickname, Role.ROLE_USER);
 
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -201,28 +217,4 @@ class AuthIntegrationTest {
         String response = result.andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).get("accessToken").asText();
     }
-    @Test
-    @DisplayName("로그아웃 시 RefreshToken 삭제")
-    void logout_should_delete_refresh_token() throws Exception {
-        // 1. 회원가입 및 로그인
-        String email = signup();
-        ResultActions loginResult = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequestDto(email, password))))
-                .andExpect(status().isOk());
-
-        String response = loginResult.andReturn().getResponse().getContentAsString();
-        TokenResponseDto tokenDto = objectMapper.readValue(response, TokenResponseDto.class);
-
-        // 2. 로그아웃 요청
-        mockMvc.perform(post("/auth/logout")
-                        .header("Authorization", "Bearer " + tokenDto.getAccessToken()))
-                .andExpect(status().isOk())
-                .andExpect(content().string("로그아웃 완료"));
-
-        // 3. RefreshToken이 실제로 삭제되었는지 확인
-        boolean exists = refreshTokenRepository.findByToken(tokenDto.getRefreshToken()).isPresent();
-        assertFalse(exists);
-    }
 }
-
