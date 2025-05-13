@@ -1,8 +1,7 @@
 package com.example.jammoney.stockApp.stock.entity;
 
-import com.example.jammoney.stockApp.stock.entity.Enums.OrderStatus;
-import com.example.jammoney.stockApp.stock.entity.Enums.OrderType;
-import com.example.jammoney.User.User;
+import com.example.jammoney.stockApp.stock.entity.Enums.*;
+import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +13,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(name = "orders")
 public class Order{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
