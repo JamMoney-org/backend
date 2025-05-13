@@ -1,0 +1,5 @@
+package com.example.jammoney.stockApp.stock.entity.Enums;
+
+public enum TradeType {
+    MARKET, LIMIT
+}

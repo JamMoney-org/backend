@@ -7,6 +7,12 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
+/**
+ * 특정 종목의 1분봉 등 단기 체결 시세 응답 DTO
+ * - 시간별 시가, 고가, 저가, 종가, 거래량 포함
+ * - 분봉 차트 데이터 구성에 사용
+ */
+
 public class StockMinResponseDto {
     private long stockMinId;
     private long companyId;

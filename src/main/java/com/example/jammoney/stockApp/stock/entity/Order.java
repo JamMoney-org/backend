@@ -31,10 +31,16 @@ public class Order{
     private Company company;
 
     @Enumerated(EnumType.STRING) // 항상 명시하자!
+    @Column(nullable = false)
     private OrderStatus orderStatus;
 
     @Enumerated(EnumType.STRING) // 항상 명시하자!
+    @Column(nullable = false)
     private OrderType orderType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TradeType tradeType;
 
     private long price;
 

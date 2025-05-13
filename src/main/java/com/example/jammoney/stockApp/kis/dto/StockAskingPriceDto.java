@@ -2,6 +2,15 @@ package com.example.jammoney.stockApp.kis.dto;
 import lombok.Data;
 
 @Data
+/**
+ * [KIS API] 실시간 호가/잔량 정보 응답 DTO
+ * - askp: 매도 호가 (1~10)
+ * - askp_rsqn: 매도 잔량 (1~10)
+ * - bidp: 매수 호가 (1~10)
+ * - bidp_rsqn: 매수 잔량 (1~10)
+ * - 실시간 호가판 구성에 사용
+ */
+
 public class StockAskingPriceDto {
     private Output output;
 

@@ -5,6 +5,13 @@ import lombok.Getter;
 
 @Builder
 @Getter
+/**
+ * 10단계 매수/매도 호가 및 잔량 응답 DTO
+ * - 매도 호가 askp1~10 / 매수 호가 bidp1~10
+ * - 각각의 잔량 정보 포함 (askp_rsqn / bidp_rsqn)
+ * - 실시간 호가판 구성 시 사용
+ */
+
 public class StockAskingPriceResponseDto {
     private long stockAsBiId;
 

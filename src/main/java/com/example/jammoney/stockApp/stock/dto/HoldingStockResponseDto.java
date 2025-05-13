@@ -5,6 +5,12 @@ import lombok.Getter;
 
 @Builder
 @Getter
+/**
+ * 사용자가 보유한 주식 정보 응답 DTO
+ * - 종목명, 보유 수량, 평가금액, 수익률, 자산 비중 포함
+ * - 보유 주식 요약 카드 또는 포트폴리오 목록에 사용
+ */
+
 public class HoldingStockResponseDto {
     private String companyKorName;
     //보유 수량

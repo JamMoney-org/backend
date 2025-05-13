@@ -1,15 +1,22 @@
 package com.example.jammoney.stockApp.stock.dto;
 
 import com.example.jammoney.stockApp.stock.entity.Enums.OrderType;
+import com.example.jammoney.stockApp.stock.entity.Enums.TradeType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
+/**
+ * 주식 주문 요청 DTO
+ * - 종목 코드, 수량, 가격, 주문/거래 유형을 포함
+ * - 지정가/시장가, 매수/매도 구분
+ * - 주문 생성 시 클라이언트 → 서버로 전달되는 입력값
+ */
+
 public class OrderRequestDto {
 
     @NotBlank(message = "종목 코드는 필수입니다.")
@@ -24,6 +31,6 @@ public class OrderRequestDto {
     @NotNull
     private OrderType orderType;     // BUY / SELL
 
-    @NotBlank
-    private String tradeType;        // MARKET / LIMIT
+    @NotNull
+    private TradeType tradeType;
 }
