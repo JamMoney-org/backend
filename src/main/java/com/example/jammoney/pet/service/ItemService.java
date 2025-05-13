@@ -1,6 +1,5 @@
 package com.example.jammoney.pet.service;
 
-import com.example.jammoney.User.User;
 import com.example.jammoney.pet.dto.InventoryResponseDTO;
 import com.example.jammoney.pet.dto.ItemShopResponseDTO;
 import com.example.jammoney.pet.entity.InventoryItem;
@@ -9,6 +8,7 @@ import com.example.jammoney.pet.entity.Pet;
 import com.example.jammoney.pet.repository.InventoryItemRepository;
 import com.example.jammoney.pet.repository.ItemRepository;
 import com.example.jammoney.pet.repository.PetRepository;
+import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
 package com.example.jammoney.financeTerm.entity;
 
-import com.example.jammoney.User.User;
+import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 

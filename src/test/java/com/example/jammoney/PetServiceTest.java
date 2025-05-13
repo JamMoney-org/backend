@@ -1,10 +1,10 @@
 package com.example.jammoney;
 
-import com.example.jammoney.User.User;
 import com.example.jammoney.pet.dto.PetStatusResponseDTO;
 import com.example.jammoney.pet.entity.Pet;
 import com.example.jammoney.pet.repository.PetRepository;
 import com.example.jammoney.pet.service.PetService;
+import com.example.jammoney.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

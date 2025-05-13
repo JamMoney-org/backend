@@ -1,12 +1,11 @@
 package com.example.jammoney.financeTerm.repository;
 
-import com.example.jammoney.User.User;
 import com.example.jammoney.financeTerm.entity.FinancialTerm;
 import com.example.jammoney.financeTerm.entity.UserTermLearning;
+import com.example.jammoney.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface UserLearningRepository extends JpaRepository<UserTermLearning, Long> {
     boolean existsByUserAndTerm(User user, FinancialTerm term); // 단어를 학습했는지 여부 확인
