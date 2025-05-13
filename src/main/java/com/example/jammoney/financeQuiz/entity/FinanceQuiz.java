@@ -23,8 +23,8 @@ public class FinanceQuiz {
     @Column(nullable = false)
     private int correctIndex;
 
-    // 보기 리스트
     @ElementCollection
+    @OrderColumn(name = "option_order")
     @CollectionTable(name = "finance_quiz_options", joinColumns = @JoinColumn(name = "quiz_id"))
     @Column(name = "option")
     private List<String> options = new ArrayList<>();

@@ -1,13 +1,15 @@
 package com.example.jammoney.financeQuiz.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class QuizAnswerSubmitRequestDTO { //사용자 정답 제출 DTO
-    private Long quizId; //퀴즈 id
-    private int selectedIndex; //고른 답
+public class QuizAnswerSubmitRequestDTO {
+    private int selectedIndex;   // 유저가 고른 보기 index
+    private QuizQuestionDTO questionData;  // 해당 문제 전체
 }
