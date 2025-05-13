@@ -3,6 +3,7 @@ import com.example.jammoney.pet.dto.PetStatusResponseDTO;
 import com.example.jammoney.pet.entity.Pet;
 import com.example.jammoney.pet.repository.PetRepository;
 import com.example.jammoney.user.entity.User;
+import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +12,10 @@ import org.springframework.stereotype.Service;
 public class PetService {
 
     private final PetRepository petRepository;
+    private final UserRepository userRepository;
 
     public void renamePet(User user, String newName) { //이름 설정
-        Pet pet = petRepository.findByUserId(user.getId());
+        Pet pet = user.getPet();
 
         if (newName == null || newName.trim().isEmpty()) {
             throw new IllegalArgumentException("이름은 비어 있을 수 없습니다.");
@@ -32,6 +34,7 @@ public class PetService {
      */
     public PetStatusResponseDTO getPetStatus(User user) {
         Pet pet = user.getPet();
+
         int currentLevel = pet.getLevel();
         int currentExp = pet.getExp();
         int nextLevelExp = getRequiredExpForLevel(currentLevel + 1);
