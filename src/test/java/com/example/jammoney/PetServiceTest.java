@@ -28,7 +28,8 @@ class PetServiceTest {
     void 이름_정상_변경() {
         User user = User.builder().id(1L).build();
         Pet pet = Pet.builder().name("공룡이").build();
-        Mockito.when(petRepository.findByUserId(1L)).thenReturn(pet);
+        user.setPet(pet);
+        //Mockito.when(petRepository.findByUserId(1L)).thenReturn(pet);
 
         petService.renamePet(user, "마루");
 
@@ -40,7 +41,8 @@ class PetServiceTest {
     void 이름_null_예외() {
         User user = User.builder().id(1L).build();
         Pet pet = Pet.builder().build();
-        Mockito.when(petRepository.findByUserId(1L)).thenReturn(pet);
+        user.setPet(pet);
+        //Mockito.when(petRepository.findByUserId(1L)).thenReturn(pet);
 
         assertThrows(IllegalArgumentException.class, () -> {
             petService.renamePet(user, null);
@@ -51,7 +53,8 @@ class PetServiceTest {
     void 이름_공백_예외() {
         User user = User.builder().id(1L).build();
         Pet pet = Pet.builder().build();
-        Mockito.when(petRepository.findByUserId(1L)).thenReturn(pet);
+        user.setPet(pet);
+        //Mockito.when(petRepository.findByUserId(1L)).thenReturn(pet);
 
         assertThrows(IllegalArgumentException.class, () -> {
             petService.renamePet(user, "   ");
@@ -62,7 +65,8 @@ class PetServiceTest {
     void 이름_길이초과_예외() {
         User user = User.builder().id(1L).build();
         Pet pet = Pet.builder().build();
-        Mockito.when(petRepository.findByUserId(1L)).thenReturn(pet);
+        user.setPet(pet);
+        //Mockito.when(petRepository.findByUserId(1L)).thenReturn(pet);
 
         String longName = "이름이이이이이이이이이이이이이이이이이이이이";
         assertThrows(IllegalArgumentException.class, () -> {
