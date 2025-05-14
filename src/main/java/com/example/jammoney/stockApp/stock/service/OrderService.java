@@ -73,7 +73,7 @@ public class OrderService {
     }
 
     private long resolvePrice(OrderRequestDto dto) {
-        if (dto.getTradeType().equalsIgnoreCase("MARKET")) {
+        if (dto.getTradeType().name().equalsIgnoreCase("MARKET")) {
             Object raw = apiCallService.getCurrentPrice(dto.getCompanyCode());
             Map<String, String> output = (Map<String, String>) ((Map<?, ?>) raw).get("output");
             return Long.parseLong(output.get("stck_prpr"));

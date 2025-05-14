@@ -94,7 +94,7 @@ public class HoldService {
                         .evaluationAmount(evaluationAmount)
                         .profitAmount(profitAmount)
                         .profitRate(profitRate)
-                        .portfoliRatio(0.0)
+                        .portfolioRatio(0.0)
                         .build());
             }
         }
