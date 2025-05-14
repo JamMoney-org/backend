@@ -1,6 +1,7 @@
 package com.example.jammoney.auth.entity;
 
 import com.example.jammoney.user.entity.User;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,14 +10,21 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class CustomUserDetails extends User implements UserDetails {
+public class CustomUserDetails implements UserDetails {
+
+    // 사용자 정보에 접근하기 위한 getter
+    @Getter
+    private final User user;
     private final List<GrantedAuthority> authorities;
 
     public CustomUserDetails(User user) {
-        super(user.getId(), user.getEmail(), user.getPassword(), user.getNickname(), user.getRole(), user.isActive());
-        this.authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
+        this.user = user;
+        this.authorities = Collections.singletonList(
+                new SimpleGrantedAuthority(user.getRole().name())
+        );
     }
 
+    // UserDetails 필수 구현 메서드
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
@@ -24,12 +32,12 @@ public class CustomUserDetails extends User implements UserDetails {
 
     @Override
     public String getPassword() {
-        return super.getPassword();
+        return user.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return super.getEmail();
+        return user.getEmail(); // 로그인 시 사용할 사용자명 (보통 이메일)
     }
 
     @Override
@@ -49,15 +57,6 @@ public class CustomUserDetails extends User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return user.isActive();
     }
-
-    public User toUser() {
-        return new User(getId(), getEmail(), getPassword(), getNickname(), getRole(), isActive());
-    }
-
-    public User getUser() { return this; }
 }
-
-
-

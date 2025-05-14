@@ -23,26 +23,27 @@ public class PetController {
     private final UserRepository userRepository;
 
     // 현재 로그인한 유저를 DB에서 다시 가져오는 유틸 메서드
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
-
-        return userRepository.findById(principal.getId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
-    }
+//    private User getCurrentUser() {
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+//
+//        return userRepository.findById(principal.getId())
+//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+//    }
 
     // 캐릭터 상태 조회
     @GetMapping("/status")
-    public ResponseEntity<ApiResponse<PetStatusResponseDTO>> getPetStatus() {
-        User user = getCurrentUser();
+    public ResponseEntity<ApiResponse<PetStatusResponseDTO>> getPetStatus(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
         PetStatusResponseDTO status = petService.getPetStatus(user);
         return ResponseEntity.ok(ApiResponse.success("캐릭터 상태 조회 성공", status));
     }
 
     // 캐릭터 이름 변경
     @PostMapping("/rename")
-    public ResponseEntity<ApiResponse<Void>> renamePet(@RequestBody PetRenameRequestDTO request) {
-        User user = getCurrentUser();
+    public ResponseEntity<ApiResponse<Void>> renamePet(@RequestBody PetRenameRequestDTO request, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        //User user = getCurrentUser();
+        User user = userDetails.getUser();
         petService.renamePet(user, request.getNewName());
         return ResponseEntity.ok(ApiResponse.success("캐릭터 이름 변경 완료", null));
     }
