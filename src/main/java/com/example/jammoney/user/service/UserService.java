@@ -48,6 +48,7 @@ public class UserService {
                 .exp(0)
                 .mood("Happy")
                 .build();
+        pet.setUser(user);
         user.setPet(pet);  // 연관관계 설정
 
         // Cash 생성 (초기 자금 100,000원 예시)

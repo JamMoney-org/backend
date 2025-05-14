@@ -55,6 +55,8 @@ public class CustomUserDetails extends User implements UserDetails {
     public User toUser() {
         return new User(getId(), getEmail(), getPassword(), getNickname(), getRole(), isActive());
     }
+
+    public User getUser() { return this; }
 }
 
 
