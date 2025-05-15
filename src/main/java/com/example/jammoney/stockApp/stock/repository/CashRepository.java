@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface CashRepository extends JpaRepository<Cash, Long> {
     Optional<Cash> findByUser(User user);
+    Optional<Cash> findByUserId(Long userId);
 }
