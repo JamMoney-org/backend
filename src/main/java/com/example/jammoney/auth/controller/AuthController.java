@@ -3,6 +3,7 @@ package com.example.jammoney.auth.controller;
 import com.example.jammoney.auth.dto.TokenResponseDto;
 import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
+import com.example.jammoney.auth.service.RedisService;
 import com.example.jammoney.auth.service.RefreshTokenService;
 import com.example.jammoney.user.dto.LoginRequestDto;
 import com.example.jammoney.user.dto.UserRequestDto;
@@ -25,6 +26,7 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final UserService userService;
+    private final RedisService redisService;
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginRequestDto requestDto) {
@@ -40,18 +42,23 @@ public class AuthController {
 
         // 3. AccessToken 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         // 4. RefreshToken 생성 및 저장
 
         // 5. 클라이언트에 응답
-        return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshTokenService.createRefreshToken(user).getToken()));
+        return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshToken));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String bearerToken) {
-        String token = bearerToken.replace("Bearer ", "");
-        String email = jwtTokenProvider.getEmailFromToken(token);
-        refreshTokenService.deleteByEmail(email); // DB에서 삭제
+        String accessToken = bearerToken.replace("Bearer ", "");
+        String email = jwtTokenProvider.getEmailFromToken(accessToken);
+
+        long remainingTime = jwtTokenProvider.getRemainingTime(accessToken);
+        redisService.blacklistAccessToken(accessToken, remainingTime);
+        refreshTokenService.deleteByEmail(email);
+
         return ResponseEntity.ok("로그아웃 완료");
     }
 
