@@ -10,7 +10,7 @@ import com.example.jammoney.financeQuiz.entity.WrongNote;
 import com.example.jammoney.financeQuiz.repository.WrongNoteRepository;
 import com.example.jammoney.gpt.service.GptApiService;
 import com.example.jammoney.pet.service.PetService;
-import com.example.jammoney.stockApp.stock.service.CashService;
+import com.example.jammoney.cash.service.CashService;
 import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

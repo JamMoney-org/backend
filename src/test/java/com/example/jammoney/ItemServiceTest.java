@@ -1,6 +1,6 @@
 package com.example.jammoney;
 
-import com.example.jammoney.stockApp.stock.entity.Cash;
+import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.pet.dto.InventoryResponseDTO;
 import com.example.jammoney.pet.dto.ItemShopResponseDTO;
 import com.example.jammoney.pet.entity.InventoryItem;

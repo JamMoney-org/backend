@@ -2,10 +2,10 @@ package com.example.jammoney.stockApp.stock.service;
 
 import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import com.example.jammoney.stockApp.stock.dto.HoldingStockResponseDto;
-import com.example.jammoney.stockApp.stock.entity.Cash;
+import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.stockApp.stock.entity.Company;
 import com.example.jammoney.stockApp.stock.entity.HoldingStock;
-import com.example.jammoney.stockApp.stock.repository.CashRepository;
+import com.example.jammoney.cash.repository.CashRepository;
 import com.example.jammoney.stockApp.stock.repository.HoldingStockRepository;
 import com.example.jammoney.user.entity.User;
 import jakarta.transaction.Transactional;

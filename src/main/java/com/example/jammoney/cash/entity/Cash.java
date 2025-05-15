@@ -1,4 +1,4 @@
-package com.example.jammoney.stockApp.stock.entity;
+package com.example.jammoney.cash.entity;
 import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
