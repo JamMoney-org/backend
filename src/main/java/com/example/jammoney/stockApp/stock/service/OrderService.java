@@ -1,7 +1,7 @@
 package com.example.jammoney.stockApp.stock.service;
 
 import com.example.jammoney.stockApp.kis.service.ApiCallService;
-import com.example.jammoney.stockApp.stock.repository.CashRepository;
+import com.example.jammoney.cash.repository.CashRepository;
 import com.example.jammoney.stockApp.stock.repository.CompanyRepository;
 import com.example.jammoney.stockApp.stock.repository.OrderRepository;
 import com.example.jammoney.stockApp.stock.dto.OrderRequestDto;

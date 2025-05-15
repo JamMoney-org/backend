@@ -4,7 +4,7 @@ import com.example.jammoney.exception.EmailAlreadyExistsException;
 import com.example.jammoney.exception.ErrorCode;
 import com.example.jammoney.exception.PasswordMismatchException;
 import com.example.jammoney.pet.entity.Pet;
-import com.example.jammoney.stockApp.stock.entity.Cash;
+import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.user.Role;
 import com.example.jammoney.user.dto.UserRequestDto;
 import com.example.jammoney.user.entity.User;
