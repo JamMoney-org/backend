@@ -1,5 +1,7 @@
 package com.example.jammoney.exception;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
 @Getter
 public enum ErrorCode {
     PASSWORD_MISMATCH("비밀번호와 비밀번호 재입력이 일치하지 않습니다.",410),
@@ -7,7 +9,9 @@ public enum ErrorCode {
     VALIDATION_ERROR("요청 값이 유효하지 않습니다.", 400),
     INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다.", 500),
     REFRESH_TOKEN_NOT_FOUND("리프레시 토큰이 존재하지 않습니다.", 401),
-    REFRESH_TOKEN_EXPIRED("리프레시 토큰이 만료되었습니다.", 401);
+    REFRESH_TOKEN_EXPIRED("리프레시 토큰이 만료되었습니다.", 401),
+    CASH_NOT_FOUND("해당 사용자의 Cash 정보가 없습니다.", 411),
+    INSUFFICIENT_BALANCE("잔액이 부족합니다.", 412);
     private final String message;
     private final int status;
 
