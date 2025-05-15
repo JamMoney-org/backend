@@ -8,6 +8,8 @@ import com.example.jammoney.financeQuiz.repository.WrongNoteRepository;
 import com.example.jammoney.financeQuiz.service.QuizServiceImpl;
 import com.example.jammoney.gpt.service.GptApiService;
 import com.example.jammoney.pet.service.PetService;
+import com.example.jammoney.stockApp.stock.entity.Cash;
+import com.example.jammoney.stockApp.stock.service.CashService;
 import com.example.jammoney.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,9 @@ public class QuizServiceImplTest {
 
     @Mock
     private PetService petService;
+
+    @Mock
+    private CashService cashService;
 
     @BeforeEach
     void setUp() {
@@ -108,7 +113,14 @@ public class QuizServiceImplTest {
 
     @Test
     void submitQuizSet_보상지급() {
-        User user = User.builder().id(1L).coin(0).build();
+        User user = User.builder()
+                .id(1L)
+                .build();
+
+        Cash cash = new Cash();
+        cash.setMoney(0L);
+        cash.setUser(user);
+        user.setCash(cash);
 
         List<QuizResult> quizResults = List.of(
                 QuizResult.builder().correct(true).build(),

@@ -22,4 +22,15 @@ public class Cash{
     @OneToOne(fetch = FetchType.LAZY)
     private User user;
 
+    public void increase(long amount) {
+        if (amount < 0) throw new IllegalArgumentException("증가 금액은 0 이상이어야 합니다.");
+        this.money += amount;
+    }
+
+    public void decrease(long amount) {
+        if (amount < 0) throw new IllegalArgumentException("감소 금액은 0 이상이어야 합니다.");
+        if (this.money < amount) throw new IllegalStateException("잔액이 부족합니다.");
+        this.money -= amount;
+    }
+
 }

@@ -11,6 +11,7 @@ import com.example.jammoney.financeQuiz.entity.WrongNote;
 import com.example.jammoney.financeQuiz.repository.WrongNoteRepository;
 import com.example.jammoney.gpt.service.GptApiService;
 import com.example.jammoney.pet.service.PetService;
+import com.example.jammoney.stockApp.stock.service.CashService;
 import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class QuizServiceImpl implements QuizService {
     private final GptApiService gptApiService;
     private final WrongNoteRepository wrongNoteRepository;
     private final PetService petService;
+    private final CashService cashService;
 
     @Override
     public List<FinanceQuiz> generateQuiz(QuizCategory category, Difficulty difficulty) {
@@ -70,8 +72,7 @@ public class QuizServiceImpl implements QuizService {
 
         if (passed) {
             petService.addExp(user, rewardExp);   // 경험치는 Pet 기준
-            //user.addCoin(rewardCoin);             // 코인은 User 기준
-            // 필요 시 userRepository.save(user); 호출
+            cashService.addCash(user.getId(), rewardCoin);
         }
 
         return QuizSummaryResult.builder()
