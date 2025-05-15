@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
                 new ErrorResponseDto(code.getStatus(), code.name(), code.getMessage(), request.getRequestURI())
         );
     }
-    @ExceptionHandler(EmailAlreadyExistsException.class)
+    @ExceptionHandler(PasswordMismatchException.class)
     public ResponseEntity<ErrorResponseDto> handlePasswordMismatchException(PasswordMismatchException e, HttpServletRequest request) {
         ErrorCode code = e.getErrorCode();
         return ResponseEntity.status(code.getStatus()).body(

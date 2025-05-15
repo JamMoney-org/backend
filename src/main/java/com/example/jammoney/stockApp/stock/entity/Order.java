@@ -13,6 +13,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(name = "orders")
 public class Order{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

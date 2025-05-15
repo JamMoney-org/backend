@@ -1,18 +1,24 @@
 package com.example.jammoney.user.entity;
-import com.example.jammoney.stockApp.stock.entity.*;
+
+import com.example.jammoney.pet.entity.Pet;
+import com.example.jammoney.stockApp.stock.entity.Cash;
+import com.example.jammoney.stockApp.stock.entity.HoldingStock;
+import com.example.jammoney.stockApp.stock.entity.InterestingStock;
+import com.example.jammoney.stockApp.stock.entity.Order;
 import com.example.jammoney.user.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "user")
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity
+@Table(name = "user")
 public class User {
 
     @Id
@@ -31,11 +37,14 @@ public class User {
     @Column(nullable = false)
     private boolean isActive;
 
-    @OneToOne(mappedBy="user", cascade = CascadeType.ALL)
-    private Cash cash;
-
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Cash cash;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Pet pet;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InterestingStock> interestingStocks = new ArrayList<>();
@@ -46,13 +55,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HoldingStock> holdingStocks = new ArrayList<>();
 
-    private boolean isVerified = false;
-
-    private String emailVerificationToken;
-
-    private LocalDateTime tokenExpiryTime;
-
-    @Builder
     public User(Long id, String email, String password, String nickname, Role role, boolean active) {
         this.id = id;
         this.email = email;
@@ -61,6 +63,4 @@ public class User {
         this.role = role;
         this.isActive = active;
     }
-
 }
-
