@@ -1,8 +1,8 @@
 package com.example.jammoney.cash;
 
 import com.example.jammoney.exception.InsufficientBalanceException;
-import com.example.jammoney.stockApp.stock.entity.Cash;
-import com.example.jammoney.stockApp.stock.service.CashService;
+import com.example.jammoney.cash.entity.Cash;
+import com.example.jammoney.cash.service.CashService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

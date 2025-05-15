@@ -1,9 +1,9 @@
-package com.example.jammoney.stockApp.stock.service;
+package com.example.jammoney.cash.service;
 
 import com.example.jammoney.exception.CashNotFoundException;
 import com.example.jammoney.exception.InsufficientBalanceException;
-import com.example.jammoney.stockApp.stock.entity.Cash;
-import com.example.jammoney.stockApp.stock.repository.CashRepository;
+import com.example.jammoney.cash.entity.Cash;
+import com.example.jammoney.cash.repository.CashRepository;
 import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
