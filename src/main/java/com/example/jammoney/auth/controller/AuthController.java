@@ -36,7 +36,7 @@ public class AuthController {
 
         // 2. 인증된 사용자 정보 가져오기
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userDetails.toUser();
+        User user = userDetails.getUser();
 
         // 3. AccessToken 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());

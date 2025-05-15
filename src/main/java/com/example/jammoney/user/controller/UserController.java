@@ -19,7 +19,7 @@ public class UserController {
     //현재 로그인한 사용자 정보 조회
     @GetMapping("/me")
     public ResponseEntity<UserProfileDto> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        User user = userDetails.toUser();  // CustomUserDetails 내부에 toUser() 메서드 있어야 함
+        User user = userDetails.getUser();
         return ResponseEntity.ok(new UserProfileDto(user));
     }
 
