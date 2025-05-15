@@ -3,7 +3,6 @@ package com.example.jammoney.financeQuiz.controller;
 import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.exception.ApiResponse;
 import com.example.jammoney.financeQuiz.dto.*;
-import com.example.jammoney.financeQuiz.service.QuizService;
 import com.example.jammoney.financeQuiz.service.WrongNoteService;
 import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;

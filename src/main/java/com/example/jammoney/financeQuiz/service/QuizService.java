@@ -1,6 +1,5 @@
 package com.example.jammoney.financeQuiz.service;
 
-
 import com.example.jammoney.financeQuiz.dto.FinanceQuiz;
 import com.example.jammoney.financeQuiz.dto.QuizResult;
 import com.example.jammoney.financeQuiz.dto.QuizSummaryResult;

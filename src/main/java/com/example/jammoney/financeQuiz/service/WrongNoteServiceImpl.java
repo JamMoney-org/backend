@@ -1,6 +1,5 @@
 package com.example.jammoney.financeQuiz.service;
 
-
 import com.example.jammoney.financeQuiz.dto.WrongNoteRequest;
 import com.example.jammoney.financeQuiz.dto.WrongNoteResponse;
 import com.example.jammoney.financeQuiz.entity.WrongNote;
