@@ -1,14 +1,16 @@
 package com.example.jammoney.gpt.mapper;
 
+import com.example.jammoney.financeQuiz.dto.FinanceQuiz;
 import com.example.jammoney.financeQuiz.entity.Difficulty;
-import com.example.jammoney.financeQuiz.entity.FinanceQuiz;
 import com.example.jammoney.financeQuiz.entity.QuizCategory;
 import com.example.jammoney.gpt.dto.GptQuizResponse;
 import com.example.jammoney.gpt.dto.GptResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 public class GptQuizMapper {
 
@@ -16,16 +18,13 @@ public class GptQuizMapper {
 
     public static List<FinanceQuiz> toQuizList(GptResponse response) {
         try {
-            String content = response.getContent(); // GPT 응답의 JSON 문자열
-
-            // 1단계: JSON → GptQuizResponse 객체로 파싱
-            GptQuizResponse gptQuizResponse = objectMapper.readValue(
+            String content = response.getContent(); // JSON 문자열
+            List<GptQuizResponse.QuizData> dataList = objectMapper.readValue(
                     content,
-                    GptQuizResponse.class
+                    new TypeReference<List<GptQuizResponse.QuizData>>() {}
             );
 
-            // 2단계: 내부 quizzes 리스트 변환
-            return gptQuizResponse.getQuizzes().stream().map(dto -> FinanceQuiz.builder()
+            return dataList.stream().map(dto -> FinanceQuiz.builder()
                     .question(dto.getQuestion())
                     .options(dto.getOptions())
                     .correctIndex(dto.getCorrectIndex())

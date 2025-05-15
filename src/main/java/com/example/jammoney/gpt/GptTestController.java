@@ -2,7 +2,7 @@ package com.example.jammoney.gpt;
 
 import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.financeQuiz.entity.Difficulty;
-import com.example.jammoney.financeQuiz.entity.FinanceQuiz;
+import com.example.jammoney.financeQuiz.dto.FinanceQuiz;
 import com.example.jammoney.financeQuiz.entity.QuizCategory;
 import com.example.jammoney.gpt.service.GptApiService;
 import com.example.jammoney.user.entity.User;

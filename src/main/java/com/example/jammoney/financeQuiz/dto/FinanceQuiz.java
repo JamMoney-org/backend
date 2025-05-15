@@ -1,5 +1,6 @@
 package com.example.jammoney.financeQuiz.dto;
 
+import com.example.jammoney.financeQuiz.entity.Difficulty;
 import com.example.jammoney.financeQuiz.entity.QuizCategory;
 import lombok.*;
 
@@ -10,12 +11,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WrongNoteSaveRequestDTO {
-    private Long userId;
+public class FinanceQuiz {
     private String question;
     private List<String> options;
     private int correctIndex;
-    private int chosenIndex;
+    private String hint;
     private String explanation;
+    private Difficulty difficulty;
     private QuizCategory category;
 }
