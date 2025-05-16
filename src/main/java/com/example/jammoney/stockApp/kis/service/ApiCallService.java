@@ -69,7 +69,7 @@ public class ApiCallService {
     /**
      * 10단계 호가/잔량 데이터
      */
-    public StockAskingPriceDto getStockAsbi(String stockCode) {
+    public StockAskingPriceDto getStockAskingPrice(String stockCode) {
         HttpHeaders headers = createHeaders("FHKST01010200");
         String uri = UriComponentsBuilder.fromHttpUrl(baseUrl + stockAsbiUrl)
                 .queryParam("FID_COND_MRKT_DIV_CODE", "J")
