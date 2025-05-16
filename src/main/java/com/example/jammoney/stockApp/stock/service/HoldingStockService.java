@@ -18,7 +18,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class HoldService {
+public class HoldingStockService {
 
     private final CashRepository cashRepository;
     private final HoldingStockRepository holdingStockRepository;
