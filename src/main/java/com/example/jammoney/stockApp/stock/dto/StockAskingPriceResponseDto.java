@@ -2,8 +2,9 @@ package com.example.jammoney.stockApp.stock.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
-@Builder
+@Setter
 @Getter
 /**
  * 10단계 매수/매도 호가 및 잔량 응답 DTO
