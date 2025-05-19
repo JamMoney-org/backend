@@ -13,7 +13,7 @@ import lombok.Setter;
 public class StockInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long stockInfoId;
+    private Long stockInfoId;
 
     @OneToOne
     @JoinColumn(name = "COMPANY_ID")
