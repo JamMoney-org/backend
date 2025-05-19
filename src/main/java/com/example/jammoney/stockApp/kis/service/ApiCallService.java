@@ -33,8 +33,8 @@ public class ApiCallService {
     @Value("${kis.base-url}")
     private String baseUrl;
 
-    @Value("${kis.url.StockAskingPrice}")
-    private String stockAsbiUrl;
+    @Value("${kis.url.stockAskingPrice}")
+    private String stockAskingPriceUrl;
 
     @Value("${kis.url.stockmin}")
     private String stockMinUrl;
@@ -74,7 +74,7 @@ public class ApiCallService {
      */
     public StockAskingPriceDto getStockAskingPrice(String stockCode) {
         HttpHeaders headers = createHeaders("FHKST01010200");
-        String uri = UriComponentsBuilder.fromHttpUrl(baseUrl + stockAsbiUrl)
+        String uri = UriComponentsBuilder.fromHttpUrl(baseUrl + stockAskingPriceUrl)
                 .queryParam("FID_COND_MRKT_DIV_CODE", "J")
                 .queryParam("FID_INPUT_ISCD", stockCode)
                 .toUriString();
