@@ -12,11 +12,11 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class FinanceQuiz {
-    private String question;
-    private List<String> options;
-    private int correctIndex;
-    private String hint;
-    private String explanation;
-    private Difficulty difficulty;
-    private QuizCategory category;
+    private String question; //질문
+    private List<String> options; //선지
+    private int correctIndex; //답 인덱스
+    private String hint; //힌트
+    private String explanation; //해설
+    private Difficulty difficulty; //난이도
+    private QuizCategory category; //카테고리
 }

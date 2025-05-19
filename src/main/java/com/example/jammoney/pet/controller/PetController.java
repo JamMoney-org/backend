@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/pet")
 @RequiredArgsConstructor
-public class PetController {
+public class PetController { //캐릭터 관련
 
     private final PetService petService;
     private final UserRepository userRepository;

@@ -1,4 +1,4 @@
-package com.example.jammoney.gpt.config;
+package com.example.jammoney.financeQuiz.gpt.config;
 
 
 import org.springframework.context.annotation.Bean;
