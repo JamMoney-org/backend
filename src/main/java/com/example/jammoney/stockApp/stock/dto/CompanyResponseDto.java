@@ -14,9 +14,18 @@ import lombok.Setter;
  */
 
 public class CompanyResponseDto {
+    //회사 id
     private long companyId;
+
+    //회사 코드
     private String code;
+
+    //회사 이름
     private String korName;
-    private StockAskingPriceResponseDto stockAskingPriceResponseDto; // 10단계 호가
-    private StockInfoResponseDto stockInfoResponseDto;   // 현재가 등 시세 정보
+
+    //회사의 10단계 호가
+    private StockAskingPriceResponseDto stockAskingPriceResponseDto;
+
+    //회사의 시세 정보
+    private StockInfoResponseDto stockInfoResponseDto;
 }

@@ -14,16 +14,20 @@ import lombok.Setter;
  */
 
 public class HoldingStockResponseDto {
-    //회사id
+    //보유 주식 id
     private long holdingStockId;
 
+    //user의 id
     private long userId;
 
+    //회사의 id
     private long companyId;
 
+    //회사의 이름
     private String companyKorName;
     //보유 수량
     private int stockCount;
+
     //현재가
     private long currentPrice;
     //평가금
