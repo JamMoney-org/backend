@@ -25,10 +25,10 @@ public class InterestingStockService {
         interestingStockRepository.save(interestingStock);
     }
 
-    public void deleteStar(User user, Long companyId) {
-        InterestingStock star = interestingStockRepository.findByUser_IdAndCompany_CompanyId(user.getId(), companyId);
+    public void deleteInterestingStock(User user, Long companyId) {
+        InterestingStock interestingStock = interestingStockRepository.findByUser_IdAndCompany_CompanyId(user.getId(), companyId);
 
-        interestingStockRepository.delete(star);
+        interestingStockRepository.delete(interestingStock);
     }
 
     public List<InterestingStockResponseDto> getStarResponseDtoList(User user) {
