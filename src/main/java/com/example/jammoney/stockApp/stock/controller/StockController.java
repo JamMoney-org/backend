@@ -20,9 +20,9 @@ public class StockController {
         return ResponseEntity.ok(apiCallService.getCurrentPrice(code));
     }
 
-    @GetMapping("/asbi/{code}")
+    @GetMapping("/askingPrice/{code}")
     public ResponseEntity<?> getAskingPrice(@PathVariable String code) {
-        return ResponseEntity.ok(apiCallService.getStockAsbi(code));
+        return ResponseEntity.ok(apiCallService.getStockAskingPrice(code));
     }
 
     @GetMapping("/min/{code}/{time}")
