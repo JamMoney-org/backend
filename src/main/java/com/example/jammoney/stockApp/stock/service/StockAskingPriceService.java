@@ -1,47 +1,61 @@
 package com.example.jammoney.stockApp.stock.service;
 
+import com.example.jammoney.exception.ErrorCode;
+import com.example.jammoney.exception.StockLogicException;
+import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
+import com.example.jammoney.stockApp.kis.service.ApiCallService;
+import com.example.jammoney.stockApp.stock.entity.Company;
 import com.example.jammoney.stockApp.stock.entity.StockAskingPrice;
+import com.example.jammoney.stockApp.stock.mapper.ApiMapper;
 import com.example.jammoney.stockApp.stock.repository.StockAskingPriceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class StockAskingPriceService {
     private final StockAskingPriceRepository stockAskingPriceRepository;
+    private final CompanyService companyService;
+    private final ApiCallService apiCallService;
+    private final ApiMapper apiMapper;
 
 
-    public StockAskingPrice getStockAskingPrice (Long companyId) {
-        return stockAskingPriceRepository.findByCompanyCompanyId(companyId);
+    public StockAskingPrice saveStockAskingPrice(StockAskingPrice stockAskingPrice) {
+        return stockAskingPriceRepository.save(stockAskingPrice);
     }
 
-    public boolean canMatchAsk(StockAskingPrice stockAskingPrice, long price, int quantity) {
-        return matchPriceVolume(stockAskingPrice, price, quantity, true);
-    }
+    public void updateStockAskingPrice() throws InterruptedException {
+        List<Company> companyList = companyService.findAllCompanies();
 
-    public boolean canMatchBid(StockAskingPrice stockAskingPrice, long price, int quantity) {
-        return matchPriceVolume(stockAskingPrice, price, quantity, false);
-    }
+        for(int i = 0; i < companyList.size(); i++) {
+            // 주식 코드로 회사 불러오기
+            Company company = companyService.findCompanyByCode(companyList.get(i).getCode());
+            // api 호출하기
+            StockAskingPriceDto stockAskingPriceDto = apiCallService.getStockAskingPrice(company.getCode());
+            // mapper로 정리 된 값 받기
+            StockAskingPrice stockAskingPrice = apiMapper.toStockAskingPrice(stockAskingPriceDto.getOutput1());
 
-    private boolean matchPriceVolume(StockAskingPrice stockAskingPrice, long price, int quantity, boolean isAsk) {
-        for (int i = 1; i <= 10; i++) {
-            try {
-                long p = Long.parseLong(getField(stockAskingPrice, (isAsk ? "askp" : "bidp") + i));
-                int q = Integer.parseInt(getField(stockAskingPrice, (isAsk ? "askp_rsqn" : "bidp_rsqn") + i));
-                if (p == price && q >= quantity) return true;
-            } catch (Exception e) {
-                continue;
-            }
+            // 회사 등록
+            stockAskingPrice.setCompany(company);
+            // 호가 컬럼을 새로운 호가 컬럼으로 변경한다
+            StockAskingPrice oldStockAskingPrice = company.getStockAskingPrice();
+            stockAskingPrice.setStockAskingPriceId(oldStockAskingPrice.getStockAskingPriceId());
+            company.setStockAskingPrice(stockAskingPrice);
+
+            // 저장한다
+            companyService.saveCompany(company);
+
+            Thread.sleep(500);
         }
-        return false;
     }
 
-    private String getField(StockAskingPrice stockAskingPrice, String fieldName) {
-        try {
-            String method = "get" + fieldName.substring(0,1).toUpperCase() + fieldName.substring(1);
-            return (String) StockAskingPrice.class.getMethod(method).invoke(stockAskingPrice);
-        } catch (Exception e) {
-            return "0";
-        }
+    public StockAskingPrice getStockAskingPrice(long companyId) {
+        Optional<StockAskingPrice> stock = stockAskingPriceRepository.findById(companyId);
+        stock.orElseThrow(() -> new StockLogicException(ErrorCode.ASKINGPRICE_NOT_FOUND));
+
+        return stock.get();
     }
 }
