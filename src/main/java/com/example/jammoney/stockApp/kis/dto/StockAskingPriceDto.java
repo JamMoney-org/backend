@@ -12,10 +12,13 @@ import lombok.Data;
  */
 
 public class StockAskingPriceDto {
-    private Output output;
+    private Output output1;
 
     @Data
     public static class Output {
+        // 호가 접수 시간
+        private String aspr_acpt_hour;
+
         private String askp1;
         private String askp2;
         private String askp3;
