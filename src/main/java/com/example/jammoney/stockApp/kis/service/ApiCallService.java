@@ -33,7 +33,7 @@ public class ApiCallService {
     @Value("${kis.base-url}")
     private String baseUrl;
 
-    @Value("${kis.url.stockasbi}")
+    @Value("${kis.url.StockAskingPrice}")
     private String stockAsbiUrl;
 
     @Value("${kis.url.stockmin}")

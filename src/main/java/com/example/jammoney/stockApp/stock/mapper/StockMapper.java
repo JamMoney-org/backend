@@ -49,7 +49,7 @@ public interface StockMapper {
         if (entity == null || entity.getCompany() == null) return null;
 
         StockAskingPriceResponseDto dto = new StockAskingPriceResponseDto();
-        dto.setStockAsBiId(entity.getStockAskingPriceId());
+        dto.setStockAskingPriceId(entity.getStockAskingPriceId());
         dto.setCompanyId(entity.getCompany().getCompanyId());
 
         // 매도 호가

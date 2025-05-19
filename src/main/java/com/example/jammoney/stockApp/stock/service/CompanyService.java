@@ -45,7 +45,7 @@ public class CompanyService {
             company.setStockAskingPrice(new StockAskingPrice());
 
             StockAskingPriceDto stockAskingPriceDto = apiCallService.getStockAskingPrice(company.getCode());
-            StockAskingPrice stockAskingPrice = apiMapper.toStockAskingPrice(stockAskingPriceDto.getOutput());
+            StockAskingPrice stockAskingPrice = apiMapper.toStockAskingPrice(stockAskingPriceDto.getOutput1());
 
             company.setStockAskingPrice(stockAskingPrice);
             stockAskingPrice.setCompany(company);

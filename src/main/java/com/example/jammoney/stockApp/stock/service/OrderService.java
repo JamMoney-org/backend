@@ -282,27 +282,27 @@ public class OrderService {
     }
 
     // 매도 판별해서 실행
-    public Order sellDiscrimination(User user, long price, StockAskingPrice stockAsBi, int stockCount, long companyId) {
+    public Order sellDiscrimination(User user, long price, StockAskingPrice stockAskingPrice, int stockCount, long companyId) {
         // 매도 호가와 가격이 같고, 잔량이 남아 있을 경우
-        if(Long.parseLong(stockAsBi.getBidp1()) == price && Integer.parseInt(stockAsBi.getBidp1()) > stockCount)
+        if(Long.parseLong(stockAskingPrice.getBidp1()) == price && Integer.parseInt(stockAskingPrice.getBidp1()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp2()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn2()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp2()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn2()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp3()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn3()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp3()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn3()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp4()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn4()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp4()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn4()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp5()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn5()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp5()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn5()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp6()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn6()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp6()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn6()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp7()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn7()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp7()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn7()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp8()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn8()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp8()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn8()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp9()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn9()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp9()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn9()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
-        else if(Long.parseLong(stockAsBi.getBidp10()) == price && Integer.parseInt(stockAsBi.getBidp_rsqn10()) > stockCount)
+        else if(Long.parseLong(stockAskingPrice.getBidp10()) == price && Integer.parseInt(stockAskingPrice.getBidp_rsqn10()) > stockCount)
             return sellStock(user, price, stockCount, companyId); // 판매 로직
         else
             return reserveStock(user, price, stockCount, companyId, OrderType.SELL); //예약 판매 로직

@@ -14,7 +14,7 @@ import lombok.Setter;
  */
 
 public class StockAskingPriceResponseDto {
-    private long stockAsBiId;
+    private long stockAskingPriceId;
 
     private long companyId;
 
