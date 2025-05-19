@@ -8,12 +8,14 @@ import com.example.jammoney.stockApp.stock.dto.OrderResponseDto;
 import com.example.jammoney.stockApp.stock.entity.*;
 import com.example.jammoney.stockApp.stock.entity.Enums.OrderStatus;
 import com.example.jammoney.stockApp.stock.entity.Enums.OrderType;
+import com.example.jammoney.stockApp.stock.event.OrderChangedEvent;
 import com.example.jammoney.stockApp.stock.mapper.StockMapper;
 import com.example.jammoney.stockApp.stock.repository.HoldingStockRepository;
 import com.example.jammoney.stockApp.stock.repository.OrderRepository;
 import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -31,6 +33,7 @@ public class OrderService {
     private final HoldingStockRepository holdingStockRepository;
     private final CashService cashService;
     private final StockMapper stockMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Order buyStocks(User user, long companyId, long price, int stockCount) {
         //회원 캐쉬 잔량 비교
@@ -73,7 +76,7 @@ public class OrderService {
         holdingStock.setStockCount(holdingStock.getStockCount() + stockCount);
         holdingStock.setTotalPrice(holdingStock.getTotalPrice() + (stockCount * price));
 
-        // 스톡 오더 작성
+        // 주문 생성
         Order order = new Order();
         order.setOrderStatus(OrderStatus.COMPLETED);
         order.setOrderType(OrderType.BUY);
@@ -90,6 +93,10 @@ public class OrderService {
         orderRepository.save(order);
         userRepository.save(user);
         holdingStockRepository.save(holdingStock);
+
+        //주문 체결되었으므로 롱 폴링 응답 발행
+        List<OrderResponseDto> buyOrders = getUpdatedBuyOrders(user.getId());
+        eventPublisher.publishEvent(new OrderChangedEvent(user.getId(), buyOrders, List.of()));
 
 
         return order;
@@ -151,6 +158,21 @@ public class OrderService {
                 }
             }
         }
+        // BUY 주문 그룹핑 후 이벤트 발행
+        updateBuyStockOrders.stream()
+                .collect(Collectors.groupingBy(order -> order.getUser().getId()))
+                .forEach((userId, orders) -> {
+                    List<OrderResponseDto> buyDtos = stockMapper.ordersToDto(orders);
+                    eventPublisher.publishEvent(new OrderChangedEvent(userId, buyDtos, List.of()));
+                });
+
+// SELL 주문 그룹핑 후 이벤트 발행
+        updateSellStockOrders.stream()
+                .collect(Collectors.groupingBy(order -> order.getUser().getId()))
+                .forEach((userId, orders) -> {
+                    List<OrderResponseDto> sellDtos = stockMapper.ordersToDto(orders);
+                    eventPublisher.publishEvent(new OrderChangedEvent(userId, List.of(), sellDtos));
+                });
     }
 
 
@@ -332,7 +354,8 @@ public class OrderService {
 
         orderRepository.save(stockOrder);
         userRepository.save(user);
-        // 여기서 stockhold 삭제됨
+
+        // 여기서 holdingStock 삭제됨
         // 예약 매도 걸 때 reserveStockCount 늘어가네
         // 예약 매도 취소 할 때 reserveStockCount 줄어들게
         if(holdingStock.getStockCount() + holdingStock.getReserveStockCount() == 0)
@@ -340,11 +363,15 @@ public class OrderService {
         else
             holdingStockRepository.save(holdingStock);
 
+        //주문 체결되었으므로 롱 폴링 응답 발행
+        List<OrderResponseDto> sellOrders = getUpdatedSellOrders(user.getId());
+        eventPublisher.publishEvent(new OrderChangedEvent(user.getId(), List.of(), sellOrders));
+
         return stockOrder;
     }
 
 
-    // 거래 대기중인 매수 StockOrder 불러오기
+    // 거래 대기중인 매수 Order 불러오기
     public Queue<Order> getOrderQueue(long companyId, OrderStatus orderStates) {
         List<Order> stockOrderList = orderRepository.findAllByCompany_CompanyIdAndOrderStatus(companyId, orderStates);
         return new LinkedList<>(stockOrderList);
@@ -357,7 +384,7 @@ public class OrderService {
         orderRepository.deleteAll(stockOrders);
     }
 
-    // 멤버의 모든 StockOrders 불러오기
+    // 멤버의 모든 order 불러오기
     public List<OrderResponseDto> getUserStockOrders(long userId) {
         List<Order> stockOrders = orderRepository.findAllByUser_IdOrderByModifiedAtDesc(userId);
 
@@ -365,7 +392,7 @@ public class OrderService {
                 .map(stockMapper::orderToDto).collect(Collectors.toList());
     }
 
-    // 예약된 stockOrder 취소하는 메소드
+    // 예약된 order 취소하는 메소드
     // 취소한 주식 수 만큼 보유주식으로 돌아오게 해야함
     public void deleteOrder(User user, long stockOrderId, int stockCount) {
         Optional<Order> optionalStockOrder = orderRepository.findById(stockOrderId);
@@ -394,5 +421,26 @@ public class OrderService {
             }
 
         }
+    }
+
+//    public void checkOrderAndNotify(Order order) {
+//        // 주문 상태 업데이트 로직 수행 (예: WAITING → SUCCESS)
+//        updateOrderStatusIfMatched(order);
+//        Long userId = order.getUser().getId();
+//        List<OrderResponseDto> buyOrders = getUpdatedBuyOrders(userId); // 직접 구현 필요
+//        List<OrderResponseDto> sellOrders = getUpdatedSellOrders(userId); // 직접 구현 필요
+//
+//        // 이벤트 발행
+//        eventPublisher.publishEvent(new OrderChangedEvent(userId, buyOrders, sellOrders));
+//    }
+
+    private List<OrderResponseDto> getUpdatedSellOrders(Long userId) {
+        List<Order> sellOrders = orderRepository.findAllByUser_IdAndOrderType(userId, OrderType.SELL);
+        return stockMapper.ordersToDto(sellOrders);
+    }
+
+    private List<OrderResponseDto> getUpdatedBuyOrders(Long userId) {
+        List<Order> buyOrders = orderRepository.findAllByUser_IdAndOrderType(userId, OrderType.BUY);
+        return stockMapper.ordersToDto(buyOrders);
     }
 }
