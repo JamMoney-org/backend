@@ -2,9 +2,10 @@ package com.example.jammoney.stockApp.stock.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-@Builder
+@Setter
 /**
  * 종목의 실시간 시세 정보 응답 DTO
  * - 현재가, 전일 대비, 거래량/거래대금 포함
@@ -12,11 +13,17 @@ import lombok.Getter;
  */
 
 public class StockInfoResponseDto {
-    private String stockCode;        // 종목 코드
-    private String stockName;        // 종목 이름
-    private String currentPrice;     // 현재가
-    private String priceDiff;        // 전일 대비
-    private String priceDiffRate;    // 전일 대비율
-    private String accumulatedVolume;    // 누적 거래량
-    private String accumulatedAmount;    // 누적 거래대금
+    private long stockInfoId;
+
+    private long companyId;
+    //주식 현재가
+    private String stck_prpr;
+    //전일 대비
+    private String prdy_vrss;
+    //전일 대비율
+    private String prdy_ctrt;
+    //누적 거래량
+    private String acml_vol;
+    //누적 거래대금
+    private String acml_tr_pbmn;
 }
