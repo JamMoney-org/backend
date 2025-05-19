@@ -15,7 +15,8 @@ public enum ErrorCode {
     ORDER_NOT_FOUND("존재하지 않는 거래 내역입니다.",414),
     ORDER_PERMISSION_DENIED("잘못된 삭제 요청입니다.",415),
     ORDER_ALREADY_FINISH("이미 완료된 거래입니다.",416),
-    HOLDINGSTOCK_NOT_FOUND("보유하고 있지 않은 주식입니다.",417 );
+    HOLDINGSTOCK_NOT_FOUND("보유하고 있지 않은 주식입니다.",417 ),
+    ASKINGPRICE_NOT_FOUND("호가 정보를 찾을 수 없습니다.",418);
     private final String message;
     private final int status;
 
