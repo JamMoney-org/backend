@@ -365,7 +365,7 @@ public class OrderService {
                 .map(stockMapper::orderToDto).collect(Collectors.toList());
     }
 
-    // 미체결 stockOrder 취소하는 메소드
+    // 예약된 stockOrder 취소하는 메소드
     // 취소한 주식 수 만큼 보유주식으로 돌아오게 해야함
     public void deleteOrder(User user, long stockOrderId, int stockCount) {
         Optional<Order> optionalStockOrder = orderRepository.findById(stockOrderId);
@@ -378,11 +378,15 @@ public class OrderService {
             throw new StockLogicException(ErrorCode.ORDER_ALREADY_FINISH);
             // 수량 선택해서 취소 할 수 있게(취소한 만큼 보유 주식 돌아오게) 0이 되면 미체결 스톡 오더 삭제
         else {
+            //예약된 수량 전부 다 취소면 order 삭제
             if(order.getStockCount() <= stockCount)
                 orderRepository.delete(order);
+            //취소하는 주식 수 만큼 stockCount에서 차감
             else {
                 order.setStockCount(order.getStockCount() - stockCount);
             }
+
+            //만약 매도 주문을 취소하는 거라면 보유 주식에 대해서 보유 주식 수와 예약된 보유 주식 수 갱신
             if(OrderType.SELL.equals(order.getOrderType())) {
                 HoldingStock holdingStock = holdingStockService.findHoldingStock(order.getCompany().getCompanyId(), order.getUser().getId());
                 holdingStock.setStockCount(holdingStock.getStockCount() + stockCount);
