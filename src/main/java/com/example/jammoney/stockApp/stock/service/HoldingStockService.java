@@ -28,28 +28,28 @@ public class HoldingStockService {
     private final StockMapper stockMapper;
 
     public List<HoldingStockResponseDto> setPercentage(List<HoldingStockResponseDto> holdingStockResponseDtos) {
-        for(HoldingStockResponseDto stockHoldResponseDto : holdingStockResponseDtos) {
+        for(HoldingStockResponseDto holdingStockResponseDto : holdingStockResponseDtos) {
             // 이름으로 회사를 불러온다
-            Company company = companyRepository.findByCompanyId(stockHoldResponseDto.getCompanyId());
+            Company company = companyRepository.findByCompanyId(holdingStockResponseDto.getCompanyId());
             // 주식 현재가를 불러온다
             String nowPrice = company.getStockInfo().getStck_prpr();
             // 주식 수익 = 전체 주식 가치 - 전체 투자 금액
             double totalRevenue =
                     Double.valueOf(nowPrice)
-                            * (stockHoldResponseDto.getStockCount()+stockHoldResponseDto.getReserveSellStockCount())
-                            - stockHoldResponseDto.getTotalPrice();
+                            * (holdingStockResponseDto.getStockCount()+holdingStockResponseDto.getReserveSellStockCount())
+                            - holdingStockResponseDto.getTotalPrice();
             // 주식 수익률(%) = (주식 수익 / 전체 투자 금액) × 100
-            double profitRate = (totalRevenue / (double)stockHoldResponseDto.getTotalPrice()) * 100;
+            double profitRate = (totalRevenue / (double)holdingStockResponseDto.getTotalPrice()) * 100;
 
-            stockHoldResponseDto.setProfitRate(profitRate);
-            stockHoldResponseDto.setEvaluationAmount((long) totalRevenue);
+            holdingStockResponseDto.setProfitRate(profitRate);
+            holdingStockResponseDto.setEvaluationAmount((long) totalRevenue);
         }
         return holdingStockResponseDtos;
     }
     public void deleteAllHoldingStocks(long userId) {
-        List<HoldingStock> stockHolds = getUserHoldingStocks(userId);
+        List<HoldingStock> holdingStocks = getUserHoldingStocks(userId);
 
-        holdingStockRepository.deleteAll(stockHolds);
+        holdingStockRepository.deleteAll(holdingStocks);
     }
 
     public List<HoldingStock> getUserHoldingStocks(long userId) {
@@ -77,7 +77,7 @@ public class HoldingStockService {
         else
             return holdingStock;
     }
-    public List<HoldingStockResponseDto> findStockHolds(long userId) {
+    public List<HoldingStockResponseDto> findHoldingStocks(long userId) {
         List<HoldingStock> holdingStocks = holdingStockRepository.findByUser(userId);
 
         return stockMapper.holdingStocksToDto(holdingStocks);
