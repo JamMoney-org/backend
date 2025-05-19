@@ -1,7 +1,9 @@
 package com.example.jammoney.stockApp.kis.service;
+import com.example.jammoney.stockApp.kis.dto.KospiDto;
 import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
 import com.example.jammoney.stockApp.kis.dto.StockMinDto;
 import com.example.jammoney.stockApp.kis.dto.StockPriceDto;
+import com.example.jammoney.stockApp.stock.dto.KospiResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Map;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -94,6 +97,47 @@ public class ApiCallService {
 
         return sendGet(uri, headers, StockMinDto.class);
     }
+
+    public List<KospiResponseDto> getKospiMonthlyIndexThisYear() {
+        HttpHeaders headers = createHeaders("FHKUP03500100");
+
+
+        String strDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String toDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+
+        String uri = baseUrl + "?FID_COND_MRKT_DIV_CODE=U&FID_INPUT_ISCD=" + "0001" + "&FID_INPUT_DATE_1=" + "20250101"
+                +"&FID_INPUT_DATE_2=" + strDate + "&FID_PERIOD_DIV_CODE=" + "M";
+
+        KospiDto response = sendGet(uri, headers, KospiDto.class);
+        if (response == null || response.getOutput2() == null) return Collections.emptyList();
+
+        List<KospiResponseDto> result = new ArrayList<>();
+        for (KospiDto.KospiRawItem item : response.getOutput2()) {
+            String yyyymm = item.getStck_bsop_date().substring(0, 6);
+            if (yyyymm.compareTo(strDate) >= 0 && yyyymm.compareTo(toDate) <= 0) {
+                KospiResponseDto dto = new KospiResponseDto();
+                dto.setDate(yyyymm);
+                dto.setOpen(parseDouble(item.getBstp_nmix_oprc()));
+                dto.setHigh(parseDouble(item.getBstp_nmix_hgpr()));
+                dto.setLow(parseDouble(item.getBstp_nmix_lwpr()));
+                dto.setClose(parseDouble(item.getBstp_nmix_prpr()));
+                result.add(dto);
+            }
+        }
+
+        // 날짜 오름차순 정렬
+        result.sort(Comparator.comparing(KospiResponseDto::getDate));
+        return result;
+    }
+
+    private double parseDouble(String s) {
+        try {
+            return Double.parseDouble(s);
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
 
     /**
      * 공통 GET 요청 처리
