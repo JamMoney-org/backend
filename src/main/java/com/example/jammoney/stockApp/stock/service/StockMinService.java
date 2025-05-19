@@ -1,11 +1,13 @@
 package com.example.jammoney.stockApp.stock.service;
 
 import com.example.jammoney.stockApp.kis.dto.StockMinDto;
+import com.example.jammoney.stockApp.stock.dto.StockMinResponseDto;
 import com.example.jammoney.stockApp.stock.mapper.ApiMapper;
 import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import com.example.jammoney.stockApp.stock.entity.Company;
 import com.example.jammoney.stockApp.stock.entity.StockInfo;
 import com.example.jammoney.stockApp.stock.entity.StockMin;
+import com.example.jammoney.stockApp.stock.mapper.StockMapper;
 import com.example.jammoney.stockApp.stock.repository.StockMinRepository;
 import com.example.jammoney.util.Time;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class StockMinService {
     private final CompanyService companyService;
     private final StockMinRepository stockMinRepository;
     private final ApiMapper apiMapper;
+    private final StockMapper stockMapper;
 
     public void updateStockMin() throws InterruptedException {
         List<Company> companyList = companyService.findAllCompanies();
@@ -58,5 +61,18 @@ public class StockMinService {
 
             Thread.sleep(500);
         }
+    }
+    public List<StockMin> getChart(long companyId) {
+
+        return stockMinRepository.findAllByCompanyCompanyId(companyId);
+    }
+
+    public List<StockMinResponseDto> getRecent420StockMin(long companyId) {
+        List<StockMin> stockMinList = stockMinRepository.findTop420ByCompanyIdOrderByStockMinIdDesc(companyId);
+
+        List<StockMinResponseDto> stockMinResponseDtos = stockMinList.stream()
+                .map(stockMapper::stockMinToDto).collect(Collectors.toList());
+        Collections.reverse(stockMinResponseDtos);
+        return stockMinResponseDtos;
     }
 }
