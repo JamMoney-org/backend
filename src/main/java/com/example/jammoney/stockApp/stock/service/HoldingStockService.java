@@ -1,104 +1,85 @@
 package com.example.jammoney.stockApp.stock.service;
 
+import com.example.jammoney.exception.ErrorCode;
+import com.example.jammoney.exception.StockLogicException;
 import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import com.example.jammoney.stockApp.stock.dto.HoldingStockResponseDto;
-import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.stockApp.stock.entity.Company;
 import com.example.jammoney.stockApp.stock.entity.HoldingStock;
 import com.example.jammoney.cash.repository.CashRepository;
+import com.example.jammoney.stockApp.stock.mapper.StockMapper;
+import com.example.jammoney.stockApp.stock.repository.CompanyRepository;
 import com.example.jammoney.stockApp.stock.repository.HoldingStockRepository;
-import com.example.jammoney.user.entity.User;
-import jakarta.transaction.Transactional;
+import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class HoldingStockService {
 
     private final CashRepository cashRepository;
+    private final CompanyRepository companyRepository;
     private final HoldingStockRepository holdingStockRepository;
     private final ApiCallService apiCallService;
+    private final UserRepository userRepository;
+    private final StockMapper stockMapper;
 
-    @Transactional
-    public void decreaseCash(User user, long amount) {
-        Cash cash = cashRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("현금 정보가 존재하지 않습니다."));
-        if (cash.getMoney() < amount) {
-            throw new RuntimeException("잔액이 부족합니다.");
+    public List<HoldingStockResponseDto> setPercentage(List<HoldingStockResponseDto> holdingStockResponseDtos) {
+        for(HoldingStockResponseDto stockHoldResponseDto : holdingStockResponseDtos) {
+            // 이름으로 회사를 불러온다
+            Company company = companyRepository.findByCompanyId(stockHoldResponseDto.getCompanyId());
+            // 주식 현재가를 불러온다
+            String nowPrice = company.getStockInfo().getStck_prpr();
+            // 주식 수익 = 전체 주식 가치 - 전체 투자 금액
+            double totalRevenue =
+                    Double.valueOf(nowPrice)
+                            * (stockHoldResponseDto.getStockCount()+stockHoldResponseDto.getReserveSellStockCount())
+                            - stockHoldResponseDto.getTotalPrice();
+            // 주식 수익률(%) = (주식 수익 / 전체 투자 금액) × 100
+            double profitRate = (totalRevenue / (double)stockHoldResponseDto.getTotalPrice()) * 100;
+
+            stockHoldResponseDto.setProfitRate(profitRate);
+            stockHoldResponseDto.setEvaluationAmount((long) totalRevenue);
         }
-        cash.setMoney(cash.getMoney() - amount);
-        cashRepository.save(cash);
+        return holdingStockResponseDtos;
+    }
+    public void deleteAllHoldingStocks(long userId) {
+        List<HoldingStock> stockHolds = getUserHoldingStocks(userId);
+
+        holdingStockRepository.deleteAll(stockHolds);
     }
 
-    @Transactional
-    public void increaseCash(User user, long amount) {
-        Cash cash = cashRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("현금 정보가 존재하지 않습니다."));
-        cash.setMoney(cash.getMoney() + amount);
-        cashRepository.save(cash);
+    public List<HoldingStock> getUserHoldingStocks(long userId) {
+
+        return holdingStockRepository.findByUser(userId);
     }
 
-    @Transactional
-    public void increaseHolding(User user, Company company, int count, long totalAmount) {
-        HoldingStock holding = holdingStockRepository.findByUserAndCompany(user, company)
-                .orElse(new HoldingStock(user, company, 0, 0));
-        holding.setStockCount(holding.getStockCount() + count);
-        holding.setTotalPrice(holding.getTotalPrice() + totalAmount);
-        holdingStockRepository.save(holding);
-    }
+    public HoldingStock checkHoldingStock(Long companyId, Long userId) {
+        HoldingStock holdingStock = holdingStockRepository.findByCompanyAndUser(companyId, userId);
+        if(holdingStock == null) {
+            HoldingStock newHoldingStock = new HoldingStock();
+            newHoldingStock.setUser(userRepository.findById(userId).get());
+            newHoldingStock.setCompany(companyRepository.findById(companyId).get());
 
-    @Transactional
-    public void decreaseHolding(User user, Company company, int count) {
-        HoldingStock holding = holdingStockRepository.findByUserAndCompany(user, company)
-                .orElseThrow(() -> new RuntimeException("보유한 주식이 없습니다."));
-        if (holding.getStockCount() < count) {
-            throw new RuntimeException("보유 수량이 부족합니다.");
+            return newHoldingStock;
         }
-
-        long avgPrice = holding.getTotalPrice() / holding.getStockCount();
-        long minusAmount = avgPrice * count;
-
-        holding.setStockCount(holding.getStockCount() - count);
-        holding.setTotalPrice(holding.getTotalPrice() - minusAmount);
-        holdingStockRepository.save(holding);
+        else
+            return holdingStock;
     }
-    @Transactional
-    public List<HoldingStockResponseDto> getHoldingStocks(User user) {
-        List<HoldingStock> holdings = holdingStockRepository.findByUser(user);
-        List<HoldingStockResponseDto> result = new ArrayList<>();
 
-        for (HoldingStock holding : holdings) {
-            String code = holding.getCompany().getCode();
-            Object raw = apiCallService.getCurrentPrice(code);
+    public HoldingStock findHoldingStock(Long companyId, Long userId) {
+        HoldingStock holdingStock = holdingStockRepository.findByCompanyAndUser(companyId, userId);
+        if(holdingStock == null)
+            throw new StockLogicException(ErrorCode.HOLDINGSTOCK_NOT_FOUND);
+        else
+            return holdingStock;
+    }
+    public List<HoldingStockResponseDto> findStockHolds(long userId) {
+        List<HoldingStock> holdingStocks = holdingStockRepository.findByUser(userId);
 
-            if (raw instanceof Map<?, ?> outer) {
-                Map<String, String> output = (Map<String, String>) outer.get("output");
-                long currentPrice = Long.parseLong(output.get("stck_prpr"));
-
-                int count = holding.getStockCount();
-                long totalBuyPrice = holding.getTotalPrice();
-
-                long evaluationAmount = currentPrice * count;
-                long profitAmount = evaluationAmount - totalBuyPrice;
-                double profitRate = totalBuyPrice == 0 ? 0.0 : ((double) profitAmount / totalBuyPrice) * 100;
-
-                result.add(HoldingStockResponseDto.builder()
-                        .companyKorName(holding.getCompany().getKorName())
-                        .stockCount(count)
-                        .currentPrice(currentPrice)
-                        .evaluationAmount(evaluationAmount)
-                        .profitAmount(profitAmount)
-                        .profitRate(profitRate)
-                        .portfolioRatio(0.0)
-                        .build());
-            }
-        }
-
-        return result;
+        return stockMapper.holdingStocksToDto(holdingStocks);
     }
 }
