@@ -1,10 +1,10 @@
 package com.example.jammoney.stockApp.stock.dto;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-@Builder
+@Setter
 /**
  * 종목 상세 정보 응답 DTO (복합 구조)
  * - companyId, code, korName: 기본 종목 정보
@@ -17,6 +17,6 @@ public class CompanyResponseDto {
     private long companyId;
     private String code;
     private String korName;
-    private StockAskingPriceResponseDto stockAsBiResponseDto; // 10단계 호가
-    private StockInfoResponseDto stockInfResponseDto;   // 현재가 등 시세 정보
+    private StockAskingPriceResponseDto stockAskingPriceResponseDto; // 10단계 호가
+    private StockInfoResponseDto stockInfoResponseDto;   // 현재가 등 시세 정보
 }
