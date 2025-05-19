@@ -2,8 +2,9 @@ package com.example.jammoney.stockApp.stock.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
-@Builder
+@Setter
 @Getter
 /**
  * 사용자가 등록한 관심 종목 응답 DTO
@@ -14,5 +15,6 @@ import lombok.Getter;
 
 public class InterestingStockResponseDto {
     private long interestingStockId;
+    private long userId;
     private CompanyResponseDto companyResponseDto;
 }
