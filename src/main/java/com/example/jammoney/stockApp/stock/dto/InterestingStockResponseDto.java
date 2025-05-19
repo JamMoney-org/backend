@@ -14,7 +14,13 @@ import lombok.Setter;
  */
 
 public class InterestingStockResponseDto {
+
+    //관심 주식 id
     private long interestingStockId;
+
+    //user id
     private long userId;
+
+    //회사 정보와 매핑
     private CompanyResponseDto companyResponseDto;
 }

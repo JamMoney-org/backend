@@ -12,10 +12,22 @@ import lombok.Getter;
  */
 
 public class InvestmentOverViewResponseDto {
-    private String userName;         // 사용자 이름
-    private long totalAsset;         // 총 평가 자산 (보유 현금 + 보유 주식 평가 금액)
-    private long cash;               // 보유 현금
-    private long stockAsset;         // 보유 주식 평가 금액
-    private long profitAmount;       // 평가 수익 금액
-    private double profitRate;       // 누적 수익률 (예: +3.24)
+
+    //사용자 이름
+    private String userName;
+
+    // 총 평가 자산 (보유 현금 + 보유 주식 평가 금액)
+    private long totalAsset;
+
+    // 보유 현금
+    private long cash;
+
+    // 보유 주식 평가 금액
+    private long stockAsset;
+
+    // 평가 수익 금액
+    private long profitAmount;
+
+    // 누적 수익률 (예: +3.24)
+    private double profitRate;       
 }

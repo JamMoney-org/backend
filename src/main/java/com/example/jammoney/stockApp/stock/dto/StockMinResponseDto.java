@@ -15,9 +15,14 @@ import java.time.LocalDateTime;
  */
 
 public class StockMinResponseDto {
+    //분봉 정보 id
     private long stockMinId;
+
+    //회사 id
     private long companyId;
-    private LocalDateTime stockTradeTime;  // 변환된 시간 정보
+
+    //stck_cntg_hour이 LocalDateTime으로 변환
+    private LocalDateTime stockTradeTime;
 
     //주식 체결 시간(문자열)
     private String stck_cntg_hour;

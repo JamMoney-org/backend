@@ -17,12 +17,27 @@ import java.time.LocalDateTime;
  */
 
 public class OrderResponseDto {
-    long orderId;
-    int stockCount;
-    long userId;
-    long companyId;
-    OrderStatus orderStatus;
-    OrderType orderType;
-    long price;
+    //주문 id
+    private long orderId;
+
+    //주문 수량
+    private int stockCount;
+
+    //user id
+    private long userId;
+
+    //회사 id
+    private long companyId;
+
+    //주문 상태 (COMPLETED, WAITING)
+    private OrderStatus orderStatus;
+
+    //주문 타입 (BUY, SELL)
+    private OrderType orderType;
+
+    //가격
+    private long price;
+
+    //주문 요청 시간
     private LocalDateTime createdAt;
 }

@@ -14,8 +14,11 @@ import lombok.Setter;
  */
 
 public class StockAskingPriceResponseDto {
+
+    //호가정보 id
     private long stockAskingPriceId;
 
+    //회사 id
     private long companyId;
 
     //매도 호가
