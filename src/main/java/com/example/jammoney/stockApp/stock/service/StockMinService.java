@@ -32,9 +32,9 @@ public class StockMinService {
         List<Company> companyList = companyService.findAllCompanies();
         LocalDateTime now = LocalDateTime.now();
         String strHour = Time.strHour(now);
-        for(int i = 0; i < companyList.size(); i++) {
+        for (Company value : companyList) {
             // 주식 코드로 회사 불러오기
-            Company company = companyService.findCompanyByCode(companyList.get(i).getCode());
+            Company company = companyService.findCompanyByCode(value.getCode());
             // 분봉 api 호출하기
             StockMinDto stockMinDto = apiCallService.getStockMin(company.getCode(), strHour);
             // mapper로 정리 된 값 받기
@@ -44,9 +44,8 @@ public class StockMinService {
                         stockMin.setCompany(company);
                         stockMin.setTradeTime(now);
                         return stockMin;
-                    }).collect(Collectors.toList());
+                    }).sorted(Comparator.comparing(StockMin::getStockTradeTime)).collect(Collectors.toList());
             // 빠른 시간 순으로 정렬
-            Collections.sort(stockMinList, Comparator.comparing(StockMin::getStockTradeTime));
             // 회사 정보 저장
             StockInfo stockInfo = apiMapper.stockMinOutput1ToStockInfo(stockMinDto.getOutput1());
             stockInfo.setCompany(company);
@@ -54,7 +53,7 @@ public class StockMinService {
             stockInfo.setStockInfoId(oldStockInf.getStockInfoId());
             company.setStockInfo(stockInfo);
 
-            // 저장한다
+            // 저장
             stockMinRepository.saveAll(stockMinList);
             companyService.saveCompany(company);
 
@@ -64,7 +63,7 @@ public class StockMinService {
     }
     public List<StockMin> getChart(long companyId) {
 
-        return stockMinRepository.findAllByCompanyCompanyId(companyId);
+        return stockMinRepository.findAllByCompany_CompanyId(companyId);
     }
 
     public List<StockMinResponseDto> getRecent420StockMin(long companyId) {
