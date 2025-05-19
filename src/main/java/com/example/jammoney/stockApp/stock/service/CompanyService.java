@@ -1,7 +1,7 @@
 package com.example.jammoney.stockApp.stock.service;
 
 import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
-import com.example.jammoney.stockApp.kis.mapper.ApiMapper;
+import com.example.jammoney.stockApp.stock.mapper.ApiMapper;
 import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import com.example.jammoney.stockApp.stock.entity.Company;
 import com.example.jammoney.stockApp.stock.entity.StockAskingPrice;
@@ -23,8 +23,9 @@ public class CompanyService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 회사가 존재하지 않습니다."));
     }
 
-    public Company findCompanyByTicker(String ticker) {
-        return companyRepository.findByCode(ticker);
+    public Company findCompanyByCode(String stockCode) {
+        Company company = companyRepository.findByCode(stockCode);
+        return company;
     }
 
     public List<Company> findAllCompanies() {
