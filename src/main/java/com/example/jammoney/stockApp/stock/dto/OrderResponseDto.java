@@ -4,10 +4,11 @@ import com.example.jammoney.stockApp.stock.entity.Enums.OrderStatus;
 import com.example.jammoney.stockApp.stock.entity.Enums.OrderType;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Builder
+@Setter
 @Getter
 /**
  * 주문 결과 응답 DTO
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
  */
 
 public class OrderResponseDto {
-    long stockOrderId;
+    long orderId;
     int stockCount;
     long userId;
     long companyId;
