@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface StockAskingPriceRepository extends JpaRepository<StockAskingPrice, Long> {
-    Optional<StockAskingPrice> findByCompanyId(Long stockId);
+    StockAskingPrice findByCompanyCompanyId(Long stockId);
 }
