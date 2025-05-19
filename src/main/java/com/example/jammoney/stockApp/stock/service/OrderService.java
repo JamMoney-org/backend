@@ -127,7 +127,7 @@ public class OrderService {
             // 회사 호가 리스트를 받아온다
             StockAskingPrice stockAskingPrice = stockAskingPriceService.getStockAskingPrice(company.getCompanyId());
             // 회사Id에 있는 stockOrder 중 체결 대기 상태인 stockOrder를 큐로 받아온다
-            Queue<Order> stockOrderQueue = getStockOrderQueue(company.getCompanyId(), OrderStatus.WAITING);
+            Queue<Order> stockOrderQueue = getOrderQueue(company.getCompanyId(), OrderStatus.WAITING);
             //큐가 비어있지 않으면
             if(!stockOrderQueue.isEmpty()) {
                 // for문(큐가 다 빌 때 까지 실행한다)
@@ -345,20 +345,20 @@ public class OrderService {
 
 
     // 거래 대기중인 매수 StockOrder 불러오기
-    public Queue<Order> getStockOrderQueue(long companyId, OrderStatus orderStates) {
+    public Queue<Order> getOrderQueue(long companyId, OrderStatus orderStates) {
         List<Order> stockOrderList = orderRepository.findAllByCompany_CompanyIdAndOrderStatus(companyId, orderStates);
         return new LinkedList<>(stockOrderList);
     }
 
     // 멤버의 모든 주식 거래내역 삭제하기
-    public void deleteStockOrders(User user) {
+    public void deleteAllOrders(User user) {
         List<Order> stockOrders = orderRepository.findAllByUser_Id(user.getId());
 
         orderRepository.deleteAll(stockOrders);
     }
 
     // 멤버의 모든 StockOrders 불러오기
-    public List<OrderResponseDto> getMemberStockOrders(long userId) {
+    public List<OrderResponseDto> getUserStockOrders(long userId) {
         List<Order> stockOrders = orderRepository.findAllByUser_IdOrderByModifiedAtDesc(userId);
 
         return stockOrders.stream()
@@ -367,7 +367,7 @@ public class OrderService {
 
     // 미체결 stockOrder 취소하는 메소드
     // 취소한 주식 수 만큼 보유주식으로 돌아오게 해야함
-    public void deleteStockOrder(User user, long stockOrderId, int stockCount) {
+    public void deleteOrder(User user, long stockOrderId, int stockCount) {
         Optional<Order> optionalStockOrder = orderRepository.findById(stockOrderId);
         Order order = optionalStockOrder.orElseThrow(() -> new StockLogicException(ErrorCode.ORDER_NOT_FOUND));
 
