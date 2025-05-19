@@ -1,10 +1,10 @@
-package com.example.jammoney.gpt.mapper;
+package com.example.jammoney.financeQuiz.gpt.mapper;
 
 import com.example.jammoney.financeQuiz.dto.FinanceQuiz;
 import com.example.jammoney.financeQuiz.entity.Difficulty;
 import com.example.jammoney.financeQuiz.entity.QuizCategory;
-import com.example.jammoney.gpt.dto.GptQuizResponse;
-import com.example.jammoney.gpt.dto.GptResponse;
+import com.example.jammoney.financeQuiz.gpt.dto.GptQuizResponse;
+import com.example.jammoney.financeQuiz.gpt.dto.GptResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

@@ -1,4 +1,4 @@
-package com.example.jammoney.gpt.service;
+package com.example.jammoney.financeQuiz.gpt.service;
 
 
 import com.example.jammoney.financeQuiz.entity.Difficulty;

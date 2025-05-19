@@ -1,4 +1,4 @@
-package com.example.jammoney.gpt.dto;
+package com.example.jammoney.financeQuiz.gpt.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

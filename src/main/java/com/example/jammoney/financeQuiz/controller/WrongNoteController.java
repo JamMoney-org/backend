@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/wrong-notes")
 @RequiredArgsConstructor
-public class WrongNoteController {
+public class WrongNoteController { //오답노트
 
     private final WrongNoteService wrongNoteService;
 
