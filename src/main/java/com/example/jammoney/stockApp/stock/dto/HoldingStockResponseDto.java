@@ -2,9 +2,11 @@ package com.example.jammoney.stockApp.stock.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
-@Builder
+
 @Getter
+@Setter
 /**
  * 사용자가 보유한 주식 정보 응답 DTO
  * - 종목명, 보유 수량, 평가금액, 수익률, 자산 비중 포함
@@ -12,6 +14,13 @@ import lombok.Getter;
  */
 
 public class HoldingStockResponseDto {
+    //회사id
+    private long holdingStockId;
+
+    private long userId;
+
+    private long companyId;
+
     private String companyKorName;
     //보유 수량
     private int stockCount;
@@ -20,9 +29,17 @@ public class HoldingStockResponseDto {
     //평가금
     private long evaluationAmount;
     //수익 금액 (평가금 - 매입금)
+
+
+    //투자 금액
+    private long totalPrice;
+
     private long profitAmount;
     //수익률 (수익금/매입금)*100
     private double profitRate;
     //전체 자산 대비 비중
     private double portfolioRatio;
+
+    //예약 매도 수
+    private long reserveSellStockCount;
 }
