@@ -11,12 +11,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/company")
 public class CompanyController {
     private final CompanyService companyService;
     private final StockMinService stockMinService;
@@ -30,18 +32,18 @@ public class CompanyController {
         return new ResponseEntity<>(companyResponseDtoList, HttpStatus.OK);
     }
 
-    // 주식 호가 정보
+    // 특정 회사의 주식 호가 정보
     @GetMapping("/{companyId}")
-    public ResponseEntity getCompanyStockAsBi(@PathVariable("companyId") Long comanyId) {
+    public ResponseEntity getCompanyStockAskingPrice(@PathVariable("companyId") Long comanyId) {
         Company company = companyService.findCompanyById(comanyId);
         CompanyResponseDto companyResponseDto = stockMapper.companyToDto(company);
 
         return new ResponseEntity<>(companyResponseDto, HttpStatus.OK);
     }
 
-    // 차트 하나 호출
+    // 특정 회사의 최신 -> 과거 순으로 420개의 분봉 차트 가져옴 (7시간치)
     @GetMapping("/charts/{companyId}")
-    public ResponseEntity getCompanyChart(@PathVariable("companyId") long companyId) {
+    public ResponseEntity getCompanyChart(@PathVariable("companyId") Long companyId) {
         List<StockMinResponseDto> stockMinList = stockMinService.getRecent420StockMin(companyId);
 
         return new ResponseEntity(stockMinList, HttpStatus.OK);
