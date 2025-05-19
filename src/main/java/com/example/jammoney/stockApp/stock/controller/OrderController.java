@@ -1,9 +1,9 @@
 package com.example.jammoney.stockApp.stock.controller;
 
 import com.example.jammoney.stockApp.stock.dto.HoldingStockResponseDto;
+import com.example.jammoney.stockApp.stock.dto.OrderResponseDto;
 import com.example.jammoney.stockApp.stock.entity.Order;
 import com.example.jammoney.stockApp.stock.mapper.StockMapper;
-import com.example.jammoney.stockApp.stock.dto.OrderResponseDto;
 import com.example.jammoney.stockApp.stock.service.HoldingStockService;
 import com.example.jammoney.stockApp.stock.service.OrderService;
 import com.example.jammoney.user.entity.User;
@@ -17,61 +17,52 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/stock")
+@RequestMapping("/api/order")
 public class OrderController {
     private final OrderService orderService;
-    private final HoldingStockService holdingStockService;
     private final StockMapper stockMapper;
+    private final HoldingStockService holdingStockService;
+
+    //매수
     @PostMapping("/buy")
     public ResponseEntity buyStocks(@RequestParam(name = "companyId") long companyId,
                                     @RequestParam(name = "price") long price,
                                     @RequestParam(name = "stockCount") int stockCount,
                                     @AuthenticationPrincipal User user) {
         Order order = orderService.buyStocks(user, companyId, price, stockCount);
-        OrderResponseDto stockOrderResponseDto = stockMapper.orderToDto(order);
-
-        return new ResponseEntity<>(stockOrderResponseDto, HttpStatus.CREATED);
+        OrderResponseDto orderResponseDto = stockMapper.orderToDto(order);
+        return new ResponseEntity<>(orderResponseDto, HttpStatus.OK);
     }
 
-    //보유중인 특정 주식 매도
+    //매도
     @PostMapping("/sell")
     public ResponseEntity sellStocks(@RequestParam(name = "companyId") long companyId,
                                      @RequestParam(name = "price") long price,
                                      @RequestParam(name = "stockCount") int stockCount,
-                                     @AuthenticationPrincipal User user) {
+                                     @AuthenticationPrincipal User user){
         Order order = orderService.sellStocks(user, companyId, price, stockCount);
-        OrderResponseDto stockOrderResponseDto = stockMapper.orderToDto(order);
-
-        return new ResponseEntity<>(stockOrderResponseDto, HttpStatus.CREATED);
+        OrderResponseDto orderResponseDto = stockMapper.orderToDto(order);
+        return new ResponseEntity<>(orderResponseDto, HttpStatus.OK);
     }
 
-    //특정 사용자의 모든 보유 주식들 조회
+    //user의 보유 주식 정보를 반환함
     @GetMapping("/holdingStocks")
     public ResponseEntity getHoldingStocks(@AuthenticationPrincipal User user) {
-        List<HoldingStockResponseDto> stockHoldResponseDtos = holdingStockService.findHoldingStocks(user.getId());
-        stockHoldResponseDtos = holdingStockService.setPercentage(stockHoldResponseDtos);
-
-        return new ResponseEntity<>(stockHoldResponseDtos, HttpStatus.OK);
+        List<HoldingStockResponseDto> holdingStockResponseDtos = holdingStockService.findHoldingStocks(user.getId());
+        holdingStockResponseDtos = holdingStockService.setPercentage(holdingStockResponseDtos);
+        return new ResponseEntity<>(holdingStockResponseDtos, HttpStatus.OK);
     }
 
-    //특정 사용자의 모든 주문들 조회
-    @GetMapping("/orders")
-    public ResponseEntity getOrders(@AuthenticationPrincipal User user) {
-        List<OrderResponseDto> stockOrderResponseDtos = orderService.getUserStockOrders(user.getId());
-
-        return new ResponseEntity<>(stockOrderResponseDtos, HttpStatus.OK);
-    }
-
-    // 예약된 매수, 매도 삭제
+    //미 체결된 매수, 매도 삭제함
     @DeleteMapping("/orders")
-    public void deleteStockOrders(@AuthenticationPrincipal User user,
-                                  @RequestParam("stockOrderId") long orderId,
-                                  @RequestParam("stockCount") int stockCount) {
+    public void deleteOrders(@AuthenticationPrincipal User user,
+                             @RequestParam("stockOrderId") long orderId,
+                             @RequestParam("stockCount") int stockCount) {
         orderService.deleteOrder(user, orderId, stockCount);
     }
 
-    //예약된 주문들에 대해서 호가 확인해서 체결 처리
-    @GetMapping("/checkOrder")
+    //스케줄러에서 자동으로 30분마다 checkOrder를 해주고 있음 (이 api는 테스트용임)
+    @GetMapping("checkOrder")
     public ResponseEntity checkOrder() {
         orderService.checkOrder();
 
