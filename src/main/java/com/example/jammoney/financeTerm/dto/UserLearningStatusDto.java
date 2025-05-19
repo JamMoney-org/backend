@@ -5,7 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class QuizSubmitDto {
-    private Long quizId;
-    private int selectedAnswer;
+public class UserLearningStatusDto {
+    private int totalLearnedCount;
 }
