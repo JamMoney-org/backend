@@ -9,6 +9,8 @@ import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -17,13 +19,13 @@ import org.hibernate.annotations.OnDeleteAction;
 public class Order{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long stockOrderId;
+    private Long orderId;
 
     @Column
     private int stockCount;
 
     @ManyToOne()
-    @JoinColumn(name = "MEMBER_ID")
+    @JoinColumn(name = "USER_ID")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
     @ManyToOne()
@@ -38,9 +40,8 @@ public class Order{
     @Column(nullable = false)
     private OrderType orderType;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TradeType tradeType;
+    private LocalDateTime modifiedAt;
 
     private long price;
 
