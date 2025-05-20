@@ -4,6 +4,7 @@ import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.stockApp.stock.entity.*;
 import com.example.jammoney.stockApp.stock.entity.Enums.OrderStatus;
 import com.example.jammoney.stockApp.stock.entity.Enums.OrderType;
+import com.example.jammoney.stockApp.stock.event.OrderChangedEvent;
 import com.example.jammoney.stockApp.stock.repository.CompanyRepository;
 import com.example.jammoney.stockApp.stock.repository.HoldingStockRepository;
 import com.example.jammoney.stockApp.stock.repository.OrderRepository;
@@ -26,8 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.lang.reflect.Field;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class orderServiceTest {
     @PersistenceContext
     EntityManager em;
+    @Autowired TestEventListener testEventListener;
     @Autowired
     OrderService orderService;
 
@@ -208,5 +209,8 @@ public class orderServiceTest {
         long expectedCash = cashBefore - (price * count);
         User updatedUser = userRepository.findById(testUser.getId()).get();
         assertEquals(expectedCash, updatedUser.getCash().getMoney());
+        boolean contains = testEventListener.getReceivedEvents().stream()
+                .anyMatch(e -> e instanceof OrderChangedEvent);
+        assertTrue(contains);
     }
 }
