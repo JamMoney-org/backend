@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CategoryDto {
+public class CategoryDto { //단어 카테고리 정보
     private Long id;
     private String category;
 }
