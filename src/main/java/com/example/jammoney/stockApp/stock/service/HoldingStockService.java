@@ -34,15 +34,15 @@ public class HoldingStockService {
             // 주식 현재가를 불러온다
             String nowPrice = company.getStockInfo().getStck_prpr();
             // 주식 수익 = 전체 주식 가치 - 전체 투자 금액
-            double totalRevenue =
-                    Double.valueOf(nowPrice)
-                            * (holdingStockResponseDto.getStockCount()+holdingStockResponseDto.getReserveSellStockCount())
-                            - holdingStockResponseDto.getTotalPrice();
-            // 주식 수익률(%) = (주식 수익 / 전체 투자 금액) × 100
+            double evaluationAmount =
+                    Double.parseDouble(nowPrice)
+                            * (holdingStockResponseDto.getStockCount() + holdingStockResponseDto.getReserveSellStockCount());
+
+            double totalRevenue = evaluationAmount - holdingStockResponseDto.getTotalPrice();
             double profitRate = (totalRevenue / (double)holdingStockResponseDto.getTotalPrice()) * 100;
 
             holdingStockResponseDto.setProfitRate(profitRate);
-            holdingStockResponseDto.setEvaluationAmount((long) totalRevenue);
+            holdingStockResponseDto.setEvaluationAmount((long) evaluationAmount);
         }
         return holdingStockResponseDtos;
     }
