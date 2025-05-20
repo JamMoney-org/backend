@@ -34,8 +34,6 @@ public class UserPortfolioService {
             long stockAsset = holdingStockResponseDtos.stream()
                     .mapToLong(HoldingStockResponseDto::getEvaluationAmount)
                     .sum();
-            System.out.println(user.getCash().getMoney()+"!@#");
-            System.out.println(stockAsset+"!@#");
             long cash = user.getCash().getMoney();
             long totalAsset = cash + stockAsset;
 
@@ -45,8 +43,11 @@ public class UserPortfolioService {
 
             long profitAmount = totalAsset - (cash + investedAmount);
             double profitRate = investedAmount > 0 ? (profitAmount / (double) investedAmount) * 100 : 0.0;
-
             UserPortfolio portfolio = userPortfolioRepository.findByUser(user);
+            if (portfolio == null) {
+                portfolio = new UserPortfolio();
+                portfolio.setUser(user);
+            }
 
             portfolio.setCash(cash);
             portfolio.setStockAsset(stockAsset);

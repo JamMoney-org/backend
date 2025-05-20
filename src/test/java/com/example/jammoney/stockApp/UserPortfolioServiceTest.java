@@ -9,6 +9,7 @@ import com.example.jammoney.stockApp.stock.repository.StockAskingPriceRepository
 import com.example.jammoney.stockApp.stock.repository.UserPortfolioRepository;
 import com.example.jammoney.stockApp.stock.service.HoldingStockService;
 import com.example.jammoney.stockApp.stock.service.UserPortfolioService;
+import com.example.jammoney.user.Role;
 import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -20,118 +21,112 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @Transactional
 class UserPortfolioServiceTest {
+
     @PersistenceContext
     private EntityManager em;
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private CompanyRepository companyRepository;
-    @Autowired
-    private HoldingStockRepository holdingStockRepository;
-    @Autowired
-    private UserPortfolioRepository userPortfolioRepository;
-    @Autowired
-    private UserPortfolioService userPortfolioService;
-    @Autowired
-    private CashRepository cashRepository;
-    @Autowired
-    private StockAskingPriceRepository stockAskingPriceRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private CompanyRepository companyRepository;
+    @Autowired private HoldingStockRepository holdingStockRepository;
+    @Autowired private UserPortfolioRepository userPortfolioRepository;
+    @Autowired private UserPortfolioService userPortfolioService;
+    @Autowired private CashRepository cashRepository;
+    @Autowired private StockAskingPriceRepository stockAskingPriceRepository;
 
     private User user;
     private Company company;
 
     @BeforeEach
-    void setup() throws NoSuchFieldException, IllegalAccessException {
-        // 유저 생성
-        user = new User();
-        user.setEmail("test@port.com");
-        user.setPassword("pwsefsefs#");
-        user.setNickname("testuser");
+    void setup() throws Exception {
+        // 1. 유저 생성
+        user = User.builder()
+                .email("test@port.com")
+                .password("pw123")
+                .nickname("testuser")
+                .isActive(true)
+                .holdingStocks(new ArrayList<>())
+                .role(Role.ROLE_USER)
+                .build();
 
+        // 2. Cash 설정 및 연관관계
         Cash cash = new Cash();
         cash.setMoney(1_000_000L);
-
-// 양방향 연관관계 설정
         cash.setUser(user);
         user.setCash(cash);
 
-// 🔥 cash 저장하지 않고 user만 저장해도 연관관계 자동 저장
         user = userRepository.save(user);
-        System.out.println("User Cash 연결 확인: " + userRepository.findById(user.getId()).get().getCash());
 
-        // 회사 및 주가 정보
+        // 3. 회사 및 주가 정보
         company = new Company();
         company.setCode("000000");
         company.setKorName("테스트회사");
 
         StockInfo info = new StockInfo();
+        info.setStck_prpr("50000");
         info.setCompany(company);
-        info.setStck_prpr("50000");  // 현재가: 5만원
         company.setStockInfo(info);
+
         StockAskingPrice ask = new StockAskingPrice();
         for (int i = 1; i <= 10; i++) {
-            Field askpField = StockAskingPrice.class.getDeclaredField("askp" + i);
-            askpField.setAccessible(true);
-            askpField.set(ask, "80000");
+            Field askp = StockAskingPrice.class.getDeclaredField("askp" + i);
+            Field askp_rsqn = StockAskingPrice.class.getDeclaredField("askp_rsqn" + i);
+            Field bidp = StockAskingPrice.class.getDeclaredField("bidp" + i);
+            Field bidp_rsqn = StockAskingPrice.class.getDeclaredField("bidp_rsqn" + i);
 
-            Field askpRsqnField = StockAskingPrice.class.getDeclaredField("askp_rsqn" + i);
-            askpRsqnField.setAccessible(true);
-            askpRsqnField.set(ask, "100");
-
-            Field bidpField = StockAskingPrice.class.getDeclaredField("bidp" + i);
-            bidpField.setAccessible(true);
-            bidpField.set(ask, "79000");
-
-            Field bidpRsqnField = StockAskingPrice.class.getDeclaredField("bidp_rsqn" + i);
-            bidpRsqnField.setAccessible(true);
-            bidpRsqnField.set(ask, "200");
+            askp.setAccessible(true); askp.set(ask, "80000");
+            askp_rsqn.setAccessible(true); askp_rsqn.set(ask, "100");
+            bidp.setAccessible(true); bidp.set(ask, "79000");
+            bidp_rsqn.setAccessible(true); bidp_rsqn.set(ask, "200");
         }
         ask.setCompany(company);
-        companyRepository.save(company);
-
-        // 보유 주식: 10주 * 매입가 6만원 = 60만원 투자
-        HoldingStock stock = new HoldingStock();
-        stock.setCompany(company);
-        stock.setUser(user);
-        stock.setStockCount(10);
-        stock.setTotalPrice(600_000L);  // 총 매입 금액
         stockAskingPriceRepository.save(ask);
         company.setStockAskingPrice(ask);
-        holdingStockRepository.save(stock);
-        em.flush();
-        em.clear();
 
-        // 사용자 포트폴리오 생성
+        company = companyRepository.save(company);
+
+        // 4. HoldingStock (양방향 관계 설정)
+        HoldingStock stock = HoldingStock.builder()
+                .user(user)
+                .company(company)
+                .stockCount(10)
+                .totalPrice(600_000L)
+                .build();
+        user.getHoldingStocks().add(stock); // 양방향 유지
+        holdingStockRepository.save(stock);
+
+        // 5. UserPortfolio 저장
         UserPortfolio portfolio = new UserPortfolio();
         portfolio.setUser(user);
         userPortfolioRepository.save(portfolio);
+
+        em.flush(); // DB 반영
+        em.clear(); // 캐시 초기화
     }
 
     @Test
     void 포트폴리오_수익률_정확히_계산되는지_확인() {
         // when
-
         userPortfolioService.updateAllUserPortfolios();
 
         // then
         UserPortfolio result = userPortfolioRepository.findByUser(user);
 
-        long expectedStockAsset = 500_000L; // 현재가 5만원 * 10주
-        long expectedTotalAsset = 1_000_000L + expectedStockAsset; // 현금 + 주식자산
-        long expectedProfitAmount = expectedTotalAsset - (1_000_000L + 600_000L); // 총자산 - (현금 + 투자원금)
+        long expectedStockAsset = 500_000L;
+        long expectedTotalAsset = 1_000_000L + expectedStockAsset;
+        long expectedProfitAmount = expectedTotalAsset - (1_000_000L + 600_000L);
         double expectedProfitRate = (expectedProfitAmount / (double) 600_000L) * 100;
 
         assertEquals(1_000_000L, result.getCash());
         assertEquals(expectedStockAsset, result.getStockAsset());
         assertEquals(expectedTotalAsset, result.getTotalAsset());
         assertEquals(expectedProfitAmount, result.getProfitAmount());
-        assertEquals(expectedProfitRate, result.getProfitRate(), 0.01); // 소수점 비교
+        assertEquals(expectedProfitRate, result.getProfitRate(), 0.01);
     }
 }
