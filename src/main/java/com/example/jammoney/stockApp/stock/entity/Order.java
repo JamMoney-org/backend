@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @Table(name = "orders")
-public class Order{
+public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
@@ -24,19 +24,20 @@ public class Order{
     @Column
     private int stockCount;
 
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "USER_ID")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
-    @ManyToOne()
+
+    @ManyToOne
     @JoinColumn(name = "COMPANY_ID")
     private Company company;
 
-    @Enumerated(EnumType.STRING) // 항상 명시하자!
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus orderStatus;
 
-    @Enumerated(EnumType.STRING) // 항상 명시하자!
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderType orderType;
 
@@ -45,4 +46,14 @@ public class Order{
 
     private long price;
 
+    @PrePersist
+    public void prePersist() {
+        this.modifiedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.modifiedAt = LocalDateTime.now();
+    }
 }
+
