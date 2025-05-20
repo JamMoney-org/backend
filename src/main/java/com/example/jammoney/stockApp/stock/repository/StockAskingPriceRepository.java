@@ -4,5 +4,5 @@ import com.example.jammoney.stockApp.stock.entity.StockAskingPrice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StockAskingPriceRepository extends JpaRepository<StockAskingPrice, Long> {
-    StockAskingPrice findByCompany_CompanyId(Long stockId);
+    StockAskingPrice findByCompany_CompanyId(Long companyId);
 }

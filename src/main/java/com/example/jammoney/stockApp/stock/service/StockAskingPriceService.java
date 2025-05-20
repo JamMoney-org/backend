@@ -52,10 +52,7 @@ public class StockAskingPriceService {
         }
     }
 
-    public StockAskingPrice getStockAskingPrice(long companyId) {
-        Optional<StockAskingPrice> stock = stockAskingPriceRepository.findById(companyId);
-        stock.orElseThrow(() -> new StockLogicException(ErrorCode.ASKINGPRICE_NOT_FOUND));
-
-        return stock.get();
+    public StockAskingPrice getStockAskingPrice(Long companyId) {
+        return stockAskingPriceRepository.findByCompany_CompanyId(companyId);
     }
 }
