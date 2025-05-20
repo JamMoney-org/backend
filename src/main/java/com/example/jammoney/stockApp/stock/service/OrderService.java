@@ -72,7 +72,7 @@ public class OrderService {
 
     public Order buyStock(User user, long price, int stockCount, long companyId) {
         // 보유 주식 설정
-        HoldingStock holdingStock = holdingStockService.checkHoldingStock(companyId, user.getId());
+        HoldingStock holdingStock = holdingStockService.getOrCreateHoldingStock(companyId, user.getId());
         holdingStock.setStockCount(holdingStock.getStockCount() + stockCount);
         holdingStock.setTotalPrice(holdingStock.getTotalPrice() + (stockCount * price));
 
@@ -243,7 +243,7 @@ public class OrderService {
         updateStockOrder.setOrderStatus(OrderStatus.COMPLETED);
         updateStockOrder.setOrderType(OrderType.BUY);
         // 보유 주식 설정
-        HoldingStock holdingStock = holdingStockService.checkHoldingStock(order.getCompany().getCompanyId(), order.getUser().getId());
+        HoldingStock holdingStock = holdingStockService.getOrCreateHoldingStock(order.getCompany().getCompanyId(), order.getUser().getId());
         holdingStock.setStockCount(holdingStock.getStockCount() + order.getStockCount());
         holdingStock.setTotalPrice(holdingStock.getTotalPrice() + (order.getStockCount() * order.getPrice()));
         // 현금량 감소

@@ -57,17 +57,18 @@ public class HoldingStockService {
         return holdingStockRepository.findByUser(userId);
     }
 
-    public HoldingStock checkHoldingStock(Long companyId, Long userId) {
+    public HoldingStock getOrCreateHoldingStock(Long companyId, Long userId) {
         HoldingStock holdingStock = holdingStockRepository.findByCompanyAndUser(companyId, userId);
         if(holdingStock == null) {
             HoldingStock newHoldingStock = new HoldingStock();
-            newHoldingStock.setUser(userRepository.findById(userId).get());
-            newHoldingStock.setCompany(companyRepository.findById(companyId).get());
-
-            return newHoldingStock;
+            newHoldingStock.setUser(userRepository.findById(userId).orElseThrow());
+            newHoldingStock.setCompany(companyRepository.findById(companyId).orElseThrow());
+            newHoldingStock.setStockCount(0);
+            newHoldingStock.setReserveStockCount(0);
+            newHoldingStock.setTotalPrice(0);
+            return holdingStockRepository.save(newHoldingStock);
         }
-        else
-            return holdingStock;
+        return holdingStock;
     }
 
     public HoldingStock findHoldingStock(Long companyId, Long userId) {
