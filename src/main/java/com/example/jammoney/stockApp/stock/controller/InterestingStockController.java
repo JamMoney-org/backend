@@ -24,7 +24,7 @@ public class InterestingStockController {
 
     //관심 주식 등록
     @PostMapping
-    public ResponseEntity setStar(@RequestParam long companyId,
+    public ResponseEntity setInterestingStock(@RequestParam long companyId,
                                   @AuthenticationPrincipal User user) {
         interestingStockService.saveInterestingStock(user, companyId);
 
