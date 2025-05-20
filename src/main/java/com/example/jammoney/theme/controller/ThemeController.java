@@ -10,7 +10,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-public class ThemeController {
+public class ThemeController { //카테고리 선택
     private final ThemeService themeService;
 
     @GetMapping("/api/themes")
