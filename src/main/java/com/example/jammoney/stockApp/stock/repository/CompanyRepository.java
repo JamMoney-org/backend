@@ -16,5 +16,6 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
   Company findByCompanyId(@Param("companyId") long companyId);
   @Query("SELECT c from Company c join fetch c.stockAskingPrice JOIN FETCH c.stockInfo")
   List<Company> findAll();
+  boolean existsByCode(String code);
 
 }

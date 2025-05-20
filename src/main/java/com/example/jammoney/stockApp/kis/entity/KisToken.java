@@ -15,7 +15,7 @@ public class KisToken {
     @Id
     private Long id = 1L; // 단일 행만 저장
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1024)
     private String token;
 
     @Column(nullable = false)
