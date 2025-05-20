@@ -49,8 +49,8 @@ public class StockMinService {
             // 회사 정보 저장
             StockInfo stockInfo = apiMapper.stockMinOutput1ToStockInfo(stockMinDto.getOutput1());
             stockInfo.setCompany(company);
-            StockInfo oldStockInf = company.getStockInfo();
-            stockInfo.setStockInfoId(oldStockInf.getStockInfoId());
+            StockInfo oldStockInfo = company.getStockInfo();
+            stockInfo.setStockInfoId(oldStockInfo.getStockInfoId());
             company.setStockInfo(stockInfo);
 
             // 저장
