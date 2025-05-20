@@ -15,7 +15,8 @@ public class StockInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long stockInfoId;
 
-    @OneToOne(mappedBy = "stockInfo")
+    @OneToOne
+    @JoinColumn(name = "COMPANY_ID")
     private Company company;
 
 
