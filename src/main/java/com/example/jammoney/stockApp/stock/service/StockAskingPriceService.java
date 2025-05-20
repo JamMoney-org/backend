@@ -30,22 +30,24 @@ public class StockAskingPriceService {
     public void updateStockAskingPrice() throws InterruptedException {
         List<Company> companyList = companyService.findAllCompanies();
 
-        for(int i = 0; i < companyList.size(); i++) {
-            // 주식 코드로 회사 불러오기
-            Company company = companyService.findCompanyByCode(companyList.get(i).getCode());
-            // api 호출하기
-            StockAskingPriceDto stockAskingPriceDto = apiCallService.getStockAskingPrice(company.getCode());
-            // mapper로 정리 된 값 받기
-            StockAskingPrice stockAskingPrice = apiMapper.toStockAskingPrice(stockAskingPriceDto.getOutput1());
+        for (Company company : companyList) {
+            // API 호출 → Dto → Entity 변환
+            StockAskingPriceDto dto = apiCallService.getStockAskingPrice(company.getCode());
+            StockAskingPrice newAskingPrice = apiMapper.toStockAskingPrice(dto.getOutput1());
 
-            // 회사 등록
-            stockAskingPrice.setCompany(company);
-            // 호가 컬럼을 새로운 호가 컬럼으로 변경한다
-            StockAskingPrice oldStockAskingPrice = company.getStockAskingPrice();
-            stockAskingPrice.setStockAskingPriceId(oldStockAskingPrice.getStockAskingPriceId());
-            company.setStockAskingPrice(stockAskingPrice);
+            // 연관관계 설정
+            newAskingPrice.setCompany(company);
 
-            // 저장한다
+            // 기존 객체가 있으면 ID 복사 (update 용도)
+            StockAskingPrice old = company.getStockAskingPrice();
+            if (old != null) {
+                newAskingPrice.setStockAskingPriceId(old.getStockAskingPriceId());
+            }
+
+            // company에 할당
+            company.setStockAskingPrice(newAskingPrice);
+
+            // 저장
             companyService.saveCompany(company);
 
             Thread.sleep(500);

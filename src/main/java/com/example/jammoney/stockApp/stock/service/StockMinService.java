@@ -33,73 +33,42 @@ public class StockMinService {
     private final ApiMapper apiMapper;
     private final StockMapper stockMapper;
 
+    @Transactional
     public void updateStockMin() throws InterruptedException {
         List<Company> companyList = companyService.findAllCompanies();
-        LocalDateTime tenAM = LocalDateTime.now().withHour(11).withMinute(0).withSecond(0).withNano(1);
-        String strHour = Time.strHour(tenAM);
+        LocalDateTime now = LocalDateTime.now();
+        String strHour = Time.strHour(now);
 
         for (Company company : companyList) {
             // 분봉 API 호출
-            log.info("Company Code : " + company.getCode());
+            log.info("Company Code : {}", company.getCode());
             StockMinDto stockMinDto = apiCallService.getStockMin(company.getCode(), strHour);
-            log.info("Output2 size: {}", stockMinDto.getOutput2().size());
-            List<StockMinDto.StockMinOutput2> rawList = stockMinDto.getOutput2();
-
-            for (int i = 0; i < rawList.size(); i++) {
-                StockMinDto.StockMinOutput2 output2 = rawList.get(i);
-                if (output2 == null) {
-                    log.error("[{}] is null", i);
-                    continue;
-                }
-
-                String hour = output2.getStck_cntg_hour();
-                if (hour == null) {
-                    log.error("[{}] stck_cntg_hour is null", i);
-                } else {
-                    log.info("[{}] stck_cntg_hour = {}", i, hour);
-                }
-
-                StockMin stockMin = apiMapper.stockMinOutput2ToStockMin(output2);
-                if (stockMin == null) {
-                    log.error("[{}] apiMapper returned null", i);
-                    continue;
-                }
-
-                try {
-                    stockMin.setTradeTime(tenAM);
-                } catch (Exception e) {
-                    log.error("[{}] setTradeTime error for hour = {}", i, stockMin.getStck_cntg_hour(), e);
-                }
-            }
 
             // 분봉 리스트 매핑 및 저장
             List<StockMin> stockMinList = stockMinDto.getOutput2().stream()
-                    .filter(Objects::nonNull) // null 요소 제거
+                    .filter(dto -> dto.getStck_cntg_hour() != null)  // null 방지
                     .map(stockMinOutput2 -> {
                         StockMin stockMin = apiMapper.stockMinOutput2ToStockMin(stockMinOutput2);
                         stockMin.setCompany(company);
-                        stockMin.setTradeTime(tenAM);
+                        stockMin.setTradeTime(now);
                         return stockMin;
                     })
                     .sorted(Comparator.comparing(StockMin::getStockTradeTime))
                     .collect(Collectors.toList());
 
-            for (StockMin min : stockMinList) {
-                log.info("Saving StockMin: companyId={}, time={}, price={}",
-                        min.getCompany().getCompanyId(),
-                        min.getStockTradeTime(),
-                        min.getStck_prpr());
-            }
             stockMinRepository.saveAll(stockMinList);
 
-            // StockInfo 생성 및 연관관계 설정
+            // StockInfo 생성 및 기존 ID 세팅
             StockInfo stockInfo = apiMapper.stockMinOutput1ToStockInfo(stockMinDto.getOutput1());
             stockInfo.setCompany(company);
-            company.setStockInfo(stockInfo);
-            log.info("연결된 stockInfo: {}", company.getStockInfo());
 
-            // 저장 (cascade = ALL이므로 함께 저장됨)
-            companyService.saveCompany(company);
+            StockInfo oldStockInfo = company.getStockInfo();
+            if (oldStockInfo != null) {
+                stockInfo.setStockInfoId(oldStockInfo.getStockInfoId());  // UPDATE로 처리되게 함
+            }
+
+            company.setStockInfo(stockInfo);
+            companyService.saveCompany(company);  // cascade로 stockInfo도 같이 저장
 
             Thread.sleep(500);
         }
