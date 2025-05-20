@@ -141,6 +141,18 @@ public class ApiCallService {
             return 0.0;
         }
     }
+    public KospiDto getKospiData(String fromDate, String toDate, String period) {
+        HttpHeaders headers = createHeaders("FHKUP03500100");
+
+        String uri = baseUrl + kospiUrl +
+                "?FID_COND_MRKT_DIV_CODE=U" +
+                "&FID_INPUT_ISCD=0001" +
+                "&FID_INPUT_DATE_1=" + fromDate +
+                "&FID_INPUT_DATE_2=" + toDate +
+                "&FID_PERIOD_DIV_CODE=" + period;
+
+        return sendGet(uri, headers, KospiDto.class);
+    }
 
 
     /**

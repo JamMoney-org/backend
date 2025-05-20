@@ -1,9 +1,6 @@
 package com.example.jammoney.stockApp.stock.scheduler;
 
-import com.example.jammoney.stockApp.stock.service.OrderService;
-import com.example.jammoney.stockApp.stock.service.StockAskingPriceService;
-import com.example.jammoney.stockApp.stock.service.StockMinService;
-import com.example.jammoney.stockApp.stock.service.UserPortfolioService;
+import com.example.jammoney.stockApp.stock.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,6 +12,7 @@ public class Scheduler {
     private final StockMinService stockMinService;
     private final OrderService orderService;
     private final UserPortfolioService userPortfolioService;
+    private final KospiService kospiService;
     @Scheduled(cron = "0 0,30 9-15 * * MON-FRI")
     public void updateAll() throws InterruptedException {
 
@@ -29,5 +27,10 @@ public class Scheduler {
 
         //모든 유저의 수익률 갱신
         userPortfolioService.updateAllUserPortfolios();
+    }
+
+    @Scheduled(cron = "0 0 3 1 * *")
+    public void saveKospiIndex() {
+        kospiService.saveMonthlyKospiIndex();
     }
 }
