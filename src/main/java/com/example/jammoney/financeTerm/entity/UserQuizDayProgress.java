@@ -3,27 +3,25 @@ package com.example.jammoney.financeTerm.entity;
 import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import jakarta.persistence.Id;
 
 @Entity
-@Table(name = "user_saved_terms")
+@Table(name = "user_quiz_day_progress")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserSavedTerm { //나만의 단어장
+public class UserQuizDayProgress {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     @ManyToOne
-    @JoinColumn(name = "user_id")
     private User user;
 
+    private String categoryName;
+    private int dayIndex;
 
-    @ManyToOne
-    @JoinColumn(name = "term_id")
-    private FinancialTerm term;
+    private boolean expGiven;
 }
-
