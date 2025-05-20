@@ -102,25 +102,29 @@ public class ApiCallService {
         HttpHeaders headers = createHeaders("FHKUP03500100");
 
 
-        String strDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String toDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+        String startDate = "20241231";
+        String endDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        String uri = baseUrl + "?FID_COND_MRKT_DIV_CODE=U&FID_INPUT_ISCD=" + "0001" + "&FID_INPUT_DATE_1=" + "20250101"
-                +"&FID_INPUT_DATE_2=" + strDate + "&FID_PERIOD_DIV_CODE=" + "M";
+        String uri = baseUrl + kospiUrl+"?FID_COND_MRKT_DIV_CODE=U&FID_INPUT_ISCD=" + "0001" + "&FID_INPUT_DATE_1=" + startDate
+                +"&FID_INPUT_DATE_2=" + endDate + "&FID_PERIOD_DIV_CODE=" + "M";
 
         KospiDto response = sendGet(uri, headers, KospiDto.class);
-        if (response == null || response.getOutput2() == null) return Collections.emptyList();
-
+        if (response == null || response.getOutput2() == null) {
+            log.warn("응답이 null 또는 output2가 없습니다.");
+            return Collections.emptyList();
+        }
+        log.info("output2 size: {}", response.getOutput2().size());
         List<KospiResponseDto> result = new ArrayList<>();
         for (KospiDto.KospiRawItem item : response.getOutput2()) {
             String yyyymm = item.getStck_bsop_date().substring(0, 6);
-            if (yyyymm.compareTo(strDate) >= 0 && yyyymm.compareTo(toDate) <= 0) {
+            if (yyyymm.compareTo(startDate) >= 0 && yyyymm.compareTo(endDate) <= 0)  {
                 KospiResponseDto dto = new KospiResponseDto();
                 dto.setDate(yyyymm);
                 dto.setOpen(parseDouble(item.getBstp_nmix_oprc()));
                 dto.setHigh(parseDouble(item.getBstp_nmix_hgpr()));
                 dto.setLow(parseDouble(item.getBstp_nmix_lwpr()));
                 dto.setClose(parseDouble(item.getBstp_nmix_prpr()));
+                log.info("raw response = {}", dto);
                 result.add(dto);
             }
         }
@@ -144,6 +148,7 @@ public class ApiCallService {
      */
     private <T> T sendGet(String uri, HttpHeaders headers, Class<T> clazz) {
         HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         try {
             ResponseEntity<T> response = restTemplate.exchange(
                     uri,
