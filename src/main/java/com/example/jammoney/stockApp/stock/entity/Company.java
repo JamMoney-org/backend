@@ -22,8 +22,10 @@ public class Company{
     @OneToOne(mappedBy = "company", cascade = CascadeType.ALL)
     private StockAskingPrice stockAskingPrice;
 
-    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "COMPANY_ID")
     private StockInfo stockInfo;
+
 
 }
 

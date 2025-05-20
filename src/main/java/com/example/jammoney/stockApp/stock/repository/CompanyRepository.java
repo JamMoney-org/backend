@@ -14,7 +14,7 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
   Company findByCode(@Param("code") String code);
   @Query("SELECT c FROM Company c JOIN FETCH c.stockAskingPrice JOIN FETCH c.stockInfo WHERE c.companyId = :companyId")
   Company findByCompanyId(@Param("companyId") long companyId);
-  @Query("SELECT c from Company c join fetch c.stockAskingPrice JOIN FETCH c.stockInfo")
+  //@Query("SELECT c from Company c join fetch c.stockAskingPrice JOIN FETCH c.stockInfo")
   List<Company> findAll();
   boolean existsByCode(String code);
 

@@ -6,6 +6,7 @@ import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import com.example.jammoney.stockApp.stock.entity.Company;
 import com.example.jammoney.stockApp.stock.entity.StockAskingPrice;
 import com.example.jammoney.stockApp.stock.repository.CompanyRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class CompanyService {
     public List<Company> findAllCompanies() {
         return companyRepository.findAll();
     }
+    @Transactional
     public Company saveCompany(Company company) {
         return companyRepository.save(company);
     }

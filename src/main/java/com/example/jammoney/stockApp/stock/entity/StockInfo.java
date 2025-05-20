@@ -15,9 +15,9 @@ public class StockInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long stockInfoId;
 
-    @OneToOne
-    @JoinColumn(name = "COMPANY_ID")
+    @OneToOne(mappedBy = "stockInfo")
     private Company company;
+
 
     //주식 현재가
     private String stck_prpr;

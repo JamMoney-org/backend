@@ -10,7 +10,9 @@ import com.example.jammoney.stockApp.stock.entity.StockMin;
 import com.example.jammoney.stockApp.stock.mapper.StockMapper;
 import com.example.jammoney.stockApp.stock.repository.StockMinRepository;
 import com.example.jammoney.util.Time;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,8 +21,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class StockMinService {
     private final ApiCallService apiCallService;
     private final CompanyService companyService;
@@ -30,33 +34,44 @@ public class StockMinService {
 
     public void updateStockMin() throws InterruptedException {
         List<Company> companyList = companyService.findAllCompanies();
-        LocalDateTime now = LocalDateTime.now();
-        String strHour = Time.strHour(now);
-        for (Company value : companyList) {
-            // 주식 코드로 회사 불러오기
-            Company company = companyService.findCompanyByCode(value.getCode());
-            // 분봉 api 호출하기
+        LocalDateTime tenAM = LocalDateTime.now().withHour(11).withMinute(0).withSecond(0).withNano(1);
+        String strHour = Time.strHour(tenAM);
+
+        for (Company company : companyList) {
+            // 분봉 API 호출
+            log.info("Company Code : " + company.getCode());
             StockMinDto stockMinDto = apiCallService.getStockMin(company.getCode(), strHour);
-            // mapper로 정리 된 값 받기
+            log.info("Output2 size: {}", stockMinDto.getOutput2().size());
+            for (StockMinDto.StockMinOutput2 o : stockMinDto.getOutput2()) {
+                log.info("raw stck_cntg_hour = {}", o.getStck_cntg_hour());
+            }
+
+            // 분봉 리스트 매핑 및 저장
             List<StockMin> stockMinList = stockMinDto.getOutput2().stream()
                     .map(stockMinOutput2 -> {
                         StockMin stockMin = apiMapper.stockMinOutput2ToStockMin(stockMinOutput2);
                         stockMin.setCompany(company);
-                        stockMin.setTradeTime(now);
+                        stockMin.setTradeTime(tenAM);
                         return stockMin;
-                    }).sorted(Comparator.comparing(StockMin::getStockTradeTime)).collect(Collectors.toList());
-            // 빠른 시간 순으로 정렬
-            // 회사 정보 저장
+                    })
+                    .sorted(Comparator.comparing(StockMin::getStockTradeTime))
+                    .collect(Collectors.toList());
+            for (StockMin min : stockMinList) {
+                log.info("Saving StockMin: companyId={}, time={}, price={}",
+                        min.getCompany().getCompanyId(),
+                        min.getStockTradeTime(),
+                        min.getStck_prpr());
+            }
+            stockMinRepository.saveAll(stockMinList);
+
+            // StockInfo 생성 및 연관관계 설정
             StockInfo stockInfo = apiMapper.stockMinOutput1ToStockInfo(stockMinDto.getOutput1());
+            log.info("연결된 stockInfo: {}", company.getStockInfo());
             stockInfo.setCompany(company);
-            StockInfo oldStockInfo = company.getStockInfo();
-            stockInfo.setStockInfoId(oldStockInfo.getStockInfoId());
             company.setStockInfo(stockInfo);
 
-            // 저장
-            stockMinRepository.saveAll(stockMinList);
+            // 저장 (cascade = ALL이므로 함께 저장됨)
             companyService.saveCompany(company);
-
 
             Thread.sleep(500);
         }
