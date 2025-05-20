@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,12 +43,38 @@ public class StockMinService {
             log.info("Company Code : " + company.getCode());
             StockMinDto stockMinDto = apiCallService.getStockMin(company.getCode(), strHour);
             log.info("Output2 size: {}", stockMinDto.getOutput2().size());
-            for (StockMinDto.StockMinOutput2 o : stockMinDto.getOutput2()) {
-                log.info("raw stck_cntg_hour = {}", o.getStck_cntg_hour());
+            List<StockMinDto.StockMinOutput2> rawList = stockMinDto.getOutput2();
+
+            for (int i = 0; i < rawList.size(); i++) {
+                StockMinDto.StockMinOutput2 output2 = rawList.get(i);
+                if (output2 == null) {
+                    log.error("[{}] is null", i);
+                    continue;
+                }
+
+                String hour = output2.getStck_cntg_hour();
+                if (hour == null) {
+                    log.error("[{}] stck_cntg_hour is null", i);
+                } else {
+                    log.info("[{}] stck_cntg_hour = {}", i, hour);
+                }
+
+                StockMin stockMin = apiMapper.stockMinOutput2ToStockMin(output2);
+                if (stockMin == null) {
+                    log.error("[{}] apiMapper returned null", i);
+                    continue;
+                }
+
+                try {
+                    stockMin.setTradeTime(tenAM);
+                } catch (Exception e) {
+                    log.error("[{}] setTradeTime error for hour = {}", i, stockMin.getStck_cntg_hour(), e);
+                }
             }
 
             // 분봉 리스트 매핑 및 저장
             List<StockMin> stockMinList = stockMinDto.getOutput2().stream()
+                    .filter(Objects::nonNull) // null 요소 제거
                     .map(stockMinOutput2 -> {
                         StockMin stockMin = apiMapper.stockMinOutput2ToStockMin(stockMinOutput2);
                         stockMin.setCompany(company);
@@ -56,6 +83,7 @@ public class StockMinService {
                     })
                     .sorted(Comparator.comparing(StockMin::getStockTradeTime))
                     .collect(Collectors.toList());
+
             for (StockMin min : stockMinList) {
                 log.info("Saving StockMin: companyId={}, time={}, price={}",
                         min.getCompany().getCompanyId(),
@@ -66,9 +94,9 @@ public class StockMinService {
 
             // StockInfo 생성 및 연관관계 설정
             StockInfo stockInfo = apiMapper.stockMinOutput1ToStockInfo(stockMinDto.getOutput1());
-            log.info("연결된 stockInfo: {}", company.getStockInfo());
             stockInfo.setCompany(company);
             company.setStockInfo(stockInfo);
+            log.info("연결된 stockInfo: {}", company.getStockInfo());
 
             // 저장 (cascade = ALL이므로 함께 저장됨)
             companyService.saveCompany(company);
