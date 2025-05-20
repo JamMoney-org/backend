@@ -24,7 +24,7 @@ public class UserPortfolioService {
 
     @Transactional
     public void updateAllUserPortfolios() {
-        List<User> allUsers = userRepository.findAll();
+        List<User> allUsers = userRepository.findAllWithCash();
 
         for (User user : allUsers) {
             List<HoldingStock> holdingStocks = holdingStockService.getUserHoldingStocks(user.getId());
@@ -34,7 +34,8 @@ public class UserPortfolioService {
             long stockAsset = holdingStockResponseDtos.stream()
                     .mapToLong(HoldingStockResponseDto::getEvaluationAmount)
                     .sum();
-
+            System.out.println(user.getCash().getMoney()+"!@#");
+            System.out.println(stockAsset+"!@#");
             long cash = user.getCash().getMoney();
             long totalAsset = cash + stockAsset;
 
