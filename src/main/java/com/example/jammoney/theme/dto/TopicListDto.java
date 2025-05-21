@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class TopicListDto {
+public class TopicListDto { //카테고리안 토픽
     private Long topicId;
     private String title;
 }

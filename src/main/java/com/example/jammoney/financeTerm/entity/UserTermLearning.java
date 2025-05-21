@@ -25,7 +25,6 @@ public class UserTermLearning {
     @JoinColumn(name = "user_id")
     private User user;
 
-
     @ManyToOne
     @JoinColumn(name = "term_id")
     private FinancialTerm term;

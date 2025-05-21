@@ -9,27 +9,16 @@ import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/pet")
 @RequiredArgsConstructor
-public class PetController {
+public class PetController { //캐릭터 관련
 
     private final PetService petService;
     private final UserRepository userRepository;
-
-    // 현재 로그인한 유저를 DB에서 다시 가져오는 유틸 메서드
-//    private User getCurrentUser() {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
-//
-//        return userRepository.findById(principal.getId())
-//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
-//    }
 
     // 캐릭터 상태 조회
     @GetMapping("/status")

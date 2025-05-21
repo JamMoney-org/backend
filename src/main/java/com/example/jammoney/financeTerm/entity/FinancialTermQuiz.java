@@ -19,9 +19,10 @@ public class FinancialTermQuiz {
     private Long id;
 
     private String question;
-    private String correctAnswer;
+    private int correctAnswer;
 
     @ElementCollection
+    @OrderColumn(name = "sequence")
     private List<String> choices;
 
     @ManyToOne

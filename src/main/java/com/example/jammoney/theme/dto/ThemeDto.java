@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ThemeDto {
+public class ThemeDto { //카테고리
     private Long themeId;
     private String name;
 }

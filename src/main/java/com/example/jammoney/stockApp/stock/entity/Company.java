@@ -25,5 +25,6 @@ public class Company{
     @OneToOne(mappedBy = "company", cascade = CascadeType.ALL)
     private StockInfo stockInfo;
 
+
 }
 

@@ -21,10 +21,10 @@ public class Kospi {
     private LocalDate date;
 
     // 종가 (마지막 영업일 종가)
-    private int close;
+    private double close;
 
     // 전월 대비 가격 차이
-    private int prdyVrss;
+    private double prdyVrss;
 
     // 전월 대비 비율
     private double prdyCrt;
