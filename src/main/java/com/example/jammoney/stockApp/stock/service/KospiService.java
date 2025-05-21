@@ -68,4 +68,9 @@ public class KospiService {
             return 0.0;
         }
     }
+
+    public List<Kospi> getChart(){
+        return kospiRepository.findAllByOrderByDateAsc();
+    }
+
 }
