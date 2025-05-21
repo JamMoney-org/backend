@@ -19,7 +19,7 @@ public class HoldingStock {
     private Long holdingStockId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MEMBER_ID")
+    @JoinColumn(name = "USER_ID")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
@@ -30,6 +30,8 @@ public class HoldingStock {
     //보유 수량
     private int stockCount;
 
+    //예약 주문 수량
+    private int reserveStockCount;
     //총 매입 금액
     private long totalPrice;
 

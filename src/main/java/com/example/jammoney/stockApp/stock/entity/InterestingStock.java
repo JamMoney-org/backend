@@ -14,10 +14,10 @@ import org.hibernate.annotations.OnDeleteAction;
 public class InterestingStock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long interestingStockId;
+    private Long interestingStockId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MEMBER_ID")
+    @JoinColumn(name = "USER_ID")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 

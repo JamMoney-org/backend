@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class StockMin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long stockMinId;
+    private Long stockMinId;
 
     @ManyToOne
     @JoinColumn(name = "COMPANY_ID")

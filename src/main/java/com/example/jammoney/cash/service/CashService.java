@@ -1,6 +1,7 @@
 package com.example.jammoney.cash.service;
 
 import com.example.jammoney.exception.CashNotFoundException;
+import com.example.jammoney.exception.ErrorCode;
 import com.example.jammoney.exception.InsufficientBalanceException;
 import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.cash.repository.CashRepository;
@@ -54,5 +55,11 @@ public class CashService {
         return cashRepository.findByUserId(userId)
                 .map(Cash::getMoney)
                 .orElse(0L);
+    }
+    public void checkCash(long price, User user) {
+        if(price > user.getCash().getMoney())
+            throw new InsufficientBalanceException();
+        else
+            return;
     }
 }

@@ -10,7 +10,7 @@ import lombok.*;
 public class StockAskingPrice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long stockAsBiId;
+    private Long stockAskingPriceId;
 
     @OneToOne
     @JoinColumn(name = "COMPANY_ID")
@@ -74,12 +74,16 @@ public class StockAskingPrice {
 
     private String bidp7;
 
+    private String bidp8;
+
     private String bidp9;
 
     private String bidp10;
 
 
     //매수 호가
+    private String bidp_rsqn1;
+
     private String bidp_rsqn2;
 
     private String bidp_rsqn3;

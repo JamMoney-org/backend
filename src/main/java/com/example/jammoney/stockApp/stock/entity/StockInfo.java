@@ -13,11 +13,12 @@ import lombok.Setter;
 public class StockInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long stockInfoId;
+    private Long stockInfoId;
 
     @OneToOne
     @JoinColumn(name = "COMPANY_ID")
     private Company company;
+
 
     //주식 현재가
     private String stck_prpr;
