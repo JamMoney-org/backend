@@ -35,12 +35,14 @@ public class PetService {
     public PetStatusResponseDTO getPetStatus(User user) {
         Pet pet = user.getPet();
 
+        String currentName = pet.getName();
         int currentLevel = pet.getLevel();
         int currentExp = pet.getExp();
         int nextLevelExp = getRequiredExpForLevel(currentLevel + 1);
         String mood = pet.getMood();
 
         return PetStatusResponseDTO.builder()
+                .name(currentName)
                 .level(currentLevel)
                 .exp(currentExp)
                 .nextLevelExp(nextLevelExp) // 확장: 경험치바 계산용
