@@ -20,27 +20,26 @@ public class GptScenarioServiceImpl implements GptScenarioService {
 
     /**
      * 질문에 대한 선택지 + 피드백 생성
-     * (초기 질문이든 다음 질문이든 공통)
      */
     @Override
     public Mono<GptScenarioChoiceResponse> generateChoices(String topic, String aiMessage, List<String> history, Difficulty difficulty) {
-        String prompt = promptBuilder.buildChoicesPrompt(topic, aiMessage, history, difficulty); // ✅ 난이도 추가
+        String prompt = promptBuilder.buildChoicesPrompt(topic, aiMessage, history, difficulty);
         return gptApiClient.callGpt(prompt)
                 .map(responseParser::parseChoiceResponse);
     }
 
     /**
-     * 선택 이후 → 그 선택에 따라 이어지는 다음 질문(한 문장) 생성
+     * 선택 이후 → 이전 질문 + 선택 기반 다음 질문 생성
      */
     @Override
-    public Mono<GptNextMessageResponse> generateNextStep(String selectedChoice, List<String> history, Difficulty difficulty) {
-        String prompt = promptBuilder.buildNextMessagePrompt(selectedChoice, history, difficulty); // ✅ 난이도 반영
+    public Mono<GptNextMessageResponse> generateNextStep(String previousQuestion, String selectedChoice, List<String> history, Difficulty difficulty) {
+        String prompt = promptBuilder.buildNextMessagePrompt(previousQuestion, selectedChoice, history, difficulty);
         return gptApiClient.callGpt(prompt)
                 .map(responseParser::parseNextMessage);
     }
 
     /**
-     * 전체 선택 이력 기반 총평 생성
+     * 총평 생성
      */
     @Override
     public Mono<GptScenarioSummaryResponse> generateSummary(List<String> selectedChoices) {

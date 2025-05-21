@@ -30,6 +30,7 @@ public class ScenarioPlayLog {
     private ScenarioStep step;
 
     private String choiceContent;
+    private String aiMessage;
 
     private int stepOrder;
     private LocalDateTime selectedAt;

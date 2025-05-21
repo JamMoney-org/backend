@@ -43,7 +43,6 @@ public class ScenarioController {
                 request.getScenarioId(),
                 user,
                 request.getSelectedChoice(),
-                request.getHistory(),
                 request.getCurrentStep()
         );
     }

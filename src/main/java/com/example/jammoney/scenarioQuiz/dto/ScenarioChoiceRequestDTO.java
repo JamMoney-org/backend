@@ -13,6 +13,5 @@ import java.util.List;
 public class ScenarioChoiceRequestDTO {
     private Long scenarioId;
     private String selectedChoice; // 사용자가 고른 문장
-    private List<String> history;  // 이전 선택 이력
     private int currentStep;       // 현재 단계 (ex. 1단계 → 2단계)
 }

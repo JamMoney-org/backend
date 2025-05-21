@@ -7,8 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ScenarioPlayLogRepository extends JpaRepository<ScenarioPlayLog, Long> {
-    List<ScenarioPlayLog> findByUserAndScenarioOrderByStepOrderAsc(User user, Scenario scenario);
+    Optional<ScenarioPlayLog> findByScenarioAndUserAndStepOrder(Scenario scenario, User user, int stepOrder);
+
+    // 전체 기록 히스토리 (정렬 포함)
+    List<ScenarioPlayLog> findByScenarioAndUserOrderByStepOrderAsc(Scenario scenario, User user);
 }

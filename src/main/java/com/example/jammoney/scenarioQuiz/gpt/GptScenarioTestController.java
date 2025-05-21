@@ -28,17 +28,18 @@ public class GptScenarioTestController {
         return gptScenarioService.generateChoices(topic, question, history, difficulty);
     }
 
-    // ✅ 사용자 선택 → 다음 질문 생성 (난이도 포함)
+    // ✅ 사용자 선택 → 다음 질문 생성 (이전 질문 + 난이도 포함)
     @PostMapping("/next")
     public Mono<GptNextMessageResponse> testNextStep(
             @RequestBody List<String> history,
+            @RequestParam String previousQuestion,
             @RequestParam String selected,
             @RequestParam Difficulty difficulty
     ) {
-        return gptScenarioService.generateNextStep(selected, history, difficulty);
+        return gptScenarioService.generateNextStep(previousQuestion, selected, history, difficulty);
     }
 
-    // ✅ 총평 생성 (그대로)
+    // ✅ 총평 생성
     @PostMapping("/summary")
     public Mono<GptScenarioSummaryResponse> testSummary(
             @RequestBody List<String> selectedChoices
