@@ -1,4 +1,4 @@
-package com.example.jammoney.scenarioQuiz;
+package com.example.jammoney.scenarioQuiz.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,7 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ScenarioStep {
+public class ScenarioStep { //AI의 질문 (단계별 대화)
     @Id @GeneratedValue
     private Long id;
 
@@ -20,5 +20,8 @@ public class ScenarioStep {
     private Scenario scenario;
 
     private int stepOrder;           // 1, 2, 3...
-    private String aiMessage;        // AI가 사용자에게 말하는 질문
+
+    private String aiMessage;        // "어떤 조건이 가장 중요하신가요?"
+
+    private boolean isEndStep;       // 이 단계가 마지막인지
 }

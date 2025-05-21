@@ -28,24 +28,28 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginRequestDto requestDto) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto requestDto) {
+        try {
 
-        // 1. 인증 시도
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword())
-        );
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword())
+            );
 
-        // 2. 인증된 사용자 정보 가져오기
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userDetails.getUser();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            User user = userDetails.getUser();
 
-        // 3. AccessToken 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
 
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+            String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-        return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshToken.getToken()));
+            return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshToken.getToken()));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("로그인 실패: " + e.getMessage());
+        }
     }
+
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String bearerToken) {
