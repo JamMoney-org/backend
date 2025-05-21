@@ -1,8 +1,8 @@
 package com.example.jammoney.exception;
 
-public class InvalidRefreshTokenException extends RuntimeException {
+public class InvalidJwtTokenException extends RuntimeException {
     private ErrorCode errorCode;
-    public InvalidRefreshTokenException(ErrorCode errorCode) {
+    public InvalidJwtTokenException(ErrorCode errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
