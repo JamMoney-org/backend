@@ -1,5 +1,6 @@
 package com.example.jammoney.auth.controller;
 
+import com.example.jammoney.auth.dto.TokenRequestDto;
 import com.example.jammoney.auth.dto.TokenResponseDto;
 import com.example.jammoney.auth.entity.RefreshToken;
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
@@ -19,22 +20,16 @@ public class RefreshTokenController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponseDto> refreshAccessToken(@RequestParam("refreshToken") String refreshTokenValue) {
-        RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenValue)
-                .filter(rt -> !rt.isExpired())
-                .orElseThrow(() -> new InvalidRefreshTokenException("리프레시 토큰이 만료되었거나 유효하지 않습니다."));
+    public ResponseEntity<TokenResponseDto> refreshAccessToken(@RequestBody TokenRequestDto request) {
+        String refreshToken = request.getRefreshToken();
+        String email = jwtTokenProvider.getEmailFromToken(refreshToken);  // 토큰이 email 정보 포함하고 있다고 가정
 
-
-        User user = refreshToken.getUser();
-
-        String newAccessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
-        String newRefreshToken = refreshToken.getToken();
-
-        // Sliding 만료: 3일 이하 남았으면 새 RefreshToken도 발급
-        if (refreshToken.isNearExpiry(3)) {
-            RefreshToken updated = refreshTokenService.createRefreshToken(user);
-            newRefreshToken = updated.getToken();
+        if (!refreshTokenService.validate(email, refreshToken)) {
+            throw new InvalidRefreshTokenException("RefreshToken 불일치 또는 없음");
         }
+
+        String newAccessToken = jwtTokenProvider.generateAccessToken(email);
+        String newRefreshToken = refreshTokenService.createRefreshToken(email);  // Sliding Expiration
 
         return ResponseEntity.ok(new TokenResponseDto(newAccessToken, newRefreshToken));
     }
