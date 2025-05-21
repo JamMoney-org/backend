@@ -1,5 +1,6 @@
 package com.example.jammoney.auth.controller;
 
+import com.example.jammoney.auth.dto.TokenRequestDto;
 import com.example.jammoney.auth.dto.TokenResponseDto;
 import com.example.jammoney.auth.entity.RefreshToken;
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
@@ -19,18 +20,17 @@ public class RefreshTokenController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponseDto> refreshAccessToken(@RequestParam("refreshToken") String refreshTokenValue) {
+    public ResponseEntity<TokenResponseDto> refreshAccessToken(@RequestBody TokenRequestDto requestDto) {
+        String refreshTokenValue = requestDto.getRefreshToken();
+
         RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenValue)
                 .filter(rt -> !rt.isExpired())
                 .orElseThrow(() -> new InvalidRefreshTokenException("리프레시 토큰이 만료되었거나 유효하지 않습니다."));
 
-
         User user = refreshToken.getUser();
-
         String newAccessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
         String newRefreshToken = refreshToken.getToken();
 
-        // Sliding 만료: 3일 이하 남았으면 새 RefreshToken도 발급
         if (refreshToken.isNearExpiry(3)) {
             RefreshToken updated = refreshTokenService.createRefreshToken(user);
             newRefreshToken = updated.getToken();

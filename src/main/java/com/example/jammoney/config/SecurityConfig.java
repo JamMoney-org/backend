@@ -54,14 +54,19 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*")); // 모든 origin 허용
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:8080",
+                "http://127.0.0.1:5500",
+                "http://127.0.0.1:5501"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("http://127.0.0.1:3000", "http://127.0.0.1:8080", "http://127.0.0.1:5500", "http://127.0.0.1:5501")); // 모든 헤더 허용
-        configuration.setAllowCredentials(true); // 인증정보 포함 허용
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With")); // 헤더만 허용
+        configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // 모든 경로에 적용
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 

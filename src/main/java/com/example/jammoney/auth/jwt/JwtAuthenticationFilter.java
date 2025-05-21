@@ -42,9 +42,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } else {
+                // 유효하지 않은 토큰이면 즉시 401 응답하고 종료
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Invalid JWT token\"}");
+                return; // 필터 체인 종료
             }
         }
 
+        // 인증 시도하지 않거나 정상 인증되었으면 다음 필터로 진행
         filterChain.doFilter(request, response);
     }
 }

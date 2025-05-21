@@ -68,6 +68,14 @@ public class JwtTokenProvider {
                 .getPayload()
                 .getSubject();
     }
+    public long getRemainingTime(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return claims.getExpiration().getTime() - System.currentTimeMillis();
+    }
 
     //토큰 유효성 검증
     public boolean validateToken(String token) {
