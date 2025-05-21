@@ -1,6 +1,8 @@
 package com.example.jammoney.auth.jwt;
 
 import com.example.jammoney.auth.service.CustomUserDetailsService;
+import com.example.jammoney.exception.ErrorCode;
+import com.example.jammoney.exception.InvalidJwtTokenException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,7 +30,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
-
+        String requestURI = request.getRequestURI();
+        if ("/auth/refresh".equals(requestURI)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
@@ -44,11 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } else {
-                // 유효하지 않은 토큰이면 즉시 401 응답하고 종료
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Invalid JWT token\"}");
-                return; // 필터 체인 종료
+                throw new InvalidJwtTokenException(ErrorCode.INVALID_TOKEN);
             }
         }
 
