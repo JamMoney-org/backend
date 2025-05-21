@@ -1,7 +1,6 @@
 package com.example.jammoney.auth.jwt;
 
 import com.example.jammoney.auth.service.CustomUserDetailsService;
-import com.example.jammoney.auth.service.RedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,44 +21,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
-    private final RedisService redisService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+                                    FilterChain filterChain) throws ServletException, IOException {
 
-        String token = resolveToken(request);
+        String authHeader = request.getHeader("Authorization");
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
 
-            // 블랙리스트 확인
-            if (redisService.isBlacklisted(token)) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "블랙리스트 처리된 토큰입니다");
-                return;
+            if (jwtTokenProvider.validateToken(token)) {
+                String userEmail = jwtTokenProvider.getEmailFromToken(token);
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } else {
+                // 유효하지 않은 토큰이면 즉시 401 응답하고 종료
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Invalid JWT token\"}");
+                return; // 필터 체인 종료
             }
-
-            String email = jwtTokenProvider.getEmailFromToken(token);
-
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
+        // 인증 시도하지 않거나 정상 인증되었으면 다음 필터로 진행
         filterChain.doFilter(request, response);
-    }
-
-    // Authorization 헤더에서 Bearer 토큰 추출
-    private String resolveToken(HttpServletRequest request) {
-        String bearer = request.getHeader("Authorization");
-        if (bearer != null && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
-        }
-        return null;
     }
 }
 
