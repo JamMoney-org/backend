@@ -123,7 +123,15 @@ public class ScenarioServiceImpl implements ScenarioService {
     }
 
     @Override
-    public ScenarioEvaluationResponseDTO summarizeScenario(List<String> selectedChoices) {
+    public ScenarioEvaluationResponseDTO summarizeScenario(Long scenarioId, User user) {
+        Scenario scenario = scenarioRepository.findById(scenarioId)
+                .orElseThrow(() -> new IllegalArgumentException("시나리오를 찾을 수 없습니다."));
+
+        List<ScenarioPlayLog> playLogs = playLogRepository.findByScenarioAndUserOrderByStepOrderAsc(scenario, user);
+        List<String> selectedChoices = playLogs.stream()
+                .map(ScenarioPlayLog::getChoiceContent)
+                .toList();
+
         GptScenarioSummaryResponse summary = gptScenarioService.generateSummary(selectedChoices).block();
         return new ScenarioEvaluationResponseDTO(summary.getSummary());
     }

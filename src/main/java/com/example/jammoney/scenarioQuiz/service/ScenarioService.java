@@ -21,7 +21,7 @@ public interface ScenarioService {
     /**
      * 전체 선택 이력을 기반으로 시나리오 총평 요청
      */
-    ScenarioEvaluationResponseDTO summarizeScenario(List<String> selectedChoices);
+    ScenarioEvaluationResponseDTO summarizeScenario(Long scenarioId, User user);
 
     void createScenarioWithFirstStep(ScenarioCreateRequestDTO request);
 }

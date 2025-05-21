@@ -50,7 +50,9 @@ public class ScenarioController {
     // 3. 총평 요청
     @PostMapping("/summary")
     public ScenarioEvaluationResponseDTO summarize(
-            @RequestBody List<String> selectedChoices) {
-        return scenarioService.summarizeScenario(selectedChoices);
+            @RequestBody ScenarioStartRequestDTO request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        return scenarioService.summarizeScenario(request.getScenarioId(), user);
     }
 }
