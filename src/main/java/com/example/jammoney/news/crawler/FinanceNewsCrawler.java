@@ -17,6 +17,7 @@ public class FinanceNewsCrawler {
 
     private static final String URL = "https://finance.naver.com/news/mainnews.naver";
 
+
     public List<NewsRequestDto> fetchTodayNews() {
         List<NewsRequestDto> result = new ArrayList<>();
 
@@ -29,7 +30,7 @@ public class FinanceNewsCrawler {
                 if (count >= 3) break;
 
                 Element anchor = el.selectFirst("a");
-                if (anchor == null) continue; // a 태그 없으면 스킵
+                if (anchor == null || anchor.text().isBlank()) continue; // a 태그 없으면 스킵
 
                 String title = anchor.text();
                 String link = "https://finance.naver.com" + anchor.attr("href");

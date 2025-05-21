@@ -1,11 +1,13 @@
 package com.example.jammoney.news.service;
 
+import com.example.jammoney.news.crawler.FinanceNewsCrawler;
 import com.example.jammoney.news.dto.NewsQuizDto;
 import com.example.jammoney.news.dto.NewsRequestDto;
 import com.example.jammoney.news.dto.NewsResponseDto;
 import com.example.jammoney.news.dto.NewsSimpleDto;
 import com.example.jammoney.news.entity.News;
 import com.example.jammoney.news.repository.NewsRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class NewsService {
     private final NewsRepository newsRepository;
+    private final FinanceNewsCrawler financeNewsCrawler;
     public void deleteOldNews() {
         LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
         newsRepository.deleteByPublishDateBefore(sevenDaysAgo);
