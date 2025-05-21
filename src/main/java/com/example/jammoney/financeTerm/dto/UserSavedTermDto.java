@@ -1,8 +1,12 @@
 package com.example.jammoney.financeTerm.dto;
 
-import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
-public class UserSavedTermDto {
+import java.util.List;
+@Getter
+@Setter
+public class UserSavedTermDto { //나만의 단어장
     private Long termId;
     private String term;
     private String definition;

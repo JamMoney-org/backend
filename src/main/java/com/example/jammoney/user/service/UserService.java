@@ -5,6 +5,7 @@ import com.example.jammoney.exception.ErrorCode;
 import com.example.jammoney.exception.PasswordMismatchException;
 import com.example.jammoney.pet.entity.Pet;
 import com.example.jammoney.cash.entity.Cash;
+import com.example.jammoney.stockApp.stock.entity.UserPortfolio;
 import com.example.jammoney.user.Role;
 import com.example.jammoney.user.dto.UserRequestDto;
 import com.example.jammoney.user.entity.User;
@@ -48,10 +49,18 @@ public class UserService {
                 .exp(0)
                 .mood("Happy")
                 .build();
-        pet.setUser(user);
-        user.setPet(pet);  // 연관관계 설정
+        user.setPet(pet);
 
-        // Cash 생성 (초기 자금 100,000원 예시)
+        UserPortfolio userPortfolio = UserPortfolio.builder()
+                .user(user)
+                .cash(0)
+                .stockAsset(0)
+                .totalAsset(0)
+                .profitAmount(0)
+                .profitRate(0.0)
+                .build();
+        user.setUserPortfolio(userPortfolio);
+
         Cash cash = new Cash();
         cash.setUser(user);
         cash.setMoney(0); // 초기 자산 설정

@@ -1,9 +1,14 @@
 package com.example.jammoney.financeTerm.dto;
 
-import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
-public class TermQuizDto {
-    private String definition;
+import java.util.List;
+@Getter
+@Setter
+public class TermQuizDto { //퀴즈 목록 불러올 때 사용
+    private Long quizId;
+    private String question;
     private List<String> choices;
-    private String correctAnswer;
 }
+

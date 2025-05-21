@@ -18,7 +18,7 @@ public class Cash{
     @Column(nullable = false)
     private long money;
 
-    @JoinColumn(name = "MEMBER_ID")
+    @JoinColumn(name = "USER_ID")
     @OneToOne(fetch = FetchType.LAZY)
     private User user;
 

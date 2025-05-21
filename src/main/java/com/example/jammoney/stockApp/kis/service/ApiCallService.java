@@ -1,7 +1,9 @@
 package com.example.jammoney.stockApp.kis.service;
+import com.example.jammoney.stockApp.kis.dto.KospiDto;
 import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
 import com.example.jammoney.stockApp.kis.dto.StockMinDto;
 import com.example.jammoney.stockApp.kis.dto.StockPriceDto;
+import com.example.jammoney.stockApp.stock.dto.KospiResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Map;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +33,8 @@ public class ApiCallService {
     @Value("${kis.base-url}")
     private String baseUrl;
 
-    @Value("${kis.url.stockasbi}")
-    private String stockAsbiUrl;
+    @Value("${kis.url.stockAskingPrice}")
+    private String stockAskingPriceUrl;
 
     @Value("${kis.url.stockmin}")
     private String stockMinUrl;
@@ -69,9 +72,9 @@ public class ApiCallService {
     /**
      * 10단계 호가/잔량 데이터
      */
-    public StockAskingPriceDto getStockAsbi(String stockCode) {
+    public StockAskingPriceDto getStockAskingPrice(String stockCode) {
         HttpHeaders headers = createHeaders("FHKST01010200");
-        String uri = UriComponentsBuilder.fromHttpUrl(baseUrl + stockAsbiUrl)
+        String uri = UriComponentsBuilder.fromHttpUrl(baseUrl + stockAskingPriceUrl)
                 .queryParam("FID_COND_MRKT_DIV_CODE", "J")
                 .queryParam("FID_INPUT_ISCD", stockCode)
                 .toUriString();
@@ -95,11 +98,69 @@ public class ApiCallService {
         return sendGet(uri, headers, StockMinDto.class);
     }
 
+    public List<KospiResponseDto> getKospiMonthlyIndexThisYear() {
+        HttpHeaders headers = createHeaders("FHKUP03500100");
+
+
+        String startDate = "20241231";
+        String endDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        String uri = baseUrl + kospiUrl+"?FID_COND_MRKT_DIV_CODE=U&FID_INPUT_ISCD=" + "0001" + "&FID_INPUT_DATE_1=" + startDate
+                +"&FID_INPUT_DATE_2=" + endDate + "&FID_PERIOD_DIV_CODE=" + "M";
+
+        KospiDto response = sendGet(uri, headers, KospiDto.class);
+        if (response == null || response.getOutput2() == null) {
+            log.warn("응답이 null 또는 output2가 없습니다.");
+            return Collections.emptyList();
+        }
+        log.info("output2 size: {}", response.getOutput2().size());
+        List<KospiResponseDto> result = new ArrayList<>();
+        for (KospiDto.KospiRawItem item : response.getOutput2()) {
+            String yyyymm = item.getStck_bsop_date().substring(0, 6);
+            if (yyyymm.compareTo(startDate) >= 0 && yyyymm.compareTo(endDate) <= 0)  {
+                KospiResponseDto dto = new KospiResponseDto();
+                dto.setDate(yyyymm);
+                dto.setOpen(parseDouble(item.getBstp_nmix_oprc()));
+                dto.setHigh(parseDouble(item.getBstp_nmix_hgpr()));
+                dto.setLow(parseDouble(item.getBstp_nmix_lwpr()));
+                dto.setClose(parseDouble(item.getBstp_nmix_prpr()));
+                log.info("raw response = {}", dto);
+                result.add(dto);
+            }
+        }
+
+        // 날짜 오름차순 정렬
+        result.sort(Comparator.comparing(KospiResponseDto::getDate));
+        return result;
+    }
+
+    private double parseDouble(String s) {
+        try {
+            return Double.parseDouble(s);
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+    public KospiDto getKospiData(String fromDate, String toDate, String period) {
+        HttpHeaders headers = createHeaders("FHKUP03500100");
+
+        String uri = baseUrl + kospiUrl +
+                "?FID_COND_MRKT_DIV_CODE=U" +
+                "&FID_INPUT_ISCD=0001" +
+                "&FID_INPUT_DATE_1=" + fromDate +
+                "&FID_INPUT_DATE_2=" + toDate +
+                "&FID_PERIOD_DIV_CODE=" + period;
+
+        return sendGet(uri, headers, KospiDto.class);
+    }
+
+
     /**
      * 공통 GET 요청 처리
      */
     private <T> T sendGet(String uri, HttpHeaders headers, Class<T> clazz) {
         HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         try {
             ResponseEntity<T> response = restTemplate.exchange(
                     uri,
