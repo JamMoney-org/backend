@@ -30,6 +30,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/protected").authenticated()
+                        .requestMatchers("/api/test/gpt/**").permitAll()  // ✅ 여기가 핵심!
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
