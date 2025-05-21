@@ -2,6 +2,7 @@ package com.example.jammoney.auth.controller;
 
 import com.example.jammoney.auth.dto.TokenResponseDto;
 import com.example.jammoney.auth.entity.CustomUserDetails;
+import com.example.jammoney.auth.entity.RefreshToken;
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
 import com.example.jammoney.auth.service.RefreshTokenService;
 import com.example.jammoney.user.dto.LoginRequestDto;
@@ -41,10 +42,9 @@ public class AuthController {
         // 3. AccessToken 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
 
-        // 4. RefreshToken 생성 및 저장
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-        // 5. 클라이언트에 응답
-        return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshTokenService.createRefreshToken(user).getToken()));
+        return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshToken.getToken()));
     }
 
     @PostMapping("/logout")

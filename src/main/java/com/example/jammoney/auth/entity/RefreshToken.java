@@ -24,7 +24,7 @@ public class RefreshToken {
     @Column(nullable = false)
     private LocalDateTime expiryDate;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)//리프레시 토큰 갱신/검증 때마다 프록시 로딩이 발생하는 현상 방지
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
