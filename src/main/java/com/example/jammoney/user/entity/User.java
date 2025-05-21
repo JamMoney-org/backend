@@ -5,6 +5,7 @@ import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.stockApp.stock.entity.HoldingStock;
 import com.example.jammoney.stockApp.stock.entity.InterestingStock;
 import com.example.jammoney.stockApp.stock.entity.Order;
+import com.example.jammoney.stockApp.stock.entity.UserPortfolio;
 import com.example.jammoney.user.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,6 +46,9 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Pet pet;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserPortfolio userPortfolio;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InterestingStock> interestingStocks = new ArrayList<>();

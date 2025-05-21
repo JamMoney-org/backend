@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/test/**").permitAll()
-                        .requestMatchers("/api/protected").authenticated()
+                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -56,7 +56,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*")); // 모든 origin 허용
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
+        configuration.setAllowedHeaders(List.of("http://127.0.0.1:3000", "http://127.0.0.1:8080", "http://127.0.0.1:5500", "http://127.0.0.1:5501")); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 인증정보 포함 허용
         configuration.setMaxAge(3600L);
 
