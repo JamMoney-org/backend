@@ -8,5 +8,5 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ScenarioEvaluationResponseDTO { // 종료 후 평가 요청/응답
-    private String overallFeedback;
+    private String overallFeedback; // GPT가 생성한 최종 피드백 문장
 }

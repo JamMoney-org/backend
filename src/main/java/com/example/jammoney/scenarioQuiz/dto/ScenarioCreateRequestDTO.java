@@ -17,5 +17,5 @@ public class ScenarioCreateRequestDTO {
     private ScenarioCategory category;  // 예: 소비
     private String firstAiMessage;      // 예: "어떤 조건의 자취방을 찾으시나요?"
     @Enumerated(EnumType.STRING)
-    private Difficulty difficulty;
+    private Difficulty difficulty; // 난이도 (EASY, NORMAL, HARD)
 }

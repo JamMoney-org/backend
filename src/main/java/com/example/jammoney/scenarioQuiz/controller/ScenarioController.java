@@ -33,7 +33,7 @@ public class ScenarioController {
         return scenarioService.startScenario(request.getScenarioId(), user);
     }
 
-    // 2. 다음 스텝 진행
+    // 2. 다음 스텝 진행 (마지막 질문일 때까지 계속 나옴!)
     @PostMapping("/next")
     public NextStepResponseDTO nextStep(
             @RequestBody ScenarioChoiceRequestDTO request,
@@ -50,9 +50,9 @@ public class ScenarioController {
     // 3. 총평 요청
     @PostMapping("/summary")
     public ScenarioEvaluationResponseDTO summarize(
-            @RequestBody ScenarioStartRequestDTO request,
+            @RequestParam Long scenarioId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return scenarioService.summarizeScenario(request.getScenarioId(), user);
+        return scenarioService.summarizeScenario(scenarioId, user);
     }
 }

@@ -102,6 +102,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                     .stepOrder(currentStep + 1)
                     .aiMessage("시나리오가 종료되었습니다.")
                     .choices(new ArrayList<>())
+                    .isFinalStep(true)
                     .build();
         }
 
@@ -110,6 +111,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .stepOrder(currentStep + 1)
                 .aiMessage(nextMessage.getNextAiMessage())
                 .choices(mapToChoiceDTOs(gptChoices.getChoices()))
+                .isFinalStep(false)
                 .build();
     }
 
