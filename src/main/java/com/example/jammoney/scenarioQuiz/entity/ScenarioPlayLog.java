@@ -15,9 +15,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ScenarioPlayLog { //사용자의 선택 이력 (총평용)
-    @Id
-    @GeneratedValue
+public class ScenarioPlayLog {
+
+    @Id @GeneratedValue
     private Long id;
 
     @ManyToOne
@@ -29,10 +29,8 @@ public class ScenarioPlayLog { //사용자의 선택 이력 (총평용)
     @ManyToOne
     private ScenarioStep step;
 
-    @ManyToOne
-    private ScenarioChoice choice;
+    private String choiceContent;
 
     private int stepOrder;
-
     private LocalDateTime selectedAt;
 }

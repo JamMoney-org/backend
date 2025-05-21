@@ -1,7 +1,14 @@
 package com.example.jammoney.scenarioQuiz.dto;
 
+import lombok.*;
+
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ScenarioStartResponseDTO { //시나리오 시작
     private Long scenarioId;
     private String title;

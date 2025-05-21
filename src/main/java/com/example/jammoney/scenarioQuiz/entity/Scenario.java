@@ -1,5 +1,6 @@
 package com.example.jammoney.scenarioQuiz.entity;
 
+import com.example.jammoney.financeQuiz.entity.Difficulty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,4 +20,7 @@ public class Scenario { //시나리오 기본 정보
 
     @Enumerated(EnumType.STRING)
     private ScenarioCategory category;
+
+    @Enumerated(EnumType.STRING)
+    private Difficulty difficulty;
 }

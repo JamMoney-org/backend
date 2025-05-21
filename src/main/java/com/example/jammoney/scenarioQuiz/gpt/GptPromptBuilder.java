@@ -1,5 +1,6 @@
     package com.example.jammoney.scenarioQuiz.gpt;
 
+    import com.example.jammoney.financeQuiz.entity.Difficulty;
     import org.springframework.stereotype.Component;
 
     import java.util.List;
@@ -8,12 +9,14 @@
     public class GptPromptBuilder {
 
         // 1️⃣ 선택지 생성용 프롬프트
-        public String buildChoicesPrompt(String topic, String aiMessage, List<String> history) {
+        public String buildChoicesPrompt(String topic, String aiMessage, List<String> history, Difficulty difficulty) {
             StringBuilder sb = new StringBuilder();
 
             sb.append("당신은 금융 교육을 위한 시나리오 기반 대화형 AI입니다.\n")
                     .append("사용자는 현실적인 금융 상황 속에서 선택지를 고르며 학습을 진행합니다.\n")
                     .append("각 선택지는 실제 대화처럼 자연스러우며, 선택 시 사용자에게 짧은 피드백이 함께 제공됩니다.\n")
+                    .append("난이도: ").append(difficulty.name()).append("\n")
+                    .append("난이도가 높을수록 더 고민이 필요한 선택지가 포함될 수 있습니다.\n\n")
                     .append("주제: ").append(topic).append("\n\n");
 
             if (history != null && !history.isEmpty()) {
@@ -48,9 +51,9 @@
         }
 
         // 2️⃣ 다음 질문 생성용 프롬프트
-        public String buildNextMessagePrompt(String selectedChoice, List<String> history) {
+        public String buildNextMessagePrompt(String selectedChoice, List<String> history, Difficulty difficulty) {
             StringBuilder sb = new StringBuilder();
-            sb.append("당신은 금융 시나리오 AI입니다.\n");
+            sb.append("당신은 ").append(difficulty.name()).append(" 난이도의 금융 시나리오 AI입니다.\n");
             sb.append("사용자의 이전 선택에 자연스럽게 이어지는 다음 질문을 생성하세요.\n");
             sb.append("질문은 친절하고 현실적인 어조로 작성하세요.\n");
             sb.append("단순한 문장 하나만 출력하고, JSON 없이 순수 문자열만 출력하세요.\n\n");

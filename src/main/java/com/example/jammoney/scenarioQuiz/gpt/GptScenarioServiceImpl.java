@@ -1,5 +1,6 @@
 package com.example.jammoney.scenarioQuiz.gpt;
 
+import com.example.jammoney.financeQuiz.entity.Difficulty;
 import com.example.jammoney.scenarioQuiz.gpt.dto.GptNextMessageResponse;
 import com.example.jammoney.scenarioQuiz.gpt.dto.GptScenarioChoiceResponse;
 import com.example.jammoney.scenarioQuiz.gpt.dto.GptScenarioSummaryResponse;
@@ -22,9 +23,8 @@ public class GptScenarioServiceImpl implements GptScenarioService {
      * (초기 질문이든 다음 질문이든 공통)
      */
     @Override
-    public Mono<GptScenarioChoiceResponse> generateChoices(String topic, String aiMessage, List<String> history) {
-        String prompt = promptBuilder.buildChoicesPrompt(topic, aiMessage, history);
-
+    public Mono<GptScenarioChoiceResponse> generateChoices(String topic, String aiMessage, List<String> history, Difficulty difficulty) {
+        String prompt = promptBuilder.buildChoicesPrompt(topic, aiMessage, history, difficulty); // ✅ 난이도 추가
         return gptApiClient.callGpt(prompt)
                 .map(responseParser::parseChoiceResponse);
     }
@@ -33,9 +33,8 @@ public class GptScenarioServiceImpl implements GptScenarioService {
      * 선택 이후 → 그 선택에 따라 이어지는 다음 질문(한 문장) 생성
      */
     @Override
-    public Mono<GptNextMessageResponse> generateNextStep(String selectedChoice, List<String> history) {
-        String prompt = promptBuilder.buildNextMessagePrompt(selectedChoice, history);
-
+    public Mono<GptNextMessageResponse> generateNextStep(String selectedChoice, List<String> history, Difficulty difficulty) {
+        String prompt = promptBuilder.buildNextMessagePrompt(selectedChoice, history, difficulty); // ✅ 난이도 반영
         return gptApiClient.callGpt(prompt)
                 .map(responseParser::parseNextMessage);
     }
@@ -46,7 +45,6 @@ public class GptScenarioServiceImpl implements GptScenarioService {
     @Override
     public Mono<GptScenarioSummaryResponse> generateSummary(List<String> selectedChoices) {
         String prompt = promptBuilder.buildSummaryPrompt(selectedChoices);
-
         return gptApiClient.callGpt(prompt)
                 .map(responseParser::parseSummary);
     }

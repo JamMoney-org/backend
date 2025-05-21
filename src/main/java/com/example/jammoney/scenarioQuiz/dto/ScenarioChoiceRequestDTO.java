@@ -1,7 +1,18 @@
 package com.example.jammoney.scenarioQuiz.dto;
 
-public class ScenarioChoiceRequestDTO { //선택지 응답
-    private Long choiceId;
-    private String content;
-    private boolean isEnd;         // 이 선택이 마지막인지 (선택 후 안내용)
+import jakarta.persistence.Entity;
+import lombok.*;
+
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ScenarioChoiceRequestDTO {
+    private Long scenarioId;
+    private String selectedChoice; // 사용자가 고른 문장
+    private List<String> history;  // 이전 선택 이력
+    private int currentStep;       // 현재 단계 (ex. 1단계 → 2단계)
 }

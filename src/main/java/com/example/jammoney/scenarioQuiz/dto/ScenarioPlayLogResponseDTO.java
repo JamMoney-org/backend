@@ -16,5 +16,4 @@ public class ScenarioPlayLogResponseDTO {
     private int stepOrder;
     private LocalDateTime selectedAt;
     private String choiceContent;
-    private String feedback;
 }

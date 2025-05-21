@@ -1,6 +1,16 @@
 package com.example.jammoney.scenarioQuiz.dto;
 
-public class ScenarioChoiceDTO { //공통 서브 DTO
+import jakarta.persistence.Entity;
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ScenarioChoiceDTO {
     private Long choiceId;
     private String content;
+    private boolean isGood;
+    private boolean isEnd;
 }
