@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/quiz")
 @RequiredArgsConstructor
-public class QuizController {
+public class QuizController { //금융상식퀴즈
 
     private final QuizService quizService;
 

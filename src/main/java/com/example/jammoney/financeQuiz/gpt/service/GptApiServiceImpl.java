@@ -1,10 +1,10 @@
-package com.example.jammoney.gpt.service;
+package com.example.jammoney.financeQuiz.gpt.service;
 
 import com.example.jammoney.financeQuiz.entity.Difficulty;
 import com.example.jammoney.financeQuiz.dto.FinanceQuiz;
 import com.example.jammoney.financeQuiz.entity.QuizCategory;
-import com.example.jammoney.gpt.dto.GptResponse;
-import com.example.jammoney.gpt.mapper.GptQuizMapper;
+import com.example.jammoney.financeQuiz.gpt.dto.GptResponse;
+import com.example.jammoney.financeQuiz.gpt.mapper.GptQuizMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

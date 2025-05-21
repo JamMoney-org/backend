@@ -23,7 +23,9 @@ public class FinancialTerm {
 
     private String definition;
 
-    private String category;
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private FinancialCategory category;
 
     private int dayIndex;
 

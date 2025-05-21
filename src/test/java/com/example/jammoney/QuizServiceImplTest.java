@@ -6,7 +6,7 @@ import com.example.jammoney.financeQuiz.entity.QuizCategory;
 import com.example.jammoney.financeQuiz.entity.WrongNote;
 import com.example.jammoney.financeQuiz.repository.WrongNoteRepository;
 import com.example.jammoney.financeQuiz.service.QuizServiceImpl;
-import com.example.jammoney.gpt.service.GptApiService;
+import com.example.jammoney.financeQuiz.gpt.service.GptApiService;
 import com.example.jammoney.pet.service.PetService;
 import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.cash.service.CashService;

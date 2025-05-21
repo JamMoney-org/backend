@@ -4,26 +4,26 @@ import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "user_saved_terms")
+@Table(name = "quiz_submissions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserSavedTerm { //나만의 단어장
+public class QuizSubmission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     @ManyToOne
-    @JoinColumn(name = "user_id")
     private User user;
 
-
     @ManyToOne
-    @JoinColumn(name = "term_id")
-    private FinancialTerm term;
-}
+    private FinancialTermQuiz quiz;
 
+    private int selectedAnswerIndex;
+    private boolean isCorrect;
+}

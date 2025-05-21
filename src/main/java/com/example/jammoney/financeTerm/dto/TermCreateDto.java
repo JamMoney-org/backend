@@ -4,11 +4,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+
 @Getter
 @Setter
-public class UserSavedTermDto { //나만의 단어장
-    private Long termId;
+public class TermCreateDto {
     private String term;
     private String definition;
     private List<String> exampleSentences;
+    private Long categoryId;
+    private int dayIndex;
 }

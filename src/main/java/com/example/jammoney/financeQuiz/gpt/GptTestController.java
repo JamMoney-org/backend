@@ -1,10 +1,10 @@
-package com.example.jammoney.gpt;
+package com.example.jammoney.financeQuiz.gpt;
 
 import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.financeQuiz.entity.Difficulty;
 import com.example.jammoney.financeQuiz.dto.FinanceQuiz;
 import com.example.jammoney.financeQuiz.entity.QuizCategory;
-import com.example.jammoney.gpt.service.GptApiService;
+import com.example.jammoney.financeQuiz.gpt.service.GptApiService;
 import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
