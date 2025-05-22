@@ -74,7 +74,7 @@ public class HoldingStockService {
     public HoldingStock findHoldingStock(Long companyId, Long userId) {
         HoldingStock holdingStock = holdingStockRepository.findByCompanyAndUser(companyId, userId);
         if(holdingStock == null)
-            throw new StockLogicException(ErrorCode.HOLDINGSTOCK_NOT_FOUND);
+            throw new StockLogicException(ErrorCode.HOLDING_STOCK_NOT_FOUND);
         else
             return holdingStock;
     }

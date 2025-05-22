@@ -19,65 +19,66 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponseDto> handleEmailAlreadyExistsException(EmailAlreadyExistsException e, HttpServletRequest request) {
-        ErrorCode code = e.getErrorCode();
+    // 1. 공통 에러 응답 생성 메서드
+    private ResponseEntity<ErrorResponseDto> buildErrorResponse(ErrorCode code, HttpServletRequest request, String overrideMessage) {
         return ResponseEntity.status(code.getStatus()).body(
-                new ErrorResponseDto(code.getStatus(), code.name(), code.getMessage(), request.getRequestURI())
-        );
-    }
-    @ExceptionHandler(PasswordMismatchException.class)
-    public ResponseEntity<ErrorResponseDto> handlePasswordMismatchException(PasswordMismatchException e, HttpServletRequest request) {
-        ErrorCode code = e.getErrorCode();
-        return ResponseEntity.status(code.getStatus()).body(
-                new ErrorResponseDto(code.getStatus(), code.name(), code.getMessage(), request.getRequestURI())
+                new ErrorResponseDto(
+                        code.getStatus(),
+                        code.name(),
+                        overrideMessage != null ? overrideMessage : code.getMessage(),
+                        request.getRequestURI()
+                )
         );
     }
 
-    @ExceptionHandler(InvalidRefreshTokenException.class)
-    public ResponseEntity<?> handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("message", ex.getMessage()));
+    private ResponseEntity<ErrorResponseDto> buildErrorResponse(ErrorCode code, HttpServletRequest request) {
+        return buildErrorResponse(code, request, null);
     }
+
+    // 2. ErrorCode 기반의 커스텀 예외 처리 (모든 XxxException)
+    @ExceptionHandler({
+            EmailAlreadyExistsException.class,
+            NicknameAlreadyExistsException.class,
+            PasswordMismatchException.class,
+            UserNotFoundException.class,
+            InvalidRefreshTokenException.class,
+            InvalidJwtTokenException.class,
+            CashNotFoundException.class,
+            InsufficientBalanceException.class,
+            StockLogicException.class
+    })
+    public ResponseEntity<ErrorResponseDto> handleCustomException(RuntimeException e, HttpServletRequest request) {
+        if (e instanceof CustomException custom) {
+            return buildErrorResponse(custom.getErrorCode(), request);
+        }
+        return buildErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, request);
+    }
+
+    // 3. 로그인 실패 (비밀번호 틀림 등)
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", 401);
-        body.put("error", "Unauthorized");
-        body.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
-        body.put("path", "/auth/login"); // 또는 동적으로 처리 가능
-
-        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<ErrorResponseDto> handleBadCredentials(BadCredentialsException e, HttpServletRequest request) {
+        return buildErrorResponse(ErrorCode.INVALID_LOGIN, request, "이메일 또는 비밀번호가 올바르지 않습니다.");
     }
 
-    // @Valid 유효성 검사 실패 처리
+    // 4. @Valid 유효성 검사 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponseDto> handleMethodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponseDto> handleValidationError(MethodArgumentNotValidException e, HttpServletRequest request) {
         FieldError fieldError = e.getBindingResult().getFieldError();
-        String message = fieldError != null ? fieldError.getDefaultMessage() : "요청 값이 유효하지 않습니다.";
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                new ErrorResponseDto(400, "ValidationError", message, request.getRequestURI())
-        );
+        String message = fieldError != null ? fieldError.getDefaultMessage() : ErrorCode.VALIDATION_ERROR.getMessage();
+        return buildErrorResponse(ErrorCode.VALIDATION_ERROR, request, message);
     }
 
-    //DB 제약조건 위반 (ex. unique 키 중복)
+    // 5. DB 제약조건 위반
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolationException(DataIntegrityViolationException e, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                new ErrorResponseDto(409, "DuplicateKeyError", "이미 존재하는 값입니다.", request.getRequestURI())
-        );
+    public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolation(DataIntegrityViolationException e, HttpServletRequest request) {
+        return buildErrorResponse(ErrorCode.EMAIL_ALREADY_EXISTS, request); // 상황 따라 다른 ErrorCode 매핑 가능
     }
 
-    //처리되지 않은 모든 예외
+    // 6. 처리되지 않은 모든 예외
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponseDto> handleAllUnhandledExceptions(Exception e, HttpServletRequest request) {
-        log.error("Unhandled exception", e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                new ErrorResponseDto(500, "InternalServerError", "서버 내부 오류가 발생했습니다.", request.getRequestURI())
-        );
+    public ResponseEntity<ErrorResponseDto> handleUnhandledException(Exception e, HttpServletRequest request) {
+        log.error("Unhandled exception caught: ", e);
+        return buildErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, request);
     }
 }
 

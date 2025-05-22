@@ -1,9 +1,7 @@
 package com.example.jammoney.exception;
 
-public class InvalidRefreshTokenException extends RuntimeException {
-    private ErrorCode errorCode;
-    public InvalidRefreshTokenException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
+public class InvalidRefreshTokenException extends CustomException {
+    public InvalidRefreshTokenException() {
+        super(ErrorCode.INVALID_REFRESH_TOKEN);
     }
 }
