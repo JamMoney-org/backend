@@ -31,7 +31,6 @@ public class PetController { //캐릭터 관련
     // 캐릭터 이름 변경
     @PostMapping("/rename")
     public ResponseEntity<ApiResponse<Void>> renamePet(@RequestBody PetRenameRequestDTO request, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        //User user = getCurrentUser();
         User user = userDetails.getUser();
         petService.renamePet(user, request.getNewName());
         return ResponseEntity.ok(ApiResponse.success("캐릭터 이름 변경 완료", null));
