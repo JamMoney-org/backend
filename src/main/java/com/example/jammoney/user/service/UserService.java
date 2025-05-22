@@ -73,7 +73,7 @@ public class UserService {
 
     public void updateNickname(String email, String newNickname) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(UserNotFoundException::new);
 
         user.setNickname(newNickname);
         userRepository.save(user);  // 변경 감지로도 가능하나 명시적으로 저장
@@ -81,7 +81,7 @@ public class UserService {
 
     public void deactivate(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(UserNotFoundException::new);
 
         user.setActive(false);
         userRepository.save(user);
