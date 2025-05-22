@@ -170,4 +170,9 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .build();
         stepRepository.save(firstStep);
     }
+
+    @Override
+    public List<Scenario> getScenariosByCategory(ScenarioCategory category) {
+        return scenarioRepository.findByCategory(category);
+    }
 }

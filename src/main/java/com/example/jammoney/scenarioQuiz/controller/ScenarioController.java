@@ -2,12 +2,15 @@ package com.example.jammoney.scenarioQuiz.controller;
 
 import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.scenarioQuiz.dto.*;
+import com.example.jammoney.scenarioQuiz.entity.Scenario;
+import com.example.jammoney.scenarioQuiz.entity.ScenarioCategory;
 import com.example.jammoney.scenarioQuiz.service.ScenarioService;
 import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -54,5 +57,25 @@ public class ScenarioController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
         return scenarioService.summarizeScenario(scenarioId, user);
+    }
+
+    @GetMapping("/category/list") //카테고리별로 조회
+    public List<ScenarioListResponseDTO> getScenariosByCategory(@RequestParam ScenarioCategory category) {
+        List<Scenario> scenarios = scenarioService.getScenariosByCategory(category);
+        return scenarios.stream()
+                .map(s -> ScenarioListResponseDTO.builder()
+                        .id(s.getId())
+                        .title(s.getTitle())
+                        .description(s.getDescription())
+                        .difficulty(s.getDifficulty())
+                        .build())
+                .toList();
+    }
+
+    @GetMapping("/category") //카테고리 조회
+    public List<String> listCategories() {
+        return Arrays.stream(ScenarioCategory.values())
+                .map(ScenarioCategory::getLabel)
+                .toList();
     }
 }
