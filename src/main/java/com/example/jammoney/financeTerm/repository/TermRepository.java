@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface TermRepository extends JpaRepository<FinancialTerm, Long> {
     List<FinancialTerm> findByCategoryAndDayIndex(FinancialCategory category, int dayIndex);
+    List<FinancialTerm> findByCategory(FinancialCategory category);
+
 }

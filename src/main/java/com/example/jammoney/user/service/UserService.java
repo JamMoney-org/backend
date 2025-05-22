@@ -1,10 +1,9 @@
 package com.example.jammoney.user.service;
 
-import com.example.jammoney.exception.EmailAlreadyExistsException;
-import com.example.jammoney.exception.ErrorCode;
-import com.example.jammoney.exception.PasswordMismatchException;
+import com.example.jammoney.exception.*;
 import com.example.jammoney.pet.entity.Pet;
 import com.example.jammoney.cash.entity.Cash;
+import com.example.jammoney.stockApp.stock.entity.UserPortfolio;
 import com.example.jammoney.user.Role;
 import com.example.jammoney.user.dto.UserRequestDto;
 import com.example.jammoney.user.entity.User;
@@ -22,11 +21,14 @@ public class UserService {
 
     public void signup(UserRequestDto dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new EmailAlreadyExistsException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            throw new EmailAlreadyExistsException();
+        }
+        if(userRepository.existsByNickname(dto.getNickname())) {
+            throw new NicknameAlreadyExistsException();
         }
 
         if (!dto.getPassword().equals(dto.getConfirmPassword())) {
-            throw new PasswordMismatchException(ErrorCode.PASSWORD_MISMATCH);
+            throw new PasswordMismatchException();
         }
 
         String encryptedPassword = passwordEncoder.encode(dto.getPassword());
@@ -48,10 +50,18 @@ public class UserService {
                 .exp(0)
                 .mood("Happy")
                 .build();
-        pet.setUser(user);
-        user.setPet(pet);  // 연관관계 설정
+        user.setPet(pet);
 
-        // Cash 생성 (초기 자금 100,000원 예시)
+        UserPortfolio userPortfolio = UserPortfolio.builder()
+                .user(user)
+                .cash(0)
+                .stockAsset(0)
+                .totalAsset(0)
+                .profitAmount(0)
+                .profitRate(0.0)
+                .build();
+        user.setUserPortfolio(userPortfolio);
+
         Cash cash = new Cash();
         cash.setUser(user);
         cash.setMoney(0); // 초기 자산 설정
@@ -63,7 +73,7 @@ public class UserService {
 
     public void updateNickname(String email, String newNickname) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(UserNotFoundException::new);
 
         user.setNickname(newNickname);
         userRepository.save(user);  // 변경 감지로도 가능하나 명시적으로 저장
@@ -71,7 +81,7 @@ public class UserService {
 
     public void deactivate(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(UserNotFoundException::new);
 
         user.setActive(false);
         userRepository.save(user);

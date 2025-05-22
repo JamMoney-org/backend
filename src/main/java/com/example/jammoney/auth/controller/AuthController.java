@@ -2,8 +2,11 @@ package com.example.jammoney.auth.controller;
 
 import com.example.jammoney.auth.dto.TokenResponseDto;
 import com.example.jammoney.auth.entity.CustomUserDetails;
+import com.example.jammoney.auth.entity.RefreshToken;
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
 import com.example.jammoney.auth.service.RefreshTokenService;
+import com.example.jammoney.exception.InvalidLoginException;
+import com.example.jammoney.exception.UserNotFoundException;
 import com.example.jammoney.user.dto.LoginRequestDto;
 import com.example.jammoney.user.dto.UserRequestDto;
 import com.example.jammoney.user.entity.User;
@@ -12,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -27,25 +31,27 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginRequestDto requestDto) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto requestDto) {
+        try {
 
-        // 1. 인증 시도
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword())
-        );
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword())
+            );
 
-        // 2. 인증된 사용자 정보 가져오기
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userDetails.getUser();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            User user = userDetails.getUser();
 
-        // 3. AccessToken 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
 
-        // 4. RefreshToken 생성 및 저장
+            String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-        // 5. 클라이언트에 응답
-        return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshTokenService.createRefreshToken(user).getToken()));
+            return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshToken.getToken()));
+
+        } catch (UserNotFoundException | BadCredentialsException e) {
+            throw new InvalidLoginException();  // GlobalExceptionHandler에서 처리
+        }
     }
+
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String bearerToken) {

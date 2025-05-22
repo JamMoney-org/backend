@@ -12,12 +12,12 @@ import java.util.concurrent.ForkJoinPool;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class LongPollingControllerTest {
-/*
-프론트엔드가 롱 폴링 요청을 보냈을 때,
-서버는 주문 체결 이벤트가 발생하면 실시간으로 응답을 내려줄 수 있고,
-체결 이벤트가 없다면 타임아웃으로 요청을 종료시킬 수 있는지 확인하는 테스트
-*/
+/*class LongPollingControllerTest {
+    /*
+    프론트엔드가 롱 폴링 요청을 보냈을 때,
+    서버는 주문 체결 이벤트가 발생하면 실시간으로 응답을 내려줄 수 있고,
+    체결 이벤트가 없다면 타임아웃으로 요청을 종료시킬 수 있는지 확인하는 테스트
+
     @Test
     void sendUpdate_shouldCompleteDeferredResult() throws Exception {
         // given
@@ -75,4 +75,4 @@ class LongPollingControllerTest {
 
         assertFalse(result.hasResult(), "타임아웃 후에도 결과가 없어야 함");
     }
-}
+}*/

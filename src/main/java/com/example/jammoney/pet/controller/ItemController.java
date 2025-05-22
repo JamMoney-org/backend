@@ -62,4 +62,19 @@ public class ItemController { //아이템 관련
         itemService.sellItem(user, request.getItemId());
         return ResponseEntity.ok(ApiResponse.success("아이템 판매 완료", null));
     }
+
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<Void>> registerItem(
+            @RequestBody ItemRegisterRequestDTO request
+    ) {
+        itemService.registerItem(
+                request.getName(),
+                request.getPrice(),
+                request.getType(),
+                request.getPosition(),
+                request.getImageUrl(),
+                request.getPreviewUrl()
+        );
+        return ResponseEntity.ok(ApiResponse.success("아이템 등록 성공", null));
+    }
 }

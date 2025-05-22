@@ -3,10 +3,8 @@ package com.example.jammoney.exception;
 import lombok.Getter;
 
 @Getter
-public class EmailAlreadyExistsException extends RuntimeException {
-  private final ErrorCode errorCode;
-    public EmailAlreadyExistsException(ErrorCode errorCode) {
-      super(errorCode.getMessage());
-      this.errorCode = errorCode;
+public class EmailAlreadyExistsException extends CustomException {
+    public EmailAlreadyExistsException() {
+      super(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
 }
