@@ -32,7 +32,7 @@ public class FinanceTermService {
     // 1. 카테고리 전체 조회 (지정된 순서대로 정렬)
     public List<CategoryDto> getAllCategories() {
         List<String> fixedOrder = List.of(
-                "소비", "저축", "대출", "투자", "보험", "세금", "금융기관&제도", "나만의 금융단어장"
+                "소비", "저축", "대출", "투자", "보험", "세금", "금융기관&제도"
         );
 
         List<CategoryDto> allCategories = categoryRepository.findAll().stream().map(c -> {
@@ -50,6 +50,7 @@ public class FinanceTermService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
+
 
 
     public List<Integer> getAvailableDayIndexes(String categoryName) {
