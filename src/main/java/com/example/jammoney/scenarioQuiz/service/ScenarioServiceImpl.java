@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +55,6 @@ public class ScenarioServiceImpl implements ScenarioService {
 
         String prevAiMessage;
 
-        // ✅ 1️⃣ 이전 질문 가져오기 (1단계는 ScenarioStep에서, 이후는 PlayLog에서)
         if (currentStep == 1) {
             ScenarioStep firstStep = stepRepository.findByScenarioAndStepOrder(scenario, 1)
                     .orElseThrow(() -> new IllegalStateException("시나리오의 첫 질문이 없습니다."));
@@ -62,10 +62,10 @@ public class ScenarioServiceImpl implements ScenarioService {
         } else {
             ScenarioPlayLog prevLog = playLogRepository.findByScenarioAndUserAndStepOrder(scenario, user, currentStep)
                     .orElseThrow(() -> new IllegalStateException("이전 질문 로그가 없습니다."));
+
             prevAiMessage = prevLog.getAiMessage();
         }
 
-        // ✅ 2️⃣ 현재 선택 저장
         ScenarioPlayLog log = ScenarioPlayLog.builder()
                 .scenario(scenario)
                 .user(user)
@@ -76,23 +76,23 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .build();
         playLogRepository.save(log);
 
-        // ✅ 3️⃣ 전체 선택 이력 조회
         List<ScenarioPlayLog> playLogs = playLogRepository.findByScenarioAndUserOrderByStepOrderAsc(scenario, user);
         List<String> history = playLogs.stream()
                 .map(ScenarioPlayLog::getChoiceContent)
                 .toList();
 
-        // ✅ 4️⃣ 다음 질문 생성
+        String conversationHistory = playLogs.stream()
+                .map(pl -> "AI: " + pl.getAiMessage() + "\n사용자: " + pl.getChoiceContent())
+                .collect(Collectors.joining("\n\n"));
+
         GptNextMessageResponse nextMessage = gptScenarioService
-                .generateNextStep(prevAiMessage, selectedChoice, history, scenario.getDifficulty())
+                .generateNextStep(conversationHistory, selectedChoice, scenario.getDifficulty())
                 .block();
 
-        // ✅ 5️⃣ 다음 선택지 생성
         GptScenarioChoiceResponse gptChoices = gptScenarioService
                 .generateChoices(scenario.getTitle(), nextMessage.getNextAiMessage(), history, scenario.getDifficulty())
                 .block();
 
-        // ✅ 6️⃣ 종료 판단 및 보상
         boolean isAllEnd = gptChoices.getChoices().stream().allMatch(GptChoiceData::isEnd);
         if (isAllEnd) {
             int rewardExp = calculateRewardExp(scenario.getDifficulty());
@@ -106,7 +106,6 @@ public class ScenarioServiceImpl implements ScenarioService {
                     .build();
         }
 
-        // ✅ 7️⃣ 응답 반환
         return NextStepResponseDTO.builder()
                 .stepOrder(currentStep + 1)
                 .aiMessage(nextMessage.getNextAiMessage())
@@ -114,7 +113,6 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .isFinalStep(false)
                 .build();
     }
-
 
     private int calculateRewardExp(Difficulty difficulty) {
         return switch (difficulty) {

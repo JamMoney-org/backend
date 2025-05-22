@@ -4,6 +4,7 @@ import com.example.jammoney.financeQuiz.entity.Difficulty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class GptPromptBuilder {
@@ -48,37 +49,20 @@ public class GptPromptBuilder {
         return sb.toString();
     }
 
-    // 2️⃣ 다음 질문 생성용 프롬프트 (이전 질문 포함)
-    public String buildNextMessagePrompt(String previousQuestion, String selectedChoice, List<String> history, Difficulty difficulty) {
+    // 2️⃣ 다음 질문 생성용 프롬프트 (대화 히스토리 기반)
+    public String buildNextMessagePrompt(String conversationHistory, String selectedChoice, Difficulty difficulty) {
         StringBuilder sb = new StringBuilder();
         sb.append("당신은 ").append(difficulty.name()).append(" 난이도의 금융 시나리오 AI입니다.\n");
-        sb.append("사용자의 이전 선택에 자연스럽게 이어지는 다음 질문을 생성하세요.\n");
-        sb.append("질문은 친절하고 현실적인 어조로 작성하세요.\n");
-        sb.append("단순한 문장 하나만 출력하고, JSON 없이 순수 문자열만 출력하세요.\n\n");
+        sb.append("지금까지의 대화를 기반으로, 사용자 선택에 이어지는 자연스러운 질문을 하나 생성하세요.\n");
+        sb.append("질문은 친절하고 현실적인 어조로 작성하고, JSON 없이 순수 문장 하나만 출력하세요.\n\n");
 
-        // ✅ 선택 이력 추가
-        if (history != null && !history.isEmpty()) {
-            sb.append("[사용자 선택 흐름]\n");
-            for (int i = 0; i < history.size(); i++) {
-                sb.append((i + 1)).append(". ").append(history.get(i)).append("\n");
-            }
-            sb.append("\n");
+        sb.append("[전체 대화 흐름]\n");
+        sb.append(conversationHistory).append("\n\n");
 
-            // ✅ 히스토리 길이에 따라 마무리 유도 추가
-            if (history.size() >= 3 && history.size() <= 4) {
-                sb.append("※ 현재 시나리오가 마무리 단계에 접어들었습니다.\n");
-                sb.append("마지막 질문처럼 보이도록 자연스럽고 포괄적인 질문을 하세요.\n");
-                sb.append("예: '좋은 방을 선택하기 위해 추가로 고려하고 싶은 점이 있나요?'\n\n");
-            }
-        }
-
-        sb.append("[이전 질문]\n");
-        sb.append(previousQuestion).append("\n\n");
-
-        sb.append("[사용자 방금 선택한 내용]\n");
+        sb.append("[사용자의 방금 선택]\n");
         sb.append(selectedChoice).append("\n\n");
 
-        sb.append("출력 예시: \"그렇다면 월세는 어느 정도까지 감당 가능하신가요?\"\n");
+        sb.append("출력 예시: \"그렇다면 월세는 어느 정도까지 감당 가능하신가요?\"");
 
         return sb.toString();
     }
