@@ -7,7 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class NewsQuizDto { //크롤링한 뉴스 데이터를 DB에 저장할 때
+//뉴스에 포함된 퀴즈 내용 전용 DTO
+public class NewsQuizDto {
     private String question;
     private String option1;
     private String option2;

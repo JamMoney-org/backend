@@ -25,6 +25,10 @@ public class NewsService {
         newsRepository.deleteByPublishDateBefore(sevenDaysAgo);
     }
 
+    public List<NewsRequestDto> testCrawlingPreview() {
+        return financeNewsCrawler.fetchTodayNews();
+    }
+
     public void saveNewsList(List<NewsRequestDto> dtoList) {
         List<News> newsList = dtoList.stream()
                 .filter(dto -> !newsRepository.existsByTitleAndPublishDate(dto.getTitle(), dto.getPublishDate()))

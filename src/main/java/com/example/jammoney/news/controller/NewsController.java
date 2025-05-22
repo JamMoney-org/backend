@@ -1,5 +1,6 @@
 package com.example.jammoney.news.controller;
 
+import com.example.jammoney.news.dto.NewsRequestDto;
 import com.example.jammoney.news.dto.NewsResponseDto;
 import com.example.jammoney.news.dto.NewsSimpleDto;
 import com.example.jammoney.news.service.NewsService;
@@ -26,4 +27,10 @@ public class NewsController {
     public NewsResponseDto getNewsDetail(@PathVariable Long id) {
         return newsService.getNewsById(id);
     }
+
+    @GetMapping("/crawl/test")
+    public List<NewsRequestDto> testCrawlOnly() {
+        return newsService.testCrawlingPreview(); // 아래에 구현할 서비스 메서드
+    }
+
 }

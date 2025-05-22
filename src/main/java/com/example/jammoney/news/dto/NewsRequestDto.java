@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-//사용자가 뉴스를 클릭해서 상세 내용을 볼 때 사용
+//크롤링한 뉴스 데이터를 DB에 저장할 때
 public class NewsRequestDto {
     private String title;
     private LocalDate publishDate;
