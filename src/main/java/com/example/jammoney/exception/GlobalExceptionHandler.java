@@ -42,6 +42,7 @@ public class GlobalExceptionHandler {
             PasswordMismatchException.class,
             UserNotFoundException.class,
             InvalidRefreshTokenException.class,
+            InvalidLoginException.class,
             InvalidJwtTokenException.class,
             CashNotFoundException.class,
             InsufficientBalanceException.class,
