@@ -6,6 +6,7 @@ import com.example.jammoney.pet.repository.PetRepository;
 import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,7 +39,8 @@ public class PetService {
         int currentExp = pet.getExp();
         int nextLevelExp = getRequiredExpForLevel(currentLevel + 1);
         int expPercentage = getExpPercentage(pet);
-        String mood = calculateMood(currentLevel, currentExp); // ✅ 인자 기반 계산
+        String mood = calculateMood(currentLevel, currentExp);
+        String imageUrl = getPetImageUrl(currentLevel);
 
         return PetStatusResponseDTO.builder()
                 .name(currentName)
@@ -47,6 +49,7 @@ public class PetService {
                 .nextLevelExp(nextLevelExp)
                 .mood(mood)
                 .expPercentage(expPercentage)
+                .imageUrl(imageUrl)
                 .build();
     }
 
@@ -89,9 +92,12 @@ public class PetService {
         };
     }
 
-    public String getPetImageName(int level) {
-        if (level >= 10) return "pet_max.png";
-        return "pet_level_" + level + ".png";
+    @Value("${cloud.aws.s3.base-url}")
+    private String s3BaseUrl;
+
+    public String getPetImageUrl(int level) {
+        String fileName = (level >= 10) ? "pet_max.png" : "pet_level_" + level + ".png";
+        return s3BaseUrl + fileName;
     }
 
     public int getExpPercentage(Pet pet) {
