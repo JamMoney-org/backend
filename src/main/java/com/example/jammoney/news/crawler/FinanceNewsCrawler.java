@@ -1,6 +1,7 @@
 package com.example.jammoney.news.crawler;
 
 import com.example.jammoney.news.dto.NewsRequestDto;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 public class FinanceNewsCrawler {
 
@@ -22,7 +24,7 @@ public class FinanceNewsCrawler {
         System.setProperty("webdriver.chrome.driver", DRIVER_PATH);
 
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless"); // UI 없이 실행
+        options.addArguments("--headless");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
 
@@ -31,7 +33,7 @@ public class FinanceNewsCrawler {
 
         try {
             driver.get(URL);
-            List<WebElement> newsElements = driver.findElements(By.cssSelector(".type06 li"));
+            List<WebElement> newsElements = driver.findElements(By.cssSelector(".type06_headline li"));
 
             int count = 0;
             for (WebElement el : newsElements) {
@@ -39,45 +41,50 @@ public class FinanceNewsCrawler {
 
                 WebElement anchor = null;
                 try {
-                    anchor = el.findElement(By.cssSelector("dt > a"));
+                    anchor = el.findElement(By.cssSelector("dl > dt > a"));
                 } catch (Exception ignore) {}
 
                 if (anchor == null || anchor.getText().isBlank()) continue;
 
-                String title = anchor.getText();
                 String link = anchor.getAttribute("href");
 
                 // 상세 페이지로 이동
                 driver.get(link);
                 Thread.sleep(1000); // 로딩 대기
 
+                String title = "";
                 String content = "";
-                try {
-                    WebElement contentEl = driver.findElement(By.id("news_read"));
-                    content = contentEl.getText();
-                } catch (Exception e) {
-                    content = "(본문을 불러올 수 없습니다)";
-                }
-
                 String source = "출처 미상";
+
                 try {
-                    source = el.findElement(By.className("writing")).getText();
-                } catch (Exception ignore) {}
+                    WebElement titleEl = driver.findElement(By.cssSelector("h2#title_area.media_end_head_headline > span"));
+                    title = titleEl.getText();
+                    log.info("title: "+title);
+
+                    WebElement contentEl = driver.findElement(By.id("dic_area"));
+                    content = contentEl.getText();
+
+                    WebElement sourceEl = driver.findElement(By.cssSelector(".media_end_head_top_logo img"));
+                    source = sourceEl.getAttribute("alt");
+                } catch (Exception e) {
+                    System.out.println("[경고] 크롤링 실패: " + link);
+                    continue; // 다음 뉴스로
+                }
 
                 NewsRequestDto dto = new NewsRequestDto();
                 dto.setTitle(title);
-                dto.setSource(source);
                 dto.setPublishDate(LocalDate.now());
+                dto.setSource(source);
                 dto.setContent(content);
                 result.add(dto);
                 count++;
 
-                System.out.println("뉴스 제목: " + title);
-                System.out.println("뉴스 링크: " + link);
-                System.out.println("뉴스 내용 (요약): " + (content.length() > 50 ? content.substring(0, 50) + "..." : content));
+                System.out.println("[" + count + "] 제목: " + title);
+                System.out.println("     출처: " + source);
+                System.out.println("     내용: " + (content.length() > 50 ? content.substring(0, 50) + "..." : content));
 
-                driver.navigate().back(); // 목록 페이지로 돌아가기
-                Thread.sleep(1000); // 다시 로딩 대기
+                driver.navigate().back();
+                Thread.sleep(1000);
             }
 
         } catch (Exception e) {
