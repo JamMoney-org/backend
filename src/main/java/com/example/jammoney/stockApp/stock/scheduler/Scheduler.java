@@ -2,9 +2,13 @@ package com.example.jammoney.stockApp.stock.scheduler;
 
 import com.example.jammoney.stockApp.stock.service.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class Scheduler {
@@ -13,9 +17,9 @@ public class Scheduler {
     private final OrderService orderService;
     private final UserPortfolioService userPortfolioService;
     private final KospiService kospiService;
-    @Scheduled(cron = "0 0,30 9-15 * * MON-FRI")
+    @Scheduled(cron = "0 0/30 9-15 * * MON-FRI", zone = "Asia/Seoul")
     public void updateAll() throws InterruptedException {
-
+        log.info("스케줄러 실행 시간: {}", LocalDateTime.now());
         //모든 회사의 호가 정보 갱신
         stockAskingPriceService.updateStockAskingPrice();
 
