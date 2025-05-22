@@ -5,6 +5,8 @@ import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.auth.entity.RefreshToken;
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
 import com.example.jammoney.auth.service.RefreshTokenService;
+import com.example.jammoney.exception.InvalidLoginException;
+import com.example.jammoney.exception.UserNotFoundException;
 import com.example.jammoney.user.dto.LoginRequestDto;
 import com.example.jammoney.user.dto.UserRequestDto;
 import com.example.jammoney.user.entity.User;
@@ -13,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -44,9 +47,8 @@ public class AuthController {
 
             return ResponseEntity.ok(new TokenResponseDto(accessToken, refreshToken.getToken()));
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("로그인 실패: " + e.getMessage());
+        } catch (UserNotFoundException | BadCredentialsException e) {
+            throw new InvalidLoginException();  // GlobalExceptionHandler에서 처리
         }
     }
 

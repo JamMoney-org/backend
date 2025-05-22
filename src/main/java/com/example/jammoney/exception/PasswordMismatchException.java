@@ -3,10 +3,8 @@ package com.example.jammoney.exception;
 import lombok.Getter;
 
 @Getter
-public class PasswordMismatchException extends RuntimeException {
-    final ErrorCode errorCode;
-    public PasswordMismatchException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
+public class PasswordMismatchException extends CustomException {
+    public PasswordMismatchException() {
+        super(ErrorCode.PASSWORD_MISMATCH);
     }
 }

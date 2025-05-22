@@ -33,10 +33,9 @@ dependencies {
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-	implementation 'junit:junit:4.13.1'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
-	testImplementation 'org.springframework.security:spring-security-test'
+	implementation 'junit:junit:4.13.1'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
@@ -47,9 +46,9 @@ dependencies {
 	implementation 'org.jsoup:jsoup:1.17.2'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
 	runtimeOnly 'io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-aarch_64'
-	implementation 'org.seleniumhq.selenium:selenium-java:4.21.0'
-	implementation 'io.github.bonigarcia:webdrivermanager:5.7.0'
 	implementation 'org.seleniumhq.selenium:selenium-java:4.25.0'
+	implementation 'io.github.bonigarcia:webdrivermanager:5.7.0'
+	implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.4.4'
 }
 
 tasks.named('test') {

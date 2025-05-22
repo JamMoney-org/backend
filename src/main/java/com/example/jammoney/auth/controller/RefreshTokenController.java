@@ -33,13 +33,13 @@ public class RefreshTokenController {
 
         // 1. 토큰 형식 유효성 검사 (서명, 만료 여부 포함)
         if (!jwtTokenProvider.validateToken(refreshTokenValue)) {
-            throw new InvalidRefreshTokenException(ErrorCode.INVALID_REFRESH_TOKEN);
+            throw new InvalidRefreshTokenException();
         }
 
         // 2. DB 조회 (회수된 토큰이나 위조된 토큰 차단 목적)
         RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenValue)
                 .filter(rt -> !rt.isExpired())
-                .orElseThrow(() -> new InvalidRefreshTokenException(ErrorCode.INVALID_REFRESH_TOKEN));
+                .orElseThrow(InvalidRefreshTokenException::new);
 
         User user = refreshToken.getUser();
         String newAccessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
