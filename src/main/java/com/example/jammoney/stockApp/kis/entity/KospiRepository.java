@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface KospiRepository extends JpaRepository<Kospi, Long> {
-
     Optional<Object> findByDate(LocalDate date);
+    List<Kospi> findAllByOrderByDateAsc();
 }
