@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -28,15 +29,28 @@ public class FinanceTermService {
     private final TermQuizRepository termQuizRepository;
     private final PetRepository petRepository;
 
-    // 1. 카테고리 전체 조회
+    // 1. 카테고리 전체 조회 (지정된 순서대로 정렬)
     public List<CategoryDto> getAllCategories() {
-        return categoryRepository.findAll().stream().map(c -> {
+        List<String> fixedOrder = List.of(
+                "소비", "저축", "대출", "투자", "보험", "세금", "금융기관&제도", "나만의 금융단어장"
+        );
+
+        List<CategoryDto> allCategories = categoryRepository.findAll().stream().map(c -> {
             CategoryDto dto = new CategoryDto();
             dto.setId(c.getId());
             dto.setCategory(c.getCategory());
             return dto;
         }).collect(Collectors.toList());
+
+        return fixedOrder.stream()
+                .map(orderName -> allCategories.stream()
+                        .filter(dto -> dto.getCategory().equals(orderName))
+                        .findFirst()
+                        .orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
+
 
     public List<Integer> getAvailableDayIndexes(String categoryName) {
         FinancialCategory category = categoryRepository.findByCategory(categoryName)
