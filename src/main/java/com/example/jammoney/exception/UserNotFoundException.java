@@ -1,12 +1,10 @@
 package com.example.jammoney.exception;
 
 
-public class UserNotFoundException extends RuntimeException {
-    private final ErrorCode errorCode;
+public class UserNotFoundException extends CustomException {
 
-    public UserNotFoundException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
+    public UserNotFoundException() {
+        super(ErrorCode.USER_NOT_FOUND);
     }
 }
 
