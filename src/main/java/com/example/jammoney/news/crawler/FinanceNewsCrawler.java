@@ -1,10 +1,9 @@
+
 package com.example.jammoney.news.crawler;
 
 import com.example.jammoney.news.dto.NewsRequestDto;
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -20,107 +19,102 @@ import java.util.List;
 @Component
 public class FinanceNewsCrawler {
 
-    private static final String DRIVER_PATH = "C:/Users/gahyeon/Desktop/chromedriver-win64/chromedriver.exe";
-    private static final String URL = "https://finance.naver.com/news/news_list.naver?mode=LSS2D&section_id=101&section_id2=258";
-
     public List<NewsRequestDto> fetchTodayNews() {
-        System.setProperty("webdriver.chrome.driver", DRIVER_PATH);
-
-        ChromeOptions options = new ChromeOptions();
-        // options.addArguments("--headless=new"); // 디버깅용으로 주석 처리 (크롬 창 뜨게)
-        options.addArguments("--disable-gpu");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--window-size=1920,1080");
-
-        WebDriver driver = new ChromeDriver(options);
-        List<NewsRequestDto> result = new ArrayList<>();
+        log.info("[크롤링 시작]");
+        WebDriver driver = null;
+        List<NewsRequestDto> newsList = new ArrayList<>();
 
         try {
-            System.out.println("=== 크롤링 시작 ===");
-            driver.get(URL);
-            System.out.println("뉴스 리스트 페이지 접속 완료");
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--headless=new");
+            options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
 
-            // ✅ 요소 로딩 기다리기 (최대 5초)
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".news_list li")));
+            driver = new ChromeDriver(options);
+            driver.get("https://biz.chosun.com/finance/");
 
-            List<WebElement> newsElements = driver.findElements(By.cssSelector(".news_list li"));
-            System.out.println("가져온 뉴스 리스트 개수: " + newsElements.size());
+            String mainPageHtml = driver.getPageSource(); // HTML 확인용
+            log.info("[메인 페이지 HTML 일부 출력] \n{}", mainPageHtml.substring(0, Math.min(1000, mainPageHtml.length())));
+            List<WebElement> elements = driver.findElements(By.cssSelector("a.text_link.story-card__headline"));
 
-            // 링크 먼저 수집
-            List<String> links = new ArrayList<>();
-            for (WebElement el : newsElements) {
-                try {
-                    WebElement anchor = el.findElement(By.cssSelector("a"));
-                    String href = anchor.getAttribute("href");
-                    System.out.println("링크 추출 성공: " + href);
-                    if (!href.isBlank()) {
-                        links.add(href);
-                    }
-                } catch (Exception e) {
-                    System.out.println("링크 추출 실패: " + e.getMessage());
-                }
-                if (links.size() >= 3) break;
+
+// 더 유연한 셀렉터로 교체
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("a.story-card__headline")));
+
+            List<WebElement> elementList = driver.findElements(By.cssSelector("a.story-card__headline"));
+            System.out.println("[검색된 요소 개수] " + elementList.size());
+
+/*            for (int i = 0; i < elementList.size(); i++) {
+                WebElement el = elementList.get(i);
+                String text = el.getText();
+                String href = el.getAttribute("href");
+                System.out.println("[" + i + "] 제목: " + text);
+                System.out.println("[" + i + "] 링크: https://biz.chosun.com" + href); // 상대경로 보정
+                System.out.println("----------");
+                driver.get("https://biz.chosun.com" + href);
+                String mainPageHtml_2 = driver.getPageSource(); // HTML 확인용
+                log.info("[메인 페이지 HTML 일부 출력] \n{}", mainPageHtml_2.substring(0, Math.min(1000, mainPageHtml_2.length())));
+            }*/
+            for (int i = 0; i < elementList.size(); i++) {
+                WebElement el = elementList.get(i);
+                String text = el.getText();
+                String href = el.getAttribute("href");
+
+                // 상대경로 → 절대경로 변환
+                String fullUrl = "https://biz.chosun.com/finance/" + href;
+
+                System.out.println("[" + i + "] 제목: " + text);
+                System.out.println("[" + i + "] 링크: " + fullUrl);
+                System.out.println("----------");
+
+                // 상세 페이지 이동
+                driver.get(fullUrl);
+
+                // HTML 일부 출력
+                String mainPageHtml_2 = driver.getPageSource();
+                log.info("[상세 페이지 HTML 일부 출력] \n{}", mainPageHtml_2.substring(0, Math.min(1000, mainPageHtml_2.length())));
+
+                List<WebElement> elementsss = driver.findElements(By.cssSelector("h1.article-header__headline"));
+                WebElement el1 = elementList.get(i);
+                String textt = el1.getText();
+                System.out.println("[" + i + "] ㅈㅂ나와야되는 제목: " + textt);
             }
 
-            System.out.println("최종 수집된 뉴스 링크 수: " + links.size());
 
-            // 상세 페이지 크롤링
-            int count = 0;
-            for (String link : links) {
-                driver.get(link);
-                Thread.sleep(1000); // 로딩 대기
+            int count = Math.min(3, elementList.size());
 
-                String title = "";
-                String content = "";
-                String source = "출처 미상";
+            for (int i = 0; i < count; i++) {
+                String link = elementList.get(i).getAttribute("href");
+                log.info("상세 페이지 이동: {}", link);
+                driver.navigate().to(link);
 
-                try {
-                    WebElement titleEl = driver.findElement(By.cssSelector("h2#title_area.media_end_head_headline"));
-                    title = titleEl.getText();
+                WebDriverWait detailWait = new WebDriverWait(driver, Duration.ofSeconds(5));
+                WebElement titleEl = detailWait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("h1.article-header__headline")));
+                WebElement contentEl = driver.findElement(By.cssSelector("div.article-body__content"));
 
-                    WebElement contentEl = driver.findElement(By.id("dic_area"));
-                    content = contentEl.getText();
+                String title = titleEl.getText();
+                String content = contentEl.getText();
 
-                    try {
-                        WebElement sourceEl = driver.findElement(By.cssSelector(".media_end_head_top_logo_text"));
-                        source = sourceEl.getText();
-                    } catch (Exception ignored) {
-                        try {
-                            WebElement altEl = driver.findElement(By.cssSelector(".media_end_head_top_logo img"));
-                            source = altEl.getAttribute("alt");
-                        } catch (Exception ignoredAgain) {}
-                    }
+                NewsRequestDto dto = new NewsRequestDto();
+                dto.setTitle(title);
+                dto.setContent(content);
+                dto.setSource("조선비즈");
+                dto.setPublishDate(LocalDate.now());
 
-                    NewsRequestDto dto = new NewsRequestDto();
-                    dto.setTitle(title);
-                    dto.setPublishDate(LocalDate.now());
-                    dto.setSource(source);
-                    dto.setContent(content);
-                    result.add(dto);
-                    count++;
+                newsList.add(dto);
 
-                    System.out.println("[" + count + "] 제목: " + title);
-                    System.out.println("     출처: " + source);
-                    System.out.println("     내용: " + (content.length() > 50 ? content.substring(0, 50) + "..." : content));
-                    System.out.println("     URL: " + link);
-                    System.out.println("-------------------------------------------------");
-
-                } catch (Exception e) {
-                    System.out.println("[경고] 뉴스 상세 크롤링 실패: " + link);
-                    e.printStackTrace();
-                }
+                driver.navigate().back();
+                Thread.sleep(1000);
             }
 
         } catch (Exception e) {
-            System.out.println("[전체 크롤링 실패]");
-            e.printStackTrace();
-            throw new RuntimeException("크롤링 중 에러 발생", e);
+            log.error("[크롤링 전체 실패]", e);
         } finally {
-            driver.quit();
+            if (driver != null) driver.quit();
         }
 
-        return result;
+        log.info("[크롤링된 뉴스 개수]: {}", newsList.size());
+        return newsList;
     }
 }
