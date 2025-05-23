@@ -18,6 +18,7 @@ public class GptPromptBuilder {
                 .append("각 선택지는 실제 대화처럼 자연스러우며, 선택 시 사용자에게 짧은 피드백이 함께 제공됩니다.\n")
                 .append("난이도: ").append(difficulty.name()).append("\n")
                 .append("난이도가 높을수록 더 고민이 필요한 선택지가 포함될 수 있습니다.\n\n")
+                .append("질문은 4~5단계로 구성하세요.\n\n")
                 .append("주제: ").append(topic).append("\n\n");
 
         if (history != null && !history.isEmpty()) {
@@ -36,13 +37,14 @@ public class GptPromptBuilder {
                 .append("- feedback: 선택했을 때 줄 짧은 피드백\n")
                 .append("- isGood: 좋은 선택이면 true, 애매하거나 위험한 선택이면 false\n")
                 .append("- isEnd: 이 선택 이후 시나리오가 종료된다면 true, 아니면 false\n\n")
-                .append("JSON 배열만 반환하세요. 예시:\n")
-                .append("[\n")
-                .append("  {\n")
-                .append("    \"content\": \"보증금 500만 원 이하 방 찾기\",\n")
-                .append("    \"feedback\": \"예산에 맞는 방을 고르는 건 좋은 출발입니다!\",\n")
-                .append("    \"isGood\": true,\n")
-                .append("    \"isEnd\": false\n")
+                .append("JSON 배열만 반환하세요.")
+//                .append("\n 예시 :")
+//                .append("[\n")
+//                .append("  {\n")
+//                .append("    \"content\": \"보증금 500만 원 이하 방 찾기\",\n")
+//                .append("    \"feedback\": \"예산에 맞는 방을 고르는 건 좋은 선택입니다!\",\n")
+//                .append("    \"isGood\": true,\n")
+//                .append("    \"isEnd\": false\n")
                 .append("  }\n")
                 .append("]\n");
 
@@ -53,7 +55,8 @@ public class GptPromptBuilder {
     public String buildNextMessagePrompt(String conversationHistory, String selectedChoice, Difficulty difficulty) {
         StringBuilder sb = new StringBuilder();
         sb.append("당신은 ").append(difficulty.name()).append(" 난이도의 금융 시나리오 AI입니다.\n");
-        sb.append("지금까지의 대화를 기반으로, 사용자 선택에 이어지는 자연스러운 질문을 하나 생성하세요.\n");
+        sb.append("지금까지의 대화를 기반으로, 사용자 선택에 이어지는 금융 관련 자연스러운 질문을 하나 생성하세요.\n");
+        sb.append("현재 3~4단계라면 시나리오를 마무리할 질문을 하세요.\n");
         sb.append("질문은 친절하고 현실적인 어조로 작성하고, JSON 없이 순수 문장 하나만 출력하세요.\n\n");
 
         sb.append("[전체 대화 흐름]\n");
@@ -62,7 +65,7 @@ public class GptPromptBuilder {
         sb.append("[사용자의 방금 선택]\n");
         sb.append(selectedChoice).append("\n\n");
 
-        sb.append("출력 예시: \"그렇다면 월세는 어느 정도까지 감당 가능하신가요?\"");
+        //sb.append("출력 예시: \"그렇다면 월세는 어느 정도까지 감당 가능하신가요?\"");
 
         return sb.toString();
     }
