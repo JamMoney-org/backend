@@ -1,6 +1,7 @@
 package com.example.jammoney.auth.service;
 
 import com.example.jammoney.auth.entity.CustomUserDetails;
+import com.example.jammoney.exception.UserNotFoundException;
 import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
-                .orElseThrow(()-> new UsernameNotFoundException("사용자를 찾을 수 없습니다" + username));
+                .orElseThrow(() -> new UsernameNotFoundException("이메일 또는 비밀번호가 올바르지 않습니다."));
         return new CustomUserDetails(user);
     }
 }

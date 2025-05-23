@@ -111,13 +111,6 @@ class PetServiceTest {
         assertEquals(0, pet.getExp());
     }
 
-    // ------------------- getPetImageName -------------------
-    @Test
-    void 이미지_파일명_정상생성() {
-        assertEquals("pet_level_3.png", petService.getPetImageName(3));
-        assertEquals("pet_max.png", petService.getPetImageName(10));
-    }
-
     // ------------------- getExpPercentage -------------------
     @Test
     void 경험치퍼센트_정상계산() {

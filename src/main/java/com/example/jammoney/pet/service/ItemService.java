@@ -1,9 +1,11 @@
 package com.example.jammoney.pet.service;
 
+import com.example.jammoney.S3.S3Uploader;
 import com.example.jammoney.pet.dto.InventoryResponseDTO;
 import com.example.jammoney.pet.dto.ItemShopResponseDTO;
 import com.example.jammoney.pet.entity.InventoryItem;
 import com.example.jammoney.pet.entity.Item;
+import com.example.jammoney.pet.entity.ItemType;
 import com.example.jammoney.pet.entity.Pet;
 import com.example.jammoney.pet.repository.InventoryItemRepository;
 import com.example.jammoney.pet.repository.ItemRepository;
@@ -22,6 +24,7 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final InventoryItemRepository inventoryItemRepository;
     private final PetRepository petRepository;
+    private final S3Uploader s3Uploader;
 
     /**
      * 상점 아이템 목록 조회
@@ -127,5 +130,19 @@ public class ItemService {
 
         // 인벤토리에서 제거
         inventoryItemRepository.delete(inventory);
+    }
+
+    //아이템 등록
+    public void registerItem(String name, int price, ItemType type, String position, String imageUrl, String previewUrl) {
+        Item item = Item.builder()
+                .name(name)
+                .price(price)
+                .type(type)
+                .position(position)
+                .imageUrl(imageUrl)
+                .previewUrl(previewUrl)
+                .build();
+
+        itemRepository.save(item);
     }
 }

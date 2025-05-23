@@ -23,6 +23,8 @@ public class LearningTopic {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    private String tag;
+
     @ManyToOne
     @JoinColumn(name = "theme_id")
     private Theme theme;
