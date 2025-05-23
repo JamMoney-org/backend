@@ -22,15 +22,16 @@ public class Scheduler {
         log.info("스케줄러 실행 시간: {}", LocalDateTime.now());
         //모든 회사의 호가 정보 갱신
         stockAskingPriceService.updateStockAskingPrice();
-
+        log.info("호가 정보 갱신 끝");
         //모든 회사의 미체결 주문 확인
         orderService.checkOrder();
-
+        log.info("미체결 주문 확인 끝");
         //모든 회사의 차트 갱신
         stockMinService.updateStockMin();
-
+        log.info("차트 갱신 끝");
         //모든 유저의 수익률 갱신
         userPortfolioService.updateAllUserPortfolios();
+        log.info("수익률 갱신 끝");
     }
 
     @Scheduled(cron = "0 0 3 1 * *")
