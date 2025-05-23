@@ -12,6 +12,6 @@ import java.util.List;
 
 public interface GptScenarioService {
     Mono<GptScenarioChoiceResponse> generateChoices(String topic, String aiMessage, List<String> history, Difficulty difficulty);
-    Mono<GptNextMessageResponse> generateNextStep(String previousAiMessage, String selectedChoice, List<String> history, Difficulty difficulty);
+    Mono<GptNextMessageResponse> generateNextStep(String conversationHistory, String selectedChoice, Difficulty difficulty);
     Mono<GptScenarioSummaryResponse> generateSummary(List<String> selectedChoices);
 }

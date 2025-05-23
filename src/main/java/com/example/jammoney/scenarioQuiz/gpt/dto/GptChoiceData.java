@@ -14,6 +14,4 @@ public class GptChoiceData {
 
     @JsonProperty("isGood")
     private boolean isGood;     // 긍정적인 선택인지 여부
-    @JsonProperty("isEnd")
-    private boolean isEnd;      // 종료 선택 여부
 }

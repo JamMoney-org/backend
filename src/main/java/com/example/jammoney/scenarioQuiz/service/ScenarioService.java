@@ -1,6 +1,8 @@
 package com.example.jammoney.scenarioQuiz.service;
 
 import com.example.jammoney.scenarioQuiz.dto.*;
+import com.example.jammoney.scenarioQuiz.entity.Scenario;
+import com.example.jammoney.scenarioQuiz.entity.ScenarioCategory;
 import com.example.jammoney.user.entity.User;
 
 import java.util.List;
@@ -24,4 +26,6 @@ public interface ScenarioService {
     ScenarioEvaluationResponseDTO summarizeScenario(Long scenarioId, User user);
 
     void createScenarioWithFirstStep(ScenarioCreateRequestDTO request);
+
+    List<Scenario> getScenariosByCategory(ScenarioCategory category);
 }

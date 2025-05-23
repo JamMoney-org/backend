@@ -2,10 +2,10 @@ package com.example.jammoney.scenarioQuiz.service;
 
 import com.example.jammoney.financeQuiz.entity.Difficulty;
 import com.example.jammoney.pet.service.PetService;
+import com.example.jammoney.scenarioQuiz.dto.*;
 import com.example.jammoney.scenarioQuiz.entity.*;
 import com.example.jammoney.scenarioQuiz.gpt.GptScenarioService;
 import com.example.jammoney.scenarioQuiz.gpt.dto.*;
-import com.example.jammoney.scenarioQuiz.dto.*;
 import com.example.jammoney.scenarioQuiz.repository.*;
 import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,8 +54,6 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .orElseThrow(() -> new IllegalArgumentException("시나리오를 찾을 수 없습니다."));
 
         String prevAiMessage;
-
-        // ✅ 1️⃣ 이전 질문 가져오기 (1단계는 ScenarioStep에서, 이후는 PlayLog에서)
         if (currentStep == 1) {
             ScenarioStep firstStep = stepRepository.findByScenarioAndStepOrder(scenario, 1)
                     .orElseThrow(() -> new IllegalStateException("시나리오의 첫 질문이 없습니다."));
@@ -65,7 +64,6 @@ public class ScenarioServiceImpl implements ScenarioService {
             prevAiMessage = prevLog.getAiMessage();
         }
 
-        // ✅ 2️⃣ 현재 선택 저장
         ScenarioPlayLog log = ScenarioPlayLog.builder()
                 .scenario(scenario)
                 .user(user)
@@ -76,25 +74,17 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .build();
         playLogRepository.save(log);
 
-        // ✅ 3️⃣ 전체 선택 이력 조회
         List<ScenarioPlayLog> playLogs = playLogRepository.findByScenarioAndUserOrderByStepOrderAsc(scenario, user);
         List<String> history = playLogs.stream()
                 .map(ScenarioPlayLog::getChoiceContent)
                 .toList();
 
-        // ✅ 4️⃣ 다음 질문 생성
-        GptNextMessageResponse nextMessage = gptScenarioService
-                .generateNextStep(prevAiMessage, selectedChoice, history, scenario.getDifficulty())
-                .block();
+        String conversationHistory = playLogs.stream()
+                .map(pl -> "AI: " + pl.getAiMessage() + "\n사용자: " + pl.getChoiceContent())
+                .collect(Collectors.joining("\n\n"));
 
-        // ✅ 5️⃣ 다음 선택지 생성
-        GptScenarioChoiceResponse gptChoices = gptScenarioService
-                .generateChoices(scenario.getTitle(), nextMessage.getNextAiMessage(), history, scenario.getDifficulty())
-                .block();
-
-        // ✅ 6️⃣ 종료 판단 및 보상
-        boolean isAllEnd = gptChoices.getChoices().stream().allMatch(GptChoiceData::isEnd);
-        if (isAllEnd) {
+        // ✅ 4단계까지는 질문 생성, 5단계면 종료
+        if (currentStep == 4) {
             int rewardExp = calculateRewardExp(scenario.getDifficulty());
             petService.addExp(user, rewardExp);
 
@@ -106,7 +96,14 @@ public class ScenarioServiceImpl implements ScenarioService {
                     .build();
         }
 
-        // ✅ 7️⃣ 응답 반환
+        GptNextMessageResponse nextMessage = gptScenarioService
+                .generateNextStep(conversationHistory, selectedChoice, scenario.getDifficulty())
+                .block();
+
+        GptScenarioChoiceResponse gptChoices = gptScenarioService
+                .generateChoices(scenario.getTitle(), nextMessage.getNextAiMessage(), history, scenario.getDifficulty())
+                .block();
+
         return NextStepResponseDTO.builder()
                 .stepOrder(currentStep + 1)
                 .aiMessage(nextMessage.getNextAiMessage())
@@ -114,7 +111,6 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .isFinalStep(false)
                 .build();
     }
-
 
     private int calculateRewardExp(Difficulty difficulty) {
         return switch (difficulty) {
@@ -145,8 +141,8 @@ public class ScenarioServiceImpl implements ScenarioService {
             result.add(ScenarioChoiceDTO.builder()
                     .choiceId((long) (i + 1))
                     .content(choice.getContent())
+                    .feedback(choice.getFeedback())
                     .isGood(choice.isGood())
-                    .isEnd(choice.isEnd())
                     .build());
         }
         return result;
@@ -169,5 +165,10 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .isEndStep(false)
                 .build();
         stepRepository.save(firstStep);
+    }
+
+    @Override
+    public List<Scenario> getScenariosByCategory(ScenarioCategory category) {
+        return scenarioRepository.findByCategory(category);
     }
 }

@@ -29,7 +29,7 @@ public class GptScenarioTestController {
     }
 
     // ✅ 사용자 선택 → 다음 질문 생성 (이전 질문 + 난이도 포함)
-    @PostMapping("/next")
+    /*@PostMapping("/next")
     public Mono<GptNextMessageResponse> testNextStep(
             @RequestBody List<String> history,
             @RequestParam String previousQuestion,
@@ -37,7 +37,7 @@ public class GptScenarioTestController {
             @RequestParam Difficulty difficulty
     ) {
         return gptScenarioService.generateNextStep(previousQuestion, selected, history, difficulty);
-    }
+    }*/
 
     // ✅ 총평 생성
     @PostMapping("/summary")

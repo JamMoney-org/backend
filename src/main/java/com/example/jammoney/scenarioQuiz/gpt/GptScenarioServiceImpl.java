@@ -29,11 +29,11 @@ public class GptScenarioServiceImpl implements GptScenarioService {
     }
 
     /**
-     * 선택 이후 → 이전 질문 + 선택 기반 다음 질문 생성
+     * 선택 이후 → 전체 대화 흐름 기반 다음 질문 생성
      */
     @Override
-    public Mono<GptNextMessageResponse> generateNextStep(String previousQuestion, String selectedChoice, List<String> history, Difficulty difficulty) {
-        String prompt = promptBuilder.buildNextMessagePrompt(previousQuestion, selectedChoice, history, difficulty);
+    public Mono<GptNextMessageResponse> generateNextStep(String conversationHistory, String selectedChoice, Difficulty difficulty) {
+        String prompt = promptBuilder.buildNextMessagePrompt(conversationHistory, selectedChoice, difficulty);
         return gptApiClient.callGpt(prompt)
                 .map(responseParser::parseNextMessage);
     }
