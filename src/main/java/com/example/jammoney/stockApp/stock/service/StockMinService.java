@@ -38,12 +38,12 @@ public class StockMinService {
         List<Company> companyList = companyService.findAllCompanies();
         LocalDateTime now = LocalDateTime.now();
         String strHour = Time.strHour(now);
-
+        int i = 0;
         for (Company company : companyList) {
             // 분봉 API 호출
             log.info("Company Code : {}", company.getCode());
             StockMinDto stockMinDto = apiCallService.getStockMin(company.getCode(), strHour);
-
+            log.info("get api from kis complete. : {}", company.getCode());
             // 분봉 리스트 매핑 및 저장
             List<StockMin> stockMinList = stockMinDto.getOutput2().stream()
                     .filter(dto -> dto.getStck_cntg_hour() != null)  // null 방지
@@ -57,6 +57,7 @@ public class StockMinService {
                     .collect(Collectors.toList());
 
             stockMinRepository.saveAll(stockMinList);
+            log.info("complete_count : {}", i++);
 
             // StockInfo 생성 및 기존 ID 세팅
             StockInfo stockInfo = apiMapper.stockMinOutput1ToStockInfo(stockMinDto.getOutput1());
@@ -72,6 +73,7 @@ public class StockMinService {
 
             Thread.sleep(500);
         }
+        log.info("StockMin update finished");
     }
     public List<StockMin> getChart(long companyId) {
 
