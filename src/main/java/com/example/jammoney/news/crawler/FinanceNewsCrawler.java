@@ -1,7 +1,7 @@
-
 package com.example.jammoney.news.crawler;
 
 import com.example.jammoney.news.dto.NewsRequestDto;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -19,102 +19,99 @@ import java.util.List;
 @Component
 public class FinanceNewsCrawler {
 
+    @PostConstruct
+    public void initChromeDriverPath() {
+        System.setProperty("webdriver.chrome.driver",
+                "C:\\Users\\gahyeon\\Desktop\\chromedriver-win64\\chromedriver.exe");
+        log.info("[ChromeDriver 경로 설정 완료]");
+    }
+
     public List<NewsRequestDto> fetchTodayNews() {
         log.info("[크롤링 시작]");
-        WebDriver driver = null;
         List<NewsRequestDto> newsList = new ArrayList<>();
+        WebDriver driver = null;
 
         try {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("--headless=new");
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-
+            options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage");
             driver = new ChromeDriver(options);
+
+            // 1) 메인 페이지 접속 & 리스트 로딩 대기
             driver.get("https://biz.chosun.com/finance/");
+            WebDriverWait waitMain = new WebDriverWait(driver, Duration.ofSeconds(10));
+            waitMain.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                    By.cssSelector("a.story-card__headline")));
 
-            String mainPageHtml = driver.getPageSource(); // HTML 확인용
-            log.info("[메인 페이지 HTML 일부 출력] \n{}", mainPageHtml.substring(0, Math.min(1000, mainPageHtml.length())));
-            List<WebElement> elements = driver.findElements(By.cssSelector("a.text_link.story-card__headline"));
+            // 2) 모든 링크 미리 수집
+            List<WebElement> cards = driver.findElements(By.cssSelector("a.story-card__headline"));
+            log.info("[메인] 검색된 기사 개수: {}", cards.size());
 
-
-// 더 유연한 셀렉터로 교체
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("a.story-card__headline")));
-
-            List<WebElement> elementList = driver.findElements(By.cssSelector("a.story-card__headline"));
-            System.out.println("[검색된 요소 개수] " + elementList.size());
-
-/*            for (int i = 0; i < elementList.size(); i++) {
-                WebElement el = elementList.get(i);
-                String text = el.getText();
-                String href = el.getAttribute("href");
-                System.out.println("[" + i + "] 제목: " + text);
-                System.out.println("[" + i + "] 링크: https://biz.chosun.com" + href); // 상대경로 보정
-                System.out.println("----------");
-                driver.get("https://biz.chosun.com" + href);
-                String mainPageHtml_2 = driver.getPageSource(); // HTML 확인용
-                log.info("[메인 페이지 HTML 일부 출력] \n{}", mainPageHtml_2.substring(0, Math.min(1000, mainPageHtml_2.length())));
-            }*/
-            for (int i = 0; i < elementList.size(); i++) {
-                WebElement el = elementList.get(i);
-                String text = el.getText();
-                String href = el.getAttribute("href");
-
-                // 상대경로 → 절대경로 변환
-                String fullUrl = "https://biz.chosun.com/finance/" + href;
-
-                System.out.println("[" + i + "] 제목: " + text);
-                System.out.println("[" + i + "] 링크: " + fullUrl);
-                System.out.println("----------");
-
-                // 상세 페이지 이동
-                driver.get(fullUrl);
-
-                // HTML 일부 출력
-                String mainPageHtml_2 = driver.getPageSource();
-                log.info("[상세 페이지 HTML 일부 출력] \n{}", mainPageHtml_2.substring(0, Math.min(1000, mainPageHtml_2.length())));
-
-                List<WebElement> elementsss = driver.findElements(By.cssSelector("h1.article-header__headline"));
-                WebElement el1 = elementList.get(i);
-                String textt = el1.getText();
-                System.out.println("[" + i + "] ㅈㅂ나와야되는 제목: " + textt);
+            List<String> links = new ArrayList<>();
+            for (WebElement card : cards) {
+                String href = card.getAttribute("href");
+                if (href != null && href.startsWith("http")) {
+                    links.add(href);
+                }
             }
 
-
-            int count = Math.min(3, elementList.size());
-
-            for (int i = 0; i < count; i++) {
-                String link = elementList.get(i).getAttribute("href");
-                log.info("상세 페이지 이동: {}", link);
+            // 3) 하루에 3개만, 스킵된 기사 건너뛰기
+            for (int idx = 0; idx < links.size() && newsList.size() < 3; idx++) {
+                String link = links.get(idx);
+                log.info("[{}] 상세 페이지 이동 → {}", idx, link);
                 driver.navigate().to(link);
 
-                WebDriverWait detailWait = new WebDriverWait(driver, Duration.ofSeconds(5));
-                WebElement titleEl = detailWait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("h1.article-header__headline")));
-                WebElement contentEl = driver.findElement(By.cssSelector("div.article-body__content"));
+                WebDriverWait waitDetail = new WebDriverWait(driver, Duration.ofSeconds(5));
+                try {
+                    // 제목
+                    WebElement titleEl = waitDetail.until(
+                            ExpectedConditions.presenceOfElementLocated(
+                                    By.cssSelector("h1.article-header__headline")));
+                    String title = titleEl.getText();
+                    log.info("[{}] 제목: {}", idx, title);
 
-                String title = titleEl.getText();
-                String content = contentEl.getText();
+                    // 본문: 여러 <p.article-body__content> 태그 모두 합치기
+                    List<WebElement> paras = waitDetail.until(
+                            ExpectedConditions.presenceOfAllElementsLocatedBy(
+                                    By.cssSelector("p.article-body__content")));
+                    StringBuilder contentBuilder = new StringBuilder();
+                    for (WebElement p : paras) {
+                        contentBuilder.append(p.getText().trim()).append("\n\n");
+                    }
+                    String content = contentBuilder.toString().trim();
+                    log.info("[{}] 본문 문단 개수: {}, 총 길이: {}자",
+                            idx, paras.size(), content.length());
 
-                NewsRequestDto dto = new NewsRequestDto();
-                dto.setTitle(title);
-                dto.setContent(content);
-                dto.setSource("조선비즈");
-                dto.setPublishDate(LocalDate.now());
+                    // (기존대로) 출처, 발간일
+                    String source = "조선비즈";
+                    LocalDate publishDate = LocalDate.now();
 
-                newsList.add(dto);
+                    // DTO 생성 & 저장
+                    NewsRequestDto dto = new NewsRequestDto();
+                    dto.setTitle(title);
+                    dto.setContent(content);
+                    dto.setSource(source);
+                    dto.setPublishDate(publishDate);
+                    newsList.add(dto);
+                    log.info("[{}] 크롤링 완료 항목 수: {}", idx, newsList.size());
 
-                driver.navigate().back();
-                Thread.sleep(1000);
+                } catch (TimeoutException te) {
+                    log.warn("[{}] 본문 또는 제목 요소를 찾지 못해 스킵합니다.", idx);
+                } catch (Exception ex) {
+                    log.error("[{}] 크롤링 중 예기치 못한 오류 발생", idx, ex);
+                }
+
+                Thread.sleep(1000);  // 서버 부하 방지
             }
 
         } catch (Exception e) {
             log.error("[크롤링 전체 실패]", e);
         } finally {
-            if (driver != null) driver.quit();
+            if (driver != null) {
+                driver.quit();
+            }
         }
 
-        log.info("[크롤링된 뉴스 개수]: {}", newsList.size());
+        log.info("[최종] 크롤링된 뉴스 개수: {}", newsList.size());
         return newsList;
     }
 }

@@ -10,6 +10,7 @@ public interface NewsRepository extends JpaRepository<News, Long> {
     void deleteByPublishDateBefore(LocalDate date);
     boolean existsByTitleAndPublishDate(String title, LocalDate publishDate);
     List<News> findByPublishDateAfter(LocalDate date);
+    long countByPublishDate(LocalDate date);
 
 }
 

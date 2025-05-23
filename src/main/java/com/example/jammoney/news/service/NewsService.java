@@ -25,6 +25,10 @@ public class NewsService {
         newsRepository.deleteByPublishDateBefore(sevenDaysAgo);
     }
 
+    public long countByPublishDate(LocalDate date) {
+        return newsRepository.countByPublishDate(date);
+    }
+
     public List<NewsRequestDto> testCrawlingPreview() {
         return financeNewsCrawler.fetchTodayNews();
     }
@@ -69,7 +73,6 @@ public class NewsService {
         dto.setSource(news.getSource());
         dto.setContent(news.getContent());
         dto.setSummary(news.getSummary());
-        // 퀴즈 포함할 경우 추가
         if (news.getQuiz() != null) {
             dto.setQuiz(NewsQuizDto.builder()
                     .question(news.getQuiz().getQuestion())
@@ -82,5 +85,4 @@ public class NewsService {
         }
         return dto;
     }
-
 }

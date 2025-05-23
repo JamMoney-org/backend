@@ -6,7 +6,11 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "news")
+@Table(name = "news",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = { "publish_date", "title" }
+        )
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,10 +28,12 @@ public class News {
 
     private String source;
 
-    @Column(length = 10000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(length = 3000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
     @OneToOne(mappedBy = "news", cascade = CascadeType.ALL)
