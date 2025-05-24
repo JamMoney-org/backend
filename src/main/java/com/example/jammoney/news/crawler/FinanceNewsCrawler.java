@@ -35,7 +35,7 @@ public class FinanceNewsCrawler {
             ChromeOptions options = new ChromeOptions();
             options.setBinary("/usr/bin/chromium");       // ← EC2에 설치된 Chromium 경로
             options.addArguments(
-                    "--headless=chrome",                      // ← 혹은 그냥 "--headless"
+                    "--headless=new",                      // ← 혹은 그냥 "--headless"
                     "--no-sandbox",
                     "--disable-dev-shm-usage",
                     "--disable-gpu",
