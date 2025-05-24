@@ -19,7 +19,7 @@ public class Scenario { //시나리오 기본 정보
     private String description; // 첫 시작 설명
 
     @Enumerated(EnumType.STRING)
-    private ScenarioCategory category;
+    private ScenarioCategory category; //카테고리
 
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
