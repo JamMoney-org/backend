@@ -1,6 +1,7 @@
 package com.example.jammoney.news.crawler;
 
 import com.example.jammoney.news.dto.NewsRequestDto;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
@@ -21,8 +22,7 @@ public class FinanceNewsCrawler {
 
     @PostConstruct
     public void initChromeDriverPath() {
-        System.setProperty("webdriver.chrome.driver",
-                "C:\\Users\\gahyeon\\Desktop\\chromedriver-win64\\chromedriver.exe");
+        WebDriverManager.chromedriver().setup();
         log.info("[ChromeDriver 경로 설정 완료]");
     }
 

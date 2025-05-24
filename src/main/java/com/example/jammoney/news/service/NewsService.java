@@ -7,7 +7,6 @@ import com.example.jammoney.news.dto.NewsResponseDto;
 import com.example.jammoney.news.dto.NewsSimpleDto;
 import com.example.jammoney.news.entity.News;
 import com.example.jammoney.news.repository.NewsRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

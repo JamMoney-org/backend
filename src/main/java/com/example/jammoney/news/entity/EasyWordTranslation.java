@@ -18,8 +18,11 @@ public class EasyWordTranslation {
 
     private String originalWord;
 
-    @Column(length = 2000)
+    @Column(length = 3000)
     private String translatedText;
+
+    @Column(length = 3000)
+    private String exampleSentence;
 
     @ManyToOne
     @JoinColumn(name = "news_id")
