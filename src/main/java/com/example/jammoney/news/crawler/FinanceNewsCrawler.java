@@ -33,7 +33,16 @@ public class FinanceNewsCrawler {
 
         try {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage");
+            options.setBinary("/usr/bin/chromium");       // ← EC2에 설치된 Chromium 경로
+            options.addArguments(
+                    "--headless=chrome",                      // ← 혹은 그냥 "--headless"
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--single-process",
+                    "--remote-debugging-port=9222",
+                    "--user-data-dir=/tmp"
+            );
             driver = new ChromeDriver(options);
 
             // 1) 메인 페이지 접속 & 리스트 로딩 대기
