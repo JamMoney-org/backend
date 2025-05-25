@@ -49,6 +49,26 @@ public class WrongNoteServiceImpl implements WrongNoteService {
     }
 
     @Override
+    public WrongNoteResponse getWrongNoteById(Long id, User user) {
+        WrongNote note = wrongNoteRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 오답노트가 존재하지 않습니다"));
+
+        if (!note.getUser().getId().equals(user.getId())) {
+            throw new SecurityException("해당 오답노트에 접근할 권한이 없습니다");
+        }
+
+        return WrongNoteResponse.builder()
+                .id(note.getId())
+                .question(note.getQuestion())
+                .selectedOption(note.getSelectedOption())
+                .correctAnswer(note.getCorrectAnswer())
+                .explanation(note.getExplanation())
+                .hint(note.getHint())
+                .category(note.getCategory())
+                .build();
+    }
+
+    @Override
     public void deleteWrongNote(Long id, User user) {
         WrongNote note = wrongNoteRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 오답노트를 찾을 수 없습니다."));

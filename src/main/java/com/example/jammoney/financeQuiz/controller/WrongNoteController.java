@@ -40,6 +40,16 @@ public class WrongNoteController { //오답노트
         return ResponseEntity.ok(ApiResponse.success("오답노트 조회 성공", notes));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<WrongNoteResponse>> getWrongNoteById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        User user = userDetails.getUser();
+        WrongNoteResponse note = wrongNoteService.getWrongNoteById(id, user);
+        return ResponseEntity.ok(ApiResponse.success("오답노트 상세 조회 성공", note));
+    }
+
     // 3. 오답노트 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteWrongNote(
@@ -50,4 +60,6 @@ public class WrongNoteController { //오답노트
         wrongNoteService.deleteWrongNote(id, user);
         return ResponseEntity.ok(ApiResponse.success("오답노트 삭제 완료", null));
     }
+
+
 }

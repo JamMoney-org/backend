@@ -1,5 +1,6 @@
 package com.example.jammoney.financeQuiz.repository;
 
+import com.example.jammoney.financeQuiz.dto.WrongNoteResponse;
 import com.example.jammoney.financeQuiz.entity.WrongNote;
 import com.example.jammoney.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
