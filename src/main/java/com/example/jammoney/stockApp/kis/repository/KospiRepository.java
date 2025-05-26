@@ -1,5 +1,6 @@
-package com.example.jammoney.stockApp.kis.entity;
+package com.example.jammoney.stockApp.kis.repository;
 
+import com.example.jammoney.stockApp.kis.entity.Kospi;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;

@@ -1,5 +1,7 @@
 package com.example.jammoney.stockApp.stock.controller;
 
+import com.example.jammoney.auth.entity.CustomUserDetails;
+import com.example.jammoney.auth.service.CustomUserDetailsService;
 import com.example.jammoney.stockApp.stock.dto.UserPortfolioResponseDto;
 import com.example.jammoney.stockApp.stock.entity.UserPortfolio;
 import com.example.jammoney.stockApp.stock.service.UserPortfolioService;
@@ -20,7 +22,8 @@ public class UserPortfolioController {
 
     //user의 포트폴리오 현황 조회
     @GetMapping
-    public ResponseEntity getMyPortfolio(@AuthenticationPrincipal User user) {
+    public ResponseEntity getMyPortfolio(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
         UserPortfolio portfolio = userPortfolioService.getPortfolio(user);
         UserPortfolioResponseDto userPortfolioResponseDto;
         userPortfolioResponseDto = UserPortfolioResponseDto.builder()

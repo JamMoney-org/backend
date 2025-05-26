@@ -36,3 +36,4 @@ out/
 /.nb-gradle/
 
 ### VS Code ###
+/src/main/java/com/example/jammoney/uml/

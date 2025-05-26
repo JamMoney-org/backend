@@ -2,7 +2,7 @@ package com.example.jammoney.stockApp.stock.service;
 
 import com.example.jammoney.stockApp.kis.dto.KospiDto;
 import com.example.jammoney.stockApp.kis.entity.Kospi;
-import com.example.jammoney.stockApp.kis.entity.KospiRepository;
+import com.example.jammoney.stockApp.kis.repository.KospiRepository;
 import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
