@@ -10,4 +10,5 @@ public interface WrongNoteService {
     void saveWrongNote(WrongNoteRequest request, User user);
     List<WrongNoteResponse> getWrongNotesByUser(User user);
     void deleteWrongNote(Long id, User user);
+    WrongNoteResponse getWrongNoteById(Long id, User user);
 }

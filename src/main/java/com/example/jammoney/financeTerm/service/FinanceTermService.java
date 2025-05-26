@@ -126,11 +126,9 @@ public class FinanceTermService {
 
             FinancialTerm term = quiz.getTerm();
 
-            // ✅ String → int 변환
             int selectedIndex = Integer.parseInt(answer.getSelectedAnswer());
             boolean isCorrect = selectedIndex == quiz.getCorrectAnswer();
 
-            // ✅ 제출 저장
             quizSubmissionRepository.save(QuizSubmission.builder()
                     .user(user)
                     .quiz(quiz)
@@ -138,7 +136,6 @@ public class FinanceTermService {
                     .isCorrect(isCorrect)
                     .build());
 
-            // ✅ 정답 여부 관계없이 학습률 증가
             if (!userLearningRepository.existsByUserAndTerm(user, term)) {
                 userLearningRepository.save(UserTermLearning.builder()
                         .user(user)
@@ -147,7 +144,6 @@ public class FinanceTermService {
                         .build());
             }
 
-            // ✅ 결과 DTO 설정
             QuizResultDto result = new QuizResultDto();
             result.setCorrect(isCorrect);
             result.setCorrectAnswer(quiz.getCorrectAnswer());
@@ -155,7 +151,6 @@ public class FinanceTermService {
             results.add(result);
         }
 
-        // ✅ 경험치 부여 조건
         FinancialCategory category = categoryRepository.findByCategory(submitDto.getCategoryName())
                 .orElseThrow(() -> new RuntimeException("카테고리 없음"));
 
@@ -222,6 +217,30 @@ public class FinanceTermService {
         UserLearningStatusDto dto = new UserLearningStatusDto();
         dto.setTotalLearnedCount((int) count);
         return dto;
+    }
+
+    public Long getMyTermsCategoryId() {
+        FinancialCategory category = categoryRepository
+                .findByCategory("나만의 단어장")
+                .orElseThrow(() -> new RuntimeException("‘나만의 단어장’ 카테고리가 없습니다."));
+        return category.getId();
+    }
+
+    @Transactional
+    public Long createNewsTerm(TermCreateDto dto) {
+        FinancialCategory category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("카테고리 ID가 유효하지 않습니다. id=" + dto.getCategoryId()));
+
+        FinancialTerm term = FinancialTerm.builder()
+                .term(dto.getTerm())
+                .definition(dto.getDefinition())
+                .exampleSentences(dto.getExampleSentences())
+                .category(category)
+                .dayIndex(dto.getDayIndex())
+                .build();
+
+        FinancialTerm saved = termRepository.save(term);
+        return saved.getId();
     }
 
     @Transactional

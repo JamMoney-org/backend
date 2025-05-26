@@ -62,7 +62,7 @@ public class SecurityConfig {
                 "http://127.0.0.1:5500",
                 "http://127.0.0.1:5501"
         ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With")); // 헤더만 허용
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
