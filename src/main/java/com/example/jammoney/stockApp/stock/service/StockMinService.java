@@ -16,10 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,43 +35,41 @@ public class StockMinService {
         List<Company> companyList = companyService.findAllCompanies();
         LocalDateTime now = LocalDateTime.now();
         String strHour = Time.strHour(now);
-        int i = 0;
+
         for (Company company : companyList) {
-            // 분봉 API 호출
-            log.info("Company Code : {}", company.getCode());
             StockMinDto stockMinDto = apiCallService.getStockMin(company.getCode(), strHour);
-            log.info("get api from kis complete. : {}", company.getCode());
-            // 분봉 리스트 매핑 및 저장
-            List<StockMin> stockMinList = stockMinDto.getOutput2().stream()
-                    .filter(dto -> dto.getStck_cntg_hour() != null)  // null 방지
-                    .map(stockMinOutput2 -> {
-                        StockMin stockMin = apiMapper.stockMinOutput2ToStockMin(stockMinOutput2);
+
+            List<StockMin> stockMinList = Optional.ofNullable(stockMinDto.getOutput2())
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .filter(dto -> dto.getStck_cntg_hour() != null)
+                    .map(dto -> {
+                        StockMin stockMin = apiMapper.stockMinOutput2ToStockMin(dto);
                         stockMin.setCompany(company);
                         stockMin.setTradeTime(now);
                         return stockMin;
                     })
-                    .sorted(Comparator.comparing(StockMin::getStockTradeTime))
-                    .collect(Collectors.toList());
+                    .toList();
 
-            stockMinRepository.saveAll(stockMinList);
-            log.info("complete_count : {}", i++);
-
-            // StockInfo 생성 및 기존 ID 세팅
-            StockInfo stockInfo = apiMapper.stockMinOutput1ToStockInfo(stockMinDto.getOutput1());
-            stockInfo.setCompany(company);
-
-            StockInfo oldStockInfo = company.getStockInfo();
-            if (oldStockInfo != null) {
-                stockInfo.setStockInfoId(oldStockInfo.getStockInfoId());  // UPDATE로 처리되게 함
+            for (StockMin stockMin : stockMinList) {
+                stockMinRepository.insertIgnore(
+                        stockMin.getCompany().getCompanyId(),
+                        stockMin.getStockTradeTime(),
+                        stockMin.getStck_cntg_hour(),
+                        stockMin.getStck_prpr(),
+                        stockMin.getStck_oprc(),
+                        stockMin.getStck_hgpr(),
+                        stockMin.getStck_lwpr(),
+                        stockMin.getCntg_vol()
+                );
             }
-
-            company.setStockInfo(stockInfo);
-            companyService.saveCompany(company);  // cascade로 stockInfo도 같이 저장
 
             Thread.sleep(500);
         }
+
         log.info("StockMin update finished");
     }
+
     public List<StockMin> getChart(long companyId) {
 
         return stockMinRepository.findAllByCompany_CompanyId(companyId);
