@@ -10,6 +10,7 @@ import com.example.jammoney.scenarioQuiz.repository.*;
 import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,9 +28,13 @@ public class ScenarioServiceImpl implements ScenarioService {
     private final PetService petService;
 
     @Override
+    @Transactional
     public ScenarioStartResponseDTO startScenario(Long scenarioId, User user) {
         Scenario scenario = scenarioRepository.findById(scenarioId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 시나리오가 존재하지 않습니다."));
+
+        // 🔥 기존 플레이 기록 삭제 (같은 유저가 다시 시나리오 시작 시)
+        playLogRepository.deleteByScenarioAndUser(scenario, user);
 
         ScenarioStep firstStep = stepRepository.findByScenarioAndStepOrder(scenario, 1)
                 .orElseThrow(() -> new IllegalStateException("시나리오에 첫 번째 질문이 존재하지 않습니다."));
