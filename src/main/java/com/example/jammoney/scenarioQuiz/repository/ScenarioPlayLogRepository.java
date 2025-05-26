@@ -15,4 +15,5 @@ public interface ScenarioPlayLogRepository extends JpaRepository<ScenarioPlayLog
 
     // 전체 기록 히스토리 (정렬 포함)
     List<ScenarioPlayLog> findByScenarioAndUserOrderByStepOrderAsc(Scenario scenario, User user);
+    void deleteByScenarioAndUser(Scenario scenario, User user);
 }
