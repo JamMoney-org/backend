@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,7 +34,7 @@ public class StockMinService {
     @Transactional
     public void updateStockMin() throws InterruptedException {
         List<Company> companyList = companyService.findAllCompanies();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
         String strHour = Time.strHour(now);
 
         for (Company company : companyList) {
