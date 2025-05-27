@@ -32,6 +32,26 @@ public class NewsQuizServiceImpl implements NewsQuizService {
 
     @Transactional
     @Override
+    public NewsQuizDto getOrCreateQuiz(Long newsId) {
+        News news = newsRepo.findById(newsId)
+                .orElseThrow(() -> new IllegalArgumentException("뉴스가 없습니다. id=" + newsId));
+
+        return quizRepo.findByNews(news)
+                .map(quiz -> NewsQuizDto.builder()
+                        .quizId(quiz.getId())
+                        .question(quiz.getQuestion())
+                        .option1(quiz.getOption1())
+                        .option2(quiz.getOption2())
+                        .option3(quiz.getOption3())
+                        .option4(quiz.getOption4())
+                        .correctAnswerIndex(null)
+                        .build())
+                .orElseGet(() -> generateAndSaveQuiz(newsId));  // 없으면 생성
+    }
+
+
+    @Transactional
+    @Override
     public NewsQuizDto generateAndSaveQuiz(Long newsId) {
         News news = newsRepo.findById(newsId)
                 .orElseThrow(() -> new IllegalArgumentException("뉴스가 없습니다. id=" + newsId));
@@ -100,4 +120,6 @@ public class NewsQuizServiceImpl implements NewsQuizService {
         petService.addExp(user, 10);
         return new QuizResultDto(correct, quiz.getCorrectAnswerIndex());
     }
+
+
 }

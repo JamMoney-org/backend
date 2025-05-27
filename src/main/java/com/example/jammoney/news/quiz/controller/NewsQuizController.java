@@ -19,7 +19,13 @@ public class NewsQuizController {
     private final UserService userService;
     private final NewsQuizService quizService;
     private final UserRepository userRepository;
-    //퀴즈 생성 및 조회
+    //퀴즈 생성
+    @GetMapping
+    public NewsQuizDto getOrCreateQuiz(@PathVariable Long newsId) {
+        return quizService.getOrCreateQuiz(newsId);
+    }
+
+    //퀴즈 조회
     @PostMapping("/generate")
     public NewsQuizDto generateQuiz(@PathVariable Long newsId) {
         return quizService.generateAndSaveQuiz(newsId);

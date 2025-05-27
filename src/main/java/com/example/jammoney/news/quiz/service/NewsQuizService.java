@@ -12,4 +12,6 @@ public interface NewsQuizService {
     boolean checkAnswer(Long quizId, int selectedOptionIndex);
     NewsQuiz findQuizById(Long quizId);
     QuizResultDto submitQuiz(Long newsId, QuizSubmissionDto submission, User user);
+    NewsQuizDto getOrCreateQuiz(Long newsId);
+
 }
