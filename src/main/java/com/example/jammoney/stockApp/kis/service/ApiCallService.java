@@ -1,4 +1,5 @@
 package com.example.jammoney.stockApp.kis.service;
+
 import com.example.jammoney.stockApp.kis.dto.KospiDto;
 import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
 import com.example.jammoney.stockApp.kis.dto.StockMinDto;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -161,17 +163,24 @@ public class ApiCallService {
     private <T> T sendGet(String uri, HttpHeaders headers, Class<T> clazz) {
         HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
         try {
-            ResponseEntity<T> response = restTemplate.exchange(
-                    uri,
-                    HttpMethod.GET,
-                    entity,
-                    clazz
-            );
+            ResponseEntity<T> response = restTemplate.exchange(uri, HttpMethod.GET, entity, clazz);
             return response.getBody();
-        } catch (Exception e) {
-            log.error("API 요청 실패: {}", e.getMessage());
-            return null;
+        } catch (RestClientResponseException e) { // 모든 4xx/5xx 포함
+            String responseBody = e.getResponseBodyAsString();
+            log.error("KIS API 요청 실패: {}", responseBody);
+
+            if (responseBody != null && responseBody.contains("EGW00123")) {
+                log.warn("KIS API: 토큰 만료 감지 → 새 토큰 발급 후 재시도");
+                String newToken = kisAuthService.requestNewToken();
+                headers.set("Authorization", "Bearer " + newToken);
+                entity = new HttpEntity<>("parameters", headers);
+                ResponseEntity<T> retryResponse = restTemplate.exchange(uri, HttpMethod.GET, entity, clazz);
+                return retryResponse.getBody();
+            }
+
+            throw e;
         }
     }
 

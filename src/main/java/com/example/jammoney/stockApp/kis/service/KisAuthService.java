@@ -14,6 +14,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,21 +34,19 @@ public class KisAuthService {
 
     private final KisTokenRepository kisTokenRepository;
 
-    private static final int TOKEN_EXPIRE_BUFFER_SEC = 10;
+    private static final int TOKEN_EXPIRE_BUFFER_SEC = 30;
 
     public synchronized String getAccessToken() {
         KisToken token = kisTokenRepository.findById(1L).orElse(null);
-
-        // 유효 토큰이면 바로 반환 (여유 시간 포함)
         if (token != null && token.getExpiredAt().isAfter(LocalDateTime.now().plusSeconds(TOKEN_EXPIRE_BUFFER_SEC))) {
+            log.info("유효한 토큰 반환 (DB 저장된 만료 시각): {}", token.getExpiredAt());
             return token.getToken();
         }
-
-        // 토큰이 없거나 만료 임박 → 새 토큰 요청
+        log.info("토큰 만료 또는 없음 → 새 토큰 발급 요청");
         return requestNewToken();
     }
 
-    private String requestNewToken() {
+    String requestNewToken() {
         String url = baseUrl + "/oauth2/tokenP";
 
         HttpHeaders headers = new HttpHeaders();
@@ -66,12 +65,14 @@ public class KisAuthService {
             Map<String, Object> result = response.getBody();
 
             String newToken = (String) result.get("access_token");
-            int expiresIn = (int) result.get("expires_in");
+            String expiredAtString = (String) result.get("access_token_token_expired");
+
+            LocalDateTime expiredAt = LocalDateTime.parse(expiredAtString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
             KisToken token = KisToken.builder()
                     .id(1L)
                     .token(newToken)
-                    .expiredAt(LocalDateTime.now().plusSeconds(expiresIn))
+                    .expiredAt(expiredAt)
                     .build();
 
             kisTokenRepository.save(token);
