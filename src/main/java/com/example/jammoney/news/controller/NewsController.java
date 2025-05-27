@@ -28,19 +28,15 @@ public class NewsController {
         return newsService.getNewsById(id);
     }
 
+    //크롤링 결과 보기
     @GetMapping("/crawl/test")
     public List<NewsRequestDto> testCrawlOnly() {
         return newsService.testCrawlingPreview();
     }
 
-    // NewsController.java
-
-    @GetMapping("/crawl/save")
-    public String testCrawlAndSave() {
-        List<NewsRequestDto> crawledNews = newsService.testCrawlingPreview();
-        newsService.saveNewsWithSummary(crawledNews);
-        return "크롤링 + 요약 + 저장 완료";
+    //요약
+    @PostMapping("/{id}/summary")
+    public String generateSummary(@PathVariable("id") Long newsId) {
+        return newsService.generateAndSaveSummary(newsId);
     }
-
-
 }

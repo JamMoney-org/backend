@@ -7,9 +7,10 @@ import com.example.jammoney.news.dto.NewsResponseDto;
 import com.example.jammoney.news.dto.NewsSimpleDto;
 import com.example.jammoney.news.entity.News;
 import com.example.jammoney.news.repository.NewsRepository;
-import com.example.jammoney.news.summary.GemmaSummaryClient;
+import com.example.jammoney.news.summary.SummaryClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,7 +21,8 @@ import java.util.stream.Collectors;
 public class NewsService {
     private final NewsRepository newsRepository;
     private final FinanceNewsCrawler financeNewsCrawler;
-    private final GemmaSummaryClient gemmaSummaryClient;
+    private final SummaryClient gptSummaryClient;
+
     public void deleteOldNews() {
         LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
         newsRepository.deleteByPublishDateBefore(sevenDaysAgo);
@@ -87,23 +89,20 @@ public class NewsService {
         return dto;
     }
 
-    public void saveNewsWithSummary(List<NewsRequestDto> dtoList) {
-        List<News> newsList = dtoList.stream()
-                .filter(dto -> !newsRepository.existsByTitleAndPublishDate(dto.getTitle(), dto.getPublishDate()))
-                .map(dto -> {
-                    String summary = gemmaSummaryClient.summarize(dto.getContent());
-                    return News.builder()
-                            .title(dto.getTitle())
-                            .publishDate(dto.getPublishDate())
-                            .source(dto.getSource())
-                            .content(dto.getContent())
-                            .summary(summary)
-                            .build();
-                })
-                .toList();
+    @Transactional
+    public String generateAndSaveSummary(Long newsId) {
+        News news = newsRepository.findById(newsId)
+                .orElseThrow(() -> new IllegalArgumentException("뉴스를 찾을 수 없습니다. id=" + newsId));
 
-        newsRepository.saveAll(newsList);
+        if (news.getSummary() != null) {
+            return news.getSummary();
+        }
+
+        String summary = gptSummaryClient.summarize(news.getContent());
+
+        news.setSummary(summary);
+        newsRepository.save(news);
+
+        return summary;
     }
-
-
 }

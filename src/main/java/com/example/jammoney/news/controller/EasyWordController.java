@@ -20,7 +20,7 @@ public class EasyWordController {
     private final EasyWordTranslationService translationService;
     private final UserRepository             userRepo;
 
-    /** 1) 쉬운말 번역 + 예문 생성 */
+    //1) 쉬운말 번역 + 예문 생성
     @GetMapping
     public ResponseEntity<List<EasyWordTranslationDto>> getEasyWords(
             @PathVariable Long newsId
@@ -29,7 +29,7 @@ public class EasyWordController {
         return ResponseEntity.ok(result);
     }
 
-    /** 2) 단어장에 추가 */
+    // 2) 단어장에 추가
     @PostMapping
     public ResponseEntity<Void> saveSingleTermToMyTerms(
             @PathVariable Long newsId,
