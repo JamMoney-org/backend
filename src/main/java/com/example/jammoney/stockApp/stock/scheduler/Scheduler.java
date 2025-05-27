@@ -17,7 +17,7 @@ public class Scheduler {
     private final OrderService orderService;
     private final UserPortfolioService userPortfolioService;
     private final KospiService kospiService;
-    @Scheduled(cron = "0 0/30 9-15 * * MON-FRI", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0/1 9-15 * * MON-FRI", zone = "Asia/Seoul")
     public void updateAll() throws InterruptedException {
         log.info("스케줄러 실행 시간: {}", LocalDateTime.now());
         //모든 회사의 호가 정보 갱신
