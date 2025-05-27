@@ -7,6 +7,7 @@ import com.example.jammoney.news.dto.NewsResponseDto;
 import com.example.jammoney.news.dto.NewsSimpleDto;
 import com.example.jammoney.news.entity.News;
 import com.example.jammoney.news.repository.NewsRepository;
+import com.example.jammoney.news.summary.GemmaSummaryClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class NewsService {
     private final NewsRepository newsRepository;
     private final FinanceNewsCrawler financeNewsCrawler;
+    private final GemmaSummaryClient gemmaSummaryClient;
     public void deleteOldNews() {
         LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
         newsRepository.deleteByPublishDateBefore(sevenDaysAgo);
@@ -84,4 +86,24 @@ public class NewsService {
         }
         return dto;
     }
+
+    public void saveNewsWithSummary(List<NewsRequestDto> dtoList) {
+        List<News> newsList = dtoList.stream()
+                .filter(dto -> !newsRepository.existsByTitleAndPublishDate(dto.getTitle(), dto.getPublishDate()))
+                .map(dto -> {
+                    String summary = gemmaSummaryClient.summarize(dto.getContent());
+                    return News.builder()
+                            .title(dto.getTitle())
+                            .publishDate(dto.getPublishDate())
+                            .source(dto.getSource())
+                            .content(dto.getContent())
+                            .summary(summary)
+                            .build();
+                })
+                .toList();
+
+        newsRepository.saveAll(newsList);
+    }
+
+
 }

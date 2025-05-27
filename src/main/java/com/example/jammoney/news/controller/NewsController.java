@@ -30,7 +30,17 @@ public class NewsController {
 
     @GetMapping("/crawl/test")
     public List<NewsRequestDto> testCrawlOnly() {
-        return newsService.testCrawlingPreview(); // 아래에 구현할 서비스 메서드
+        return newsService.testCrawlingPreview();
     }
+
+    // NewsController.java
+
+    @GetMapping("/crawl/save")
+    public String testCrawlAndSave() {
+        List<NewsRequestDto> crawledNews = newsService.testCrawlingPreview();
+        newsService.saveNewsWithSummary(crawledNews);
+        return "크롤링 + 요약 + 저장 완료";
+    }
+
 
 }
