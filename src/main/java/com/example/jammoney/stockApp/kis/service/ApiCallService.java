@@ -92,7 +92,7 @@ public class ApiCallService {
                 .queryParam("FID_INPUT_ISCD", stockCode)
                 .queryParam("FID_ETC_CLS_CODE", "")
                 .queryParam("FID_INPUT_HOUR_1", time)
-                .queryParam("FID_PW_DATA_INCU_YN", "Y")
+                .queryParam("FID_PW_DATA_INCU_YN", "N")
                 .toUriString();
 
         return sendGet(uri, headers, StockMinDto.class);
