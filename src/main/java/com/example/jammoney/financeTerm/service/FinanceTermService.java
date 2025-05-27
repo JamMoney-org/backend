@@ -226,6 +226,12 @@ public class FinanceTermService {
         return category.getId();
     }
 
+    public Optional<FinancialTerm> findByTermAndCategory(String term, Long categoryId) {
+        FinancialCategory cat = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("카테고리 없음 id=" + categoryId));
+        return termRepository.findByTermAndCategory(term, cat);
+    }
+
     @Transactional
     public Long createNewsTerm(TermCreateDto dto) {
         FinancialCategory category = categoryRepository.findById(dto.getCategoryId())
