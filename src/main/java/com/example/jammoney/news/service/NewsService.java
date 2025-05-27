@@ -7,8 +7,10 @@ import com.example.jammoney.news.dto.NewsResponseDto;
 import com.example.jammoney.news.dto.NewsSimpleDto;
 import com.example.jammoney.news.entity.News;
 import com.example.jammoney.news.repository.NewsRepository;
+import com.example.jammoney.news.summary.SummaryClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 public class NewsService {
     private final NewsRepository newsRepository;
     private final FinanceNewsCrawler financeNewsCrawler;
+    private final SummaryClient gptSummaryClient;
+
     public void deleteOldNews() {
         LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
         newsRepository.deleteByPublishDateBefore(sevenDaysAgo);
@@ -83,5 +87,22 @@ public class NewsService {
                     .build());
         }
         return dto;
+    }
+
+    @Transactional
+    public String generateAndSaveSummary(Long newsId) {
+        News news = newsRepository.findById(newsId)
+                .orElseThrow(() -> new IllegalArgumentException("뉴스를 찾을 수 없습니다. id=" + newsId));
+
+        if (news.getSummary() != null) {
+            return news.getSummary();
+        }
+
+        String summary = gptSummaryClient.summarize(news.getContent());
+
+        news.setSummary(summary);
+        newsRepository.save(news);
+
+        return summary;
     }
 }
