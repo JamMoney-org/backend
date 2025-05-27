@@ -38,9 +38,12 @@ public class FinanceTermController {
     public ResponseEntity<List<TermDto>> getTermsByCategoryAndDay(
             @PathVariable String categoryName,
             @PathVariable int dayIndex,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return ResponseEntity.ok(financeTermService.getTermsByCategoryAndDay(categoryName, dayIndex, user));
+        User user = userDetails.getUser();
+        return ResponseEntity.ok(
+                financeTermService.getTermsByCategoryAndDay(categoryName, dayIndex, user)
+        );
     }
 
     //DAY 단어 모두 본 뒤 퀴즈 시작 시
@@ -62,14 +65,13 @@ public class FinanceTermController {
         return ResponseEntity.ok(financeTermService.submitQuizAnswer(user, submitDto));
     }
 
-
-
     //단어 카드에서 북마크 누를 때
     @PostMapping("/bookmark/{termId}")
     public ResponseEntity<Void> bookmarkTerm(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long termId
     ) {
+        User user = userDetails.getUser();
         financeTermService.bookmarkTerm(user, termId);
         return ResponseEntity.ok().build();
     }
@@ -77,9 +79,10 @@ public class FinanceTermController {
     //북마크 해제
     @DeleteMapping("/bookmark/{termId}")
     public ResponseEntity<Void> unbookmarkTerm(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long termId
     ) {
+        User user = userDetails.getUser();
         financeTermService.unbookmarkTerm(user, termId);
         return ResponseEntity.ok().build();
     }
@@ -87,16 +90,18 @@ public class FinanceTermController {
     //나만의 단어장 클릭
     @GetMapping("/my-terms")
     public ResponseEntity<List<UserSavedTermDto>> getSavedTerms(
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        User user = userDetails.getUser();
         return ResponseEntity.ok(financeTermService.getMySavedTerms(user));
     }
 
     //학습 진도율 표시용
     @GetMapping("/progress")
     public ResponseEntity<UserLearningStatusDto> getLearningStatus(
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        User user = userDetails.getUser();
         return ResponseEntity.ok(financeTermService.getUserLearningStatus(user));
     }
 

@@ -1,6 +1,7 @@
 package com.example.jammoney.news.service;
 
 import com.example.jammoney.financeTerm.dto.TermCreateDto;
+import com.example.jammoney.financeTerm.entity.FinancialTerm;
 import com.example.jammoney.financeTerm.service.FinanceTermService;
 import com.example.jammoney.news.dto.EasyWordTranslationDto;
 import com.example.jammoney.news.entity.EasyWordTranslation;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -138,19 +140,23 @@ public class EasyWordTranslationService {
     public void saveSingleTermToMyTerms(Long newsId,
                                         EasyWordTranslationDto dto,
                                         User user) {
+
         Long myCategoryId = termService.getMyTermsCategoryId();
 
-        // TermCreateDto로 변환
         TermCreateDto termDto = new TermCreateDto();
         termDto.setCategoryId(myCategoryId);
         termDto.setTerm(dto.getOriginalWord());
         termDto.setDefinition(dto.getTranslatedText());
         termDto.setExampleSentences(List.of(dto.getExampleSentence()));
 
-        // 단어 저장 (FinancialTerm)
-        Long newTermId = termService.createNewsTerm(termDto);
+        Optional<FinancialTerm> existing = termService.findByTermAndCategory(
+                dto.getOriginalWord(), myCategoryId
+        );
 
-        // 즐겨찾기(나만의 단어장) 등록
-        termService.bookmarkTerm(user, newTermId);
+        Long termId = existing
+                .map(FinancialTerm::getId)
+                .orElseGet(() -> termService.createNewsTerm(termDto));
+
+        termService.bookmarkTerm(user, termId);
     }
 }
