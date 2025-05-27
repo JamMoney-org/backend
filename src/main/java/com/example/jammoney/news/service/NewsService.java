@@ -65,9 +65,16 @@ public class NewsService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public NewsResponseDto getNewsById(Long id) {
         News news = newsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("뉴스를 찾을 수 없습니다. id=" + id));
+
+        if (news.getSummary() == null) {
+            String summary = gptSummaryClient.summarize(news.getContent());
+            news.setSummary(summary);
+            newsRepository.save(news);
+        }
 
         NewsResponseDto dto = new NewsResponseDto();
         dto.setId(news.getId());
