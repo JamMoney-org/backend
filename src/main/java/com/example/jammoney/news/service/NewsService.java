@@ -6,6 +6,7 @@ import com.example.jammoney.news.dto.NewsRequestDto;
 import com.example.jammoney.news.dto.NewsResponseDto;
 import com.example.jammoney.news.dto.NewsSimpleDto;
 import com.example.jammoney.news.entity.News;
+import com.example.jammoney.news.quiz.service.NewsQuizService;
 import com.example.jammoney.news.repository.NewsRepository;
 import com.example.jammoney.news.summary.SummaryClient;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class NewsService {
     private final NewsRepository newsRepository;
     private final FinanceNewsCrawler financeNewsCrawler;
     private final SummaryClient gptSummaryClient;
+    private final NewsQuizService newsQuizService;
 
     public void deleteOldNews() {
         LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
@@ -76,6 +78,8 @@ public class NewsService {
             newsRepository.save(news);
         }
 
+        NewsQuizDto quizDto = newsQuizService.generateAndSaveQuiz(id);
+
         NewsResponseDto dto = new NewsResponseDto();
         dto.setId(news.getId());
         dto.setTitle(news.getTitle());
@@ -83,16 +87,8 @@ public class NewsService {
         dto.setSource(news.getSource());
         dto.setContent(news.getContent());
         dto.setSummary(news.getSummary());
-        if (news.getQuiz() != null) {
-            dto.setQuiz(NewsQuizDto.builder()
-                    .question(news.getQuiz().getQuestion())
-                    .option1(news.getQuiz().getOption1())
-                    .option2(news.getQuiz().getOption2())
-                    .option3(news.getQuiz().getOption3())
-                    .option4(news.getQuiz().getOption4())
-                    .correctAnswerIndex(news.getQuiz().getCorrectAnswerIndex())
-                    .build());
-        }
+        dto.setQuiz(quizDto);
+
         return dto;
     }
 
