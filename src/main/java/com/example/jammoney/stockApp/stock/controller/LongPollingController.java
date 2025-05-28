@@ -1,5 +1,6 @@
 package com.example.jammoney.stockApp.stock.controller;
 
+import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.stockApp.stock.dto.OrderResponseDto;
 import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -32,12 +33,12 @@ public class LongPollingController {
      * @return 체결된 주문 정보가 포함된 응답(ResponseEntity<List<[buyOrders], [sellOrders]>>)
      */
     @GetMapping
-    public DeferredResult<ResponseEntity<List<List<OrderResponseDto>>>> listen(@AuthenticationPrincipal User user) {
+    public DeferredResult<ResponseEntity<List<List<OrderResponseDto>>>> listen(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         DeferredResult<ResponseEntity<List<List<OrderResponseDto>>>> output = new DeferredResult<>(60000L);
-        userWaitMap.put(user.getId(), output);
+        userWaitMap.put(customUserDetails.getUser().getId(), output);
 
-        output.onCompletion(() -> userWaitMap.remove(user.getId()));
-        output.onTimeout(() -> userWaitMap.remove(user.getId()));
+        output.onCompletion(() -> userWaitMap.remove(customUserDetails.getUser().getId()));
+        output.onTimeout(() -> userWaitMap.remove(customUserDetails.getUser().getId()));
 
         return output;
     }
