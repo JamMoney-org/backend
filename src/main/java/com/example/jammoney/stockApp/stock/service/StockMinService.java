@@ -64,11 +64,16 @@ public class StockMinService {
                         stockMin.getCntg_vol()
                 );
             }
-
+            StockInfo stockInfo = apiMapper.stockMinOutput1ToStockInfo(stockMinDto.getOutput1());
+            stockInfo.setCompany(company);
+            StockInfo oldStockInfo = company.getStockInfo();
+            stockInfo.setStockInfoId(oldStockInfo.getStockInfoId());
+            company.setStockInfo(stockInfo);
+            companyService.saveCompany(company);
             Thread.sleep(500);
         }
 
-        log.info("StockMin update finished");
+        log.info("StockMin and StockInfo update finished");
     }
 
     public List<StockMin> getChart(long companyId) {
