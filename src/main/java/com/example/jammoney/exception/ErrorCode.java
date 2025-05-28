@@ -8,6 +8,7 @@ public enum ErrorCode {
     NICKNAME_ALREADY_EXISTS("이미 사용 중인 닉네임입니다.", 409),
     USER_NOT_FOUND("사용자를 찾을 수 없습니다.", 410),
     VALIDATION_ERROR("요청 값이 유효하지 않습니다.", 400),
+    LEVEL_NOT_MATCHED("레벨 7 미달성 시 현금을 생성할 수 없습니다.",411),
     INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다.", 500),
     INVALID_LOGIN("존재하지 않는 이메일이거나, 올바르지 않은 비밀번호입니다.",410),
     INVALID_TOKEN("유효하지 않은 JWT 토큰입니다.",401),
