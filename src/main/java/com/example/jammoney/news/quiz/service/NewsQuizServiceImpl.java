@@ -93,7 +93,7 @@ public class NewsQuizServiceImpl implements NewsQuizService {
                 .option2(saved.getOption2())
                 .option3(saved.getOption3())
                 .option4(saved.getOption4())
-                .correctAnswerIndex(null)
+                .correctAnswerIndex(saved.getCorrectAnswerIndex())
                 .build();
     }
 
