@@ -30,6 +30,7 @@ public class NewsQuizController {
     public NewsQuizDto generateQuiz(@PathVariable Long newsId) {
         return quizService.generateAndSaveQuiz(newsId);
     }
+
     //퀴즈 제출
     @PostMapping("/submit")
     public QuizResultDto submitAnswer(
