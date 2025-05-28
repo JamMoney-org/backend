@@ -1,5 +1,6 @@
 package com.example.jammoney.stockApp.stock.controller;
 
+import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.stockApp.stock.dto.HoldingStockResponseDto;
 import com.example.jammoney.stockApp.stock.dto.OrderResponseDto;
 import com.example.jammoney.stockApp.stock.entity.Order;
@@ -28,8 +29,8 @@ public class OrderController {
     public ResponseEntity buyStocks(@RequestParam(name = "companyId") long companyId,
                                     @RequestParam(name = "price") long price,
                                     @RequestParam(name = "stockCount") int stockCount,
-                                    @AuthenticationPrincipal User user) {
-        Order order = orderService.buyStocks(user, companyId, price, stockCount);
+                                    @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Order order = orderService.buyStocks(customUserDetails.getUser(), companyId, price, stockCount);
         OrderResponseDto orderResponseDto = stockMapper.orderToDto(order);
         return new ResponseEntity<>(orderResponseDto, HttpStatus.OK);
     }
@@ -39,26 +40,26 @@ public class OrderController {
     public ResponseEntity sellStocks(@RequestParam(name = "companyId") long companyId,
                                      @RequestParam(name = "price") long price,
                                      @RequestParam(name = "stockCount") int stockCount,
-                                     @AuthenticationPrincipal User user){
-        Order order = orderService.sellStocks(user, companyId, price, stockCount);
+                                     @AuthenticationPrincipal CustomUserDetails customUserDetails){
+        Order order = orderService.sellStocks(customUserDetails.getUser(), companyId, price, stockCount);
         OrderResponseDto orderResponseDto = stockMapper.orderToDto(order);
         return new ResponseEntity<>(orderResponseDto, HttpStatus.OK);
     }
 
     //user의 보유 주식 정보를 반환함
     @GetMapping("/holdingStocks")
-    public ResponseEntity getHoldingStocks(@AuthenticationPrincipal User user) {
-        List<HoldingStockResponseDto> holdingStockResponseDtos = holdingStockService.findHoldingStocks(user.getId());
+    public ResponseEntity getHoldingStocks(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        List<HoldingStockResponseDto> holdingStockResponseDtos = holdingStockService.findHoldingStocks(customUserDetails.getUser().getId());
         holdingStockResponseDtos = holdingStockService.setPercentage(holdingStockResponseDtos);
         return new ResponseEntity<>(holdingStockResponseDtos, HttpStatus.OK);
     }
 
     //미 체결된 매수, 매도 삭제함
     @DeleteMapping("/orders")
-    public void deleteOrders(@AuthenticationPrincipal User user,
+    public void deleteOrders(@AuthenticationPrincipal CustomUserDetails customUserDetails,
                              @RequestParam("stockOrderId") long orderId,
                              @RequestParam("stockCount") int stockCount) {
-        orderService.deleteOrder(user, orderId, stockCount);
+        orderService.deleteOrder(customUserDetails.getUser(), orderId, stockCount);
     }
 
     //스케줄러에서 자동으로 30분마다 checkOrder를 해주고 있음 (이 api는 테스트용임)

@@ -1,5 +1,6 @@
 package com.example.jammoney.stockApp.stock.controller;
 
+import com.example.jammoney.auth.entity.CustomUserDetails;
 import com.example.jammoney.stockApp.stock.dto.HoldingStockResponseDto;
 import com.example.jammoney.stockApp.stock.entity.HoldingStock;
 import com.example.jammoney.stockApp.stock.mapper.StockMapper;
@@ -25,16 +26,16 @@ public class InterestingStockController {
     //관심 주식 등록
     @PostMapping
     public ResponseEntity setInterestingStock(@RequestParam long companyId,
-                                  @AuthenticationPrincipal User user) {
-        interestingStockService.saveInterestingStock(user, companyId);
+                                              @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        interestingStockService.saveInterestingStock(customUserDetails.getUser(), companyId);
 
         return new ResponseEntity(HttpStatus.CREATED);
     }
 
     //관심 주식들 조회
     @GetMapping
-    public ResponseEntity getInterestingStockList(@AuthenticationPrincipal User user) {
-        List<HoldingStock> holdingStocks = holdingStockService.getUserHoldingStocks(user.getId());
+    public ResponseEntity getInterestingStockList( @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        List<HoldingStock> holdingStocks = holdingStockService.getUserHoldingStocks(customUserDetails.getUser().getId());
         List<HoldingStockResponseDto> holdingStockResponseDtos = stockMapper.holdingStocksToDto(holdingStocks);
         return new ResponseEntity<>(holdingStockResponseDtos, HttpStatus.OK);
     }
@@ -42,8 +43,8 @@ public class InterestingStockController {
     //관심 주식 삭제
     @DeleteMapping
     public ResponseEntity deleteInterestingStock(@RequestParam long companyId,
-                                     @AuthenticationPrincipal User user) {
-        interestingStockService.deleteInterestingStock(user, companyId);
+                                                 @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        interestingStockService.deleteInterestingStock(customUserDetails.getUser(), companyId);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
