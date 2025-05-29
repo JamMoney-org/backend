@@ -43,9 +43,9 @@ public class Scheduler {
 
     @Scheduled(cron = "0 0 00 * * MON-FRI", zone = "Asia/Seoul")
     public void updateStockMetaData(){
-        log.info("스케줄러 실행 시간: {}", LocalDateTime.now());
         companyService.updateAllCompanyMeta();
         companyService.updateDividendInfo();
+        log.info("메타 데이터 갱신 끝");
     }
 
 
