@@ -17,6 +17,8 @@ public class Scheduler {
     private final OrderService orderService;
     private final UserPortfolioService userPortfolioService;
     private final KospiService kospiService;
+    private final CompanyService companyService;
+
     @Scheduled(cron = "0 0/30 9-15 * * MON-FRI", zone = "Asia/Seoul")
     public void updateAll() throws InterruptedException {
         log.info("스케줄러 실행 시간: {}", LocalDateTime.now());
@@ -34,8 +36,17 @@ public class Scheduler {
         log.info("수익률 갱신 끝");
     }
 
-    @Scheduled(cron = "0 0 3 1 * *")
+    @Scheduled(cron = "0 0 3 1 * *", zone = "Asia/Seoul")
     public void saveKospiIndex() {
         kospiService.saveMonthlyKospiIndex();
     }
+
+    @Scheduled(cron = "0 0 00 * * MON-FRI", zone = "Asia/Seoul")
+    public void updateStockMetaData(){
+        companyService.updateAllCompanyMeta();
+        companyService.updateDividendInfo();
+        log.info("메타 데이터 갱신 끝");
+    }
+
+
 }

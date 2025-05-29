@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/test/init")
+@RequestMapping("/api/init")
 @RequiredArgsConstructor
 public class CompanyInitController {
 
@@ -16,9 +16,9 @@ public class CompanyInitController {
 
 
     //모의투자에서 사용할 회사의 이름과 종목코드를 받아서 DB에 저장함 (서버 실행시 딱 한 번만 실행하는 메서드)
-//    @GetMapping
-//    public ResponseEntity<Void> initialize() throws InterruptedException {
-//        companyService.fillCompaniesData();
-//        return ResponseEntity.ok().build();
-//    }
+    @GetMapping
+    public ResponseEntity<Void> initialize(){
+        companyService.fillCompaniesData();
+        return ResponseEntity.ok().build();
+    }
 }

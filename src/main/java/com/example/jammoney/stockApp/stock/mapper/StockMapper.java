@@ -20,6 +20,18 @@ public interface StockMapper {
         dto.setKorName(company.getKorName());
         dto.setStockAskingPriceResponseDto(stockAskingPriceToDto(company.getStockAskingPrice()));
         dto.setStockInfoResponseDto(stockInfoToDto(company.getStockInfo()));
+        dto.setMarketCap(company.getMarketCap());
+        dto.setFaceValue(company.getFaceValue());
+        dto.setListedDate(company.getListedDate());
+        dto.setListedShares(company.getListedShares());
+        dto.setIndustry(company.getIndustry());
+        dto.setDividendYield(company.getDividendYield());
+        dto.setDividendPerShare(company.getDividendPerShare());
+        dto.setEps(company.getEps());
+        dto.setPbr(company.getPbr());
+        dto.setBps(company.getBps());
+        dto.setPer(company.getPer());
+        dto.setSettlementMonth(company.getSettlementMonth());
         return dto;
     }
 

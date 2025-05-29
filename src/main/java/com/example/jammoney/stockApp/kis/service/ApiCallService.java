@@ -1,10 +1,8 @@
 package com.example.jammoney.stockApp.kis.service;
 
-import com.example.jammoney.stockApp.kis.dto.KospiDto;
-import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
-import com.example.jammoney.stockApp.kis.dto.StockMinDto;
-import com.example.jammoney.stockApp.kis.dto.StockPriceDto;
+import com.example.jammoney.stockApp.kis.dto.*;
 import com.example.jammoney.stockApp.stock.dto.KospiResponseDto;
+import com.example.jammoney.stockApp.stock.dto.StockMetaDataResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,33 +40,41 @@ public class ApiCallService {
     private String stockMinUrl;
 
     @Value("${kis.url.price}")
-    private String stockPriceUrl;
+    private String stockMetaDataUrl;
 
     @Value("${kis.url.kospi}")
     private String kospiUrl;
 
     /**
-     * 실시간 시세 호출 (현재가)
+     * 주식 메타 데이터
      */
-    public long getCurrentPrice(String stockCode) {
+    public StockMetaDataResponseDto getStockMetaData(String stockCode) {
         HttpHeaders headers = createHeaders("FHKST01010100");
-        String uri = UriComponentsBuilder.fromHttpUrl(baseUrl + stockPriceUrl)
-                .queryParam("fid_cond_mrkt_div_code", "J")  // 시장 구분 (KOSPI 등)
+        String uri = UriComponentsBuilder.fromHttpUrl(baseUrl + stockMetaDataUrl)
+                .queryParam("fid_cond_mrkt_div_code", "J")
                 .queryParam("fid_input_iscd", stockCode)
                 .toUriString();
 
-        StockPriceDto response = sendGet(uri, headers, StockPriceDto.class);
-        String priceStr = Objects.requireNonNull(response).getOutput().getStck_prpr();
+        StockMetaDataDto response = sendGet(uri, headers, StockMetaDataDto.class);
 
-        if (priceStr == null || priceStr.isBlank()) {
-            throw new RuntimeException("현재가 정보가 비어 있습니다.");
+        if (response == null || response.getOutput() == null) {
+            throw new RuntimeException("KIS API 응답이 비어 있습니다.");
         }
 
-        try {
-            return Long.parseLong(priceStr);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("현재가 형식이 잘못되었습니다: " + priceStr);
-        }
+        StockMetaDataDto.Output output = response.getOutput();
+
+        StockMetaDataResponseDto dto = new StockMetaDataResponseDto();
+        dto.setHts_avls(output.getHts_avls());
+        dto.setStck_fcam(output.getStck_fcam());
+        dto.setLstn_stcn(output.getLstn_stcn());
+        dto.setBscp_kor_isnm(output.getBscp_kor_isnm());
+        dto.setEps(output.getEps());
+        dto.setPer(output.getPer());
+        dto.setBps(output.getBps());
+        dto.setPbr(output.getPbr());
+        dto.setStac_month(output.getStac_month());
+
+        return dto;
     }
 
     /**
