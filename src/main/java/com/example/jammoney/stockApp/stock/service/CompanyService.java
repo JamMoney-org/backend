@@ -45,7 +45,7 @@ public class CompanyService {
     public Company saveCompany(Company company) {
         return companyRepository.save(company);
     }
-    public void fillCompaniesData() throws InterruptedException {
+    public void fillCompaniesData(){
         List<String> korNames = List.of(
                 "삼성전자", "LG에너지솔루션", "SK하이닉스", "삼성바이오로직스", "현대차", "NAVER",
                 "POSCO홀딩스", "삼성SDI", "카카오", "LG화학", "기아", "현대모비스", "셀트리온", "삼성물산", "SK이노베이션"
@@ -101,7 +101,11 @@ public class CompanyService {
 
             try {
                 if (companyRepository.existsByCode(code)) {
-                    log.info("이미 등록된 회사: {}", code);
+                    Company company = companyRepository.findByCode(code);
+                    company.setListedDate(listedDates.get(code));
+                    company.setIndustry(industries.get(code));
+                    companyRepository.save(company);
+                    log.info("상장 일자, 업종 종류 등록 완료: {}", code);
                     continue;
                 }
 
