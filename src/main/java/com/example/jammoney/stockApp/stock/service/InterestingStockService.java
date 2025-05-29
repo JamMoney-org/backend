@@ -31,7 +31,7 @@ public class InterestingStockService {
         interestingStockRepository.delete(interestingStock);
     }
 
-    public List<InterestingStockResponseDto> getStarResponseDtoList(User user) {
+    public List<InterestingStockResponseDto> getInterestingStockResponseDto(User user) {
         List<InterestingStock> interestingStocks = interestingStockRepository.findAllByUser_Id(user.getId());
         return stockMapper.interestingStockToDto(interestingStocks);
     }

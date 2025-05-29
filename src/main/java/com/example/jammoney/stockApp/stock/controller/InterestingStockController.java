@@ -1,12 +1,10 @@
 package com.example.jammoney.stockApp.stock.controller;
 
 import com.example.jammoney.auth.entity.CustomUserDetails;
-import com.example.jammoney.stockApp.stock.dto.HoldingStockResponseDto;
-import com.example.jammoney.stockApp.stock.entity.HoldingStock;
+import com.example.jammoney.stockApp.stock.dto.InterestingStockResponseDto;
 import com.example.jammoney.stockApp.stock.mapper.StockMapper;
 import com.example.jammoney.stockApp.stock.service.HoldingStockService;
 import com.example.jammoney.stockApp.stock.service.InterestingStockService;
-import com.example.jammoney.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +18,6 @@ import java.util.List;
 @RequestMapping("/api/interestingStocks")
 public class InterestingStockController {
     private final InterestingStockService interestingStockService;
-    private final HoldingStockService holdingStockService;
-    private final StockMapper stockMapper;
 
     //관심 주식 등록
     @PostMapping
@@ -35,9 +31,8 @@ public class InterestingStockController {
     //관심 주식들 조회
     @GetMapping
     public ResponseEntity getInterestingStockList( @AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        List<HoldingStock> holdingStocks = holdingStockService.getUserHoldingStocks(customUserDetails.getUser().getId());
-        List<HoldingStockResponseDto> holdingStockResponseDtos = stockMapper.holdingStocksToDto(holdingStocks);
-        return new ResponseEntity<>(holdingStockResponseDtos, HttpStatus.OK);
+        List<InterestingStockResponseDto> holdingStocks = interestingStockService.getInterestingStockResponseDto(customUserDetails.getUser());
+        return new ResponseEntity<>(holdingStocks, HttpStatus.OK);
     }
 
     //관심 주식 삭제
