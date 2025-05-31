@@ -40,13 +40,13 @@ public class UserPortfolioService {
                 .mapToLong(HoldingStockResponseDto::getEvaluationAmount)
                 .sum();
 
-        long cash = user.getCash().getMoney();
+        long cash = user.getCash().getMoney(); // 직접 Cash 참조
         long totalAsset = cash + stockAsset;
 
         long investedAmount = holdingStockResponseDtos.stream()
                 .mapToLong(HoldingStockResponseDto::getTotalPrice)
                 .sum();
-        long profitAmount = stockAsset - investedAmount; //주식 평가금 - 매입금
+        long profitAmount = stockAsset - investedAmount;
         double profitRate = investedAmount > 0 ? (profitAmount / (double) investedAmount) * 100 : 0.0;
 
         UserPortfolio portfolio = userPortfolioRepository.findByUser(user);
@@ -55,7 +55,6 @@ public class UserPortfolioService {
             portfolio.setUser(user);
         }
 
-        portfolio.setCash(user.getCash());
         portfolio.setStockAsset(stockAsset);
         portfolio.setTotalAsset(totalAsset);
         portfolio.setProfitAmount(profitAmount);
@@ -64,7 +63,9 @@ public class UserPortfolioService {
         userPortfolioRepository.save(portfolio);
     }
 
+
+
     public UserPortfolio getPortfolio(User user) {
-        return userPortfolioRepository.findByUserWithCash(user);
+        return userPortfolioRepository.findByUser(user);
     }
 }

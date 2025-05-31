@@ -27,7 +27,7 @@ public class UserPortfolioController {
         UserPortfolioResponseDto userPortfolioResponseDto;
         userPortfolioResponseDto = UserPortfolioResponseDto.builder()
                 .nickname(user.getNickname())
-                .money(portfolio.getCash().getMoney())
+                .money(user.getCash().getMoney())
                 .stockAsset(portfolio.getStockAsset())
                 .totalAsset(portfolio.getTotalAsset())
                 .profitAmount(portfolio.getProfitAmount())

@@ -21,10 +21,6 @@ public class UserPortfolio {
     @JoinColumn(name = "user_id", unique = true)
     private User user;
 
-    @OneToOne
-    @JoinColumn(name = "cash_id", unique = true)
-    private Cash cash;
-
     // 보유 주식 자산 총액
     private long stockAsset;
 
