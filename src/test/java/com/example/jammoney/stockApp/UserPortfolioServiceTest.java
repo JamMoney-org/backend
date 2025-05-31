@@ -63,6 +63,8 @@ class UserPortfolioServiceTest {
 
         user = userRepository.save(user);
 
+        em.flush(); // 💡 이거 추가: Cash도 DB에 insert
+
         // 3. 회사 및 주가 정보
         company = new Company();
         company.setCode("000000");
@@ -98,35 +100,67 @@ class UserPortfolioServiceTest {
                 .stockCount(10)
                 .totalPrice(600_000L)
                 .build();
-        user.getHoldingStocks().add(stock); // 양방향 유지
+        stock.setUser(user); // 명시적으로 설정
+        stock.setCompany(company); // 명시적으로 설정
+        user.getHoldingStocks().add(stock);
         holdingStockRepository.save(stock);
 
         // 5. UserPortfolio 저장
         UserPortfolio portfolio = new UserPortfolio();
         portfolio.setUser(user);
+        portfolio.setCash(user.getCash()); // 이제 확실히 insert된 cash
         userPortfolioRepository.save(portfolio);
 
-        em.flush(); // DB 반영
-        em.clear(); // 캐시 초기화
+        em.flush();
+        em.clear();
+    }
+
+
+    @Test
+    void 매수_주문후_포트폴리오_수익률_정확히_계산되는지_확인() {
+        // when
+        userPortfolioService.updateUserPortfolio(user);
+
+        // then
+        UserPortfolio result = userPortfolioRepository.findByUser(user);
+        long expectedStockAsset = 500_000L;
+        long expectedTotalAsset = 1_000_000L + expectedStockAsset;
+        long expectedProfitAmount = expectedStockAsset - 600_000L;
+        double expectedProfitRate = (expectedProfitAmount / (double) 600_000L) * 100;
+
+        assertEquals(1_000_000L, result.getCash().getMoney());
+        assertEquals(expectedStockAsset, result.getStockAsset());
+        assertEquals(expectedTotalAsset, result.getTotalAsset());
+        assertEquals(expectedProfitAmount, result.getProfitAmount());
+        assertEquals(expectedProfitRate, result.getProfitRate(), 0.01);
     }
 
     @Test
-    void 포트폴리오_수익률_정확히_계산되는지_확인() {
+    void 현금만_변동_후_포트폴리오_갱신되는지_확인() {
+        // given
+        user.getCash().setMoney(2_000_000L);
+        userRepository.save(user);
+
+        // when
+        userPortfolioService.updateUserPortfolio(user);
+
+        // then
+        UserPortfolio result = userPortfolioRepository.findByUser(user);
+        assertEquals(2_000_000L + 500_000L, result.getTotalAsset());
+        assertEquals(2_000_000L, result.getCash().getMoney());
+    }
+
+    @Test
+    void 전체_포트폴리오_업데이트_정확성_검증() {
         // when
         userPortfolioService.updateAllUserPortfolios();
 
         // then
         UserPortfolio result = userPortfolioRepository.findByUser(user);
-
         long expectedStockAsset = 500_000L;
         long expectedTotalAsset = 1_000_000L + expectedStockAsset;
-        long expectedProfitAmount = expectedTotalAsset - (1_000_000L + 600_000L);
-        double expectedProfitRate = (expectedProfitAmount / (double) 600_000L) * 100;
 
-        assertEquals(1_000_000L, result.getCash());
         assertEquals(expectedStockAsset, result.getStockAsset());
         assertEquals(expectedTotalAsset, result.getTotalAsset());
-        assertEquals(expectedProfitAmount, result.getProfitAmount());
-        assertEquals(expectedProfitRate, result.getProfitRate(), 0.01);
     }
 }
