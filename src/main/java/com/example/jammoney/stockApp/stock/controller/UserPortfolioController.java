@@ -1,7 +1,6 @@
 package com.example.jammoney.stockApp.stock.controller;
 
 import com.example.jammoney.auth.entity.CustomUserDetails;
-import com.example.jammoney.auth.service.CustomUserDetailsService;
 import com.example.jammoney.stockApp.stock.dto.UserPortfolioResponseDto;
 import com.example.jammoney.stockApp.stock.entity.UserPortfolio;
 import com.example.jammoney.stockApp.stock.service.UserPortfolioService;
@@ -28,7 +27,7 @@ public class UserPortfolioController {
         UserPortfolioResponseDto userPortfolioResponseDto;
         userPortfolioResponseDto = UserPortfolioResponseDto.builder()
                 .nickname(user.getNickname())
-                .cash(portfolio.getCash())
+                .money(portfolio.getCash().getMoney())
                 .stockAsset(portfolio.getStockAsset())
                 .totalAsset(portfolio.getTotalAsset())
                 .profitAmount(portfolio.getProfitAmount())
