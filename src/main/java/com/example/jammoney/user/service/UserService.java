@@ -59,7 +59,6 @@ public class UserService {
 
         UserPortfolio userPortfolio = UserPortfolio.builder()
                 .user(user)
-                .cash(user.getCash())
                 .stockAsset(0)
                 .totalAsset(0)
                 .profitAmount(0)

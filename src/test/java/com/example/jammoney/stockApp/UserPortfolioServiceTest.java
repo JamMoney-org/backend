@@ -108,7 +108,6 @@ class UserPortfolioServiceTest {
         // 5. UserPortfolio 저장
         UserPortfolio portfolio = new UserPortfolio();
         portfolio.setUser(user);
-        portfolio.setCash(user.getCash()); // 이제 확실히 insert된 cash
         userPortfolioRepository.save(portfolio);
 
         em.flush();
@@ -128,7 +127,7 @@ class UserPortfolioServiceTest {
         long expectedProfitAmount = expectedStockAsset - 600_000L;
         double expectedProfitRate = (expectedProfitAmount / (double) 600_000L) * 100;
 
-        assertEquals(1_000_000L, result.getCash().getMoney());
+        assertEquals(1_000_000L, result.getUser().getCash().getMoney());
         assertEquals(expectedStockAsset, result.getStockAsset());
         assertEquals(expectedTotalAsset, result.getTotalAsset());
         assertEquals(expectedProfitAmount, result.getProfitAmount());
@@ -147,7 +146,7 @@ class UserPortfolioServiceTest {
         // then
         UserPortfolio result = userPortfolioRepository.findByUser(user);
         assertEquals(2_000_000L + 500_000L, result.getTotalAsset());
-        assertEquals(2_000_000L, result.getCash().getMoney());
+        assertEquals(2_000_000L, result.getUser().getCash().getMoney());
     }
 
     @Test
