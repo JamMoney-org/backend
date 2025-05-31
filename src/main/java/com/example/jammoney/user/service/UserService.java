@@ -52,20 +52,20 @@ public class UserService {
                 .build();
         user.setPet(pet);
 
+        Cash cash = new Cash();
+        cash.setUser(user);
+        cash.setMoney(0); // 초기 자산 설정
+        user.setCash(cash);
+
         UserPortfolio userPortfolio = UserPortfolio.builder()
                 .user(user)
-                .cash(0)
+                .cash(user.getCash())
                 .stockAsset(0)
                 .totalAsset(0)
                 .profitAmount(0)
                 .profitRate(0.0)
                 .build();
         user.setUserPortfolio(userPortfolio);
-
-        Cash cash = new Cash();
-        cash.setUser(user);
-        cash.setMoney(0); // 초기 자산 설정
-        user.setCash(cash);     // 연관관계 설정
 
         // 저장 (Cascade에 의해 pet, cash도 같이 저장됨)
         userRepository.save(user);

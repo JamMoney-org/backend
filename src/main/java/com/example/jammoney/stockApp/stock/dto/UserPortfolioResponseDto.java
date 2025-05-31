@@ -14,7 +14,7 @@ public class UserPortfolioResponseDto {
     private String nickname;
 
     //보유 현금
-    private long cash;
+    private long money;
 
     // 보유 주식 자산 총액
     private long stockAsset;

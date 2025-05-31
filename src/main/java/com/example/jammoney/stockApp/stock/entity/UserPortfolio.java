@@ -1,5 +1,6 @@
 package com.example.jammoney.stockApp.stock.entity;
 
+import com.example.jammoney.cash.entity.Cash;
 import com.example.jammoney.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,8 +21,9 @@ public class UserPortfolio {
     @JoinColumn(name = "user_id", unique = true)
     private User user;
 
-    // 보유 현금
-    private long cash;
+    @OneToOne
+    @JoinColumn(name = "cash_id", unique = true)
+    private Cash cash;
 
     // 보유 주식 자산 총액
     private long stockAsset;
