@@ -25,41 +25,46 @@ public class UserPortfolioService {
     @Transactional
     public void updateAllUserPortfolios() {
         List<User> allUsers = userRepository.findAllWithCash();
-
         for (User user : allUsers) {
-            List<HoldingStock> holdingStocks = holdingStockService.getUserHoldingStocks(user.getId());
-            List<HoldingStockResponseDto> holdingStockResponseDtos = stockMapper.holdingStocksToDto(holdingStocks);
-            holdingStockService.setPercentage(holdingStockResponseDtos); // 각 종목 수익률 계산
-
-            long stockAsset = holdingStockResponseDtos.stream()
-                    .mapToLong(HoldingStockResponseDto::getEvaluationAmount)
-                    .sum();
-            long cash = user.getCash().getMoney();
-            long totalAsset = cash + stockAsset;
-
-            long investedAmount = holdingStockResponseDtos.stream()
-                    .mapToLong(HoldingStockResponseDto::getTotalPrice)
-                    .sum();
-
-            long profitAmount = totalAsset - (cash + investedAmount);
-            double profitRate = investedAmount > 0 ? (profitAmount / (double) investedAmount) * 100 : 0.0;
-            UserPortfolio portfolio = userPortfolioRepository.findByUser(user);
-            if (portfolio == null) {
-                portfolio = new UserPortfolio();
-                portfolio.setUser(user);
-            }
-
-            portfolio.setCash(cash);
-            portfolio.setStockAsset(stockAsset);
-            portfolio.setTotalAsset(totalAsset);
-            portfolio.setProfitAmount(profitAmount);
-            portfolio.setProfitRate(profitRate);
-
-            userPortfolioRepository.save(portfolio);
+            updateUserPortfolio(user);
         }
     }
 
+    @Transactional
+    public void updateUserPortfolio(User user) {
+        List<HoldingStock> holdingStocks = holdingStockService.getUserHoldingStocks(user.getId());
+        List<HoldingStockResponseDto> holdingStockResponseDtos = stockMapper.holdingStocksToDto(holdingStocks);
+        holdingStockService.setPercentage(holdingStockResponseDtos);
+
+        long stockAsset = holdingStockResponseDtos.stream()
+                .mapToLong(HoldingStockResponseDto::getEvaluationAmount)
+                .sum();
+
+        long cash = user.getCash().getMoney();
+        long totalAsset = cash + stockAsset;
+
+        long investedAmount = holdingStockResponseDtos.stream()
+                .mapToLong(HoldingStockResponseDto::getTotalPrice)
+                .sum();
+        long profitAmount = stockAsset - investedAmount; //주식 평가금 - 매입금
+        double profitRate = investedAmount > 0 ? (profitAmount / (double) investedAmount) * 100 : 0.0;
+
+        UserPortfolio portfolio = userPortfolioRepository.findByUser(user);
+        if (portfolio == null) {
+            portfolio = new UserPortfolio();
+            portfolio.setUser(user);
+        }
+
+        portfolio.setCash(user.getCash());
+        portfolio.setStockAsset(stockAsset);
+        portfolio.setTotalAsset(totalAsset);
+        portfolio.setProfitAmount(profitAmount);
+        portfolio.setProfitRate(profitRate);
+
+        userPortfolioRepository.save(portfolio);
+    }
+
     public UserPortfolio getPortfolio(User user) {
-        return userPortfolioRepository.findByUser(user);
+        return userPortfolioRepository.findByUserWithCash(user);
     }
 }
