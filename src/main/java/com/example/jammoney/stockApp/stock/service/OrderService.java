@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final StockAskingPriceService stockAskingPriceService;
+    private final UserPortfolioService userPortfolioService;
     private final CompanyService companyService;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -96,6 +97,10 @@ public class OrderService {
         orderRepository.save(order);
         userRepository.save(user);
         holdingStockRepository.save(holdingStock);
+
+
+        userPortfolioService.updateUserPortfolio(user);
+
         publishOrderEvent(user.getId());
 
         return order;
@@ -118,6 +123,10 @@ public class OrderService {
         } else {
             holdingStockRepository.save(holdingStock);
         }
+
+
+        userPortfolioService.updateUserPortfolio(user);
+
         publishOrderEvent(user.getId());
 
         return order;
