@@ -2,11 +2,8 @@ package com.example.jammoney.stockApp.stock.service;
 
 import com.example.jammoney.exception.ErrorCode;
 import com.example.jammoney.exception.StockLogicException;
-import com.example.jammoney.stockApp.kis.service.ApiCallService;
 import com.example.jammoney.stockApp.stock.dto.HoldingStockResponseDto;
-import com.example.jammoney.stockApp.stock.entity.Company;
 import com.example.jammoney.stockApp.stock.entity.HoldingStock;
-import com.example.jammoney.cash.repository.CashRepository;
 import com.example.jammoney.stockApp.stock.mapper.StockMapper;
 import com.example.jammoney.stockApp.stock.repository.CompanyRepository;
 import com.example.jammoney.stockApp.stock.repository.HoldingStockRepository;
@@ -20,32 +17,49 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HoldingStockService {
 
-    private final CashRepository cashRepository;
     private final CompanyRepository companyRepository;
     private final HoldingStockRepository holdingStockRepository;
-    private final ApiCallService apiCallService;
     private final UserRepository userRepository;
     private final StockMapper stockMapper;
 
     public List<HoldingStockResponseDto> setPercentage(List<HoldingStockResponseDto> holdingStockResponseDtos) {
-        for(HoldingStockResponseDto holdingStockResponseDto : holdingStockResponseDtos) {
-            // 이름으로 회사를 불러온다
-            Company company = companyRepository.findByCompanyId(holdingStockResponseDto.getCompanyId());
-            // 주식 현재가를 불러온다
-            String nowPrice = company.getStockInfo().getStck_prpr();
-            // 주식 수익 = 전체 주식 가치 - 전체 투자 금액
-            double evaluationAmount =
-                    Double.parseDouble(nowPrice)
-                            * (holdingStockResponseDto.getStockCount() + holdingStockResponseDto.getReserveSellStockCount());
+        long totalPortfolioValue = 0L; // 전체 포트폴리오 평가금액(=총 평가금액)
 
-            double totalRevenue = evaluationAmount - holdingStockResponseDto.getTotalPrice();
-            double profitRate = (totalRevenue / (double)holdingStockResponseDto.getTotalPrice()) * 100;
+        // 1. 각 종목의 평가금액, 수익금, 수익률 계산
+        for (HoldingStockResponseDto dto : holdingStockResponseDtos) {
+            long currentPrice = dto.getCurrentPrice();
+            int totalStockCount = dto.getStockCount() + dto.getReserveSellStockCount();
 
-            holdingStockResponseDto.setProfitRate(profitRate);
-            holdingStockResponseDto.setEvaluationAmount((long) evaluationAmount);
+            // 평가금액 = 현재가 * (보유수량 + 예약매도)
+            double evaluationAmount = (double) currentPrice * totalStockCount;
+
+            // 수익금 = 평가금액 - 총 투자금
+            double profitAmount = evaluationAmount - dto.getTotalPrice();
+
+            // 수익률 = (수익금 / 총 투자금) * 100
+            double profitRate = dto.getTotalPrice() > 0
+                    ? (profitAmount / dto.getTotalPrice()) * 100
+                    : 0.0;
+
+            dto.setEvaluationAmount((long) evaluationAmount);
+            dto.setProfitAmount((long) profitAmount);
+            dto.setProfitRate(profitRate);
+
+            totalPortfolioValue += (long) evaluationAmount;
         }
+
+        // 2. 포트폴리오 비율 계산 = (종목 평가금액 / 전체 평가금액) * 100
+        for (HoldingStockResponseDto dto : holdingStockResponseDtos) {
+            double portfolioRatio = totalPortfolioValue > 0
+                    ? ((double) dto.getEvaluationAmount() / totalPortfolioValue) * 100
+                    : 0.0;
+            dto.setPortfolioRatio(portfolioRatio);
+        }
+
         return holdingStockResponseDtos;
     }
+
+
     public void deleteAllHoldingStocks(long userId) {
         List<HoldingStock> holdingStocks = getUserHoldingStocks(userId);
 
