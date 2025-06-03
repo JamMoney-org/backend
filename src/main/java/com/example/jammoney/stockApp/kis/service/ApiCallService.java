@@ -67,7 +67,7 @@ public class ApiCallService {
         dto.setHts_avls(output.getHts_avls());
         dto.setStck_fcam(output.getStck_fcam());
         dto.setLstn_stcn(output.getLstn_stcn());
-        dto.setBscp_kor_isnm(output.getBscp_kor_isnm());
+        dto.setBstp_kor_isnm(output.getBstp_kor_isnm());
         dto.setEps(output.getEps());
         dto.setPer(output.getPer());
         dto.setBps(output.getBps());

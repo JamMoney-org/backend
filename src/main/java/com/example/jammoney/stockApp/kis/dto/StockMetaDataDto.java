@@ -13,7 +13,7 @@ public class StockMetaDataDto {
         private String hts_avls;         // 시가총액
         private String stck_fcam;        // 액면가
         private String lstn_stcn;        // 상장 주식 수
-        private String bscp_kor_isnm;    // 업종명
+        private String bstp_kor_isnm;    // 업종명
         private String eps;              // EPS
         private String per;              // PER
         private String bps;              // BPS
