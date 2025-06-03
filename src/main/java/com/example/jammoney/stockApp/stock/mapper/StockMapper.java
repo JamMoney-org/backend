@@ -165,8 +165,11 @@ public interface StockMapper {
             dto.setStockCount(holding.getStockCount());
             dto.setReserveSellStockCount(holding.getReserveStockCount());
             dto.setTotalPrice(holding.getTotalPrice());
+            dto.setPortfolioRatio(0.0);
             dto.setProfitRate(0D);
+            dto.setProfitAmount(0);
             dto.setEvaluationAmount(0);
+            dto.setCurrentPrice(Long.parseLong(holding.getCompany().getStockInfo().getStck_prpr()));
             result.add(dto);
         }
         return result;
