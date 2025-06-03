@@ -40,21 +40,20 @@ public class UserPortfolioService {
                 .mapToLong(HoldingStockResponseDto::getEvaluationAmount)
                 .sum();
 
-        long cash = user.getCash().getMoney(); // 직접 Cash 참조
+        long cash = user.getCash().getMoney();
         long totalAsset = cash + stockAsset;
 
         long investedAmount = holdingStockResponseDtos.stream()
                 .mapToLong(HoldingStockResponseDto::getTotalPrice)
                 .sum();
+        
         long profitAmount = stockAsset - investedAmount;
         double profitRate = investedAmount > 0 ? (profitAmount / (double) investedAmount) * 100 : 0.0;
 
         UserPortfolio portfolio = userPortfolioRepository.findByUser(user);
         if (portfolio == null) {
-            portfolio = new UserPortfolio();
-            portfolio.setUser(user);
+            throw new IllegalStateException("UserPortfolio is not initialized for user: " + user.getId());
         }
-
         portfolio.setStockAsset(stockAsset);
         portfolio.setTotalAsset(totalAsset);
         portfolio.setProfitAmount(profitAmount);
