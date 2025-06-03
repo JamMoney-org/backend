@@ -45,5 +45,9 @@ public class HoldingStockResponseDto {
     private double portfolioRatio;
 
     //예약 매도 수
-    private long reserveSellStockCount;
+    private int reserveSellStockCount;
+
+    public HoldingStockResponseDto() {
+
+    }
 }
