@@ -153,7 +153,7 @@ public class CompanyService {
         company.setMarketCap(parseLong(metaData.getHts_avls()));
         company.setFaceValue(parseLong(metaData.getStck_fcam()));
         company.setListedShares(parseLong(metaData.getLstn_stcn()));
-        company.setIndustry(metaData.getBscp_kor_isnm());
+        company.setIndustry(metaData.getBstp_kor_isnm());
         company.setEps(parseBigDecimal(metaData.getEps()));
         company.setPer(parseBigDecimal(metaData.getPer()));
         company.setBps(parseBigDecimal(metaData.getBps()));
