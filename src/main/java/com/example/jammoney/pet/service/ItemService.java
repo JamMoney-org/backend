@@ -1,6 +1,7 @@
 package com.example.jammoney.pet.service;
 
 import com.example.jammoney.S3.S3Uploader;
+import com.example.jammoney.cash.service.CashService;
 import com.example.jammoney.pet.dto.InventoryResponseDTO;
 import com.example.jammoney.pet.dto.ItemShopResponseDTO;
 import com.example.jammoney.pet.entity.InventoryItem;
@@ -25,6 +26,7 @@ public class ItemService {
     private final InventoryItemRepository inventoryItemRepository;
     private final PetRepository petRepository;
     private final S3Uploader s3Uploader;
+    private final CashService cashService;
 
     /**
      * 상점 아이템 목록 조회
@@ -52,12 +54,13 @@ public class ItemService {
             throw new IllegalStateException("이미 보유한 아이템입니다.");
         }
 
+        // 충분한 돈 있는지 확인
         if (user.getCash().getMoney() < item.getPrice()) {
             throw new IllegalStateException("가상 머니가 부족합니다.");
         }
 
         // 코인 차감
-        user.getCash().setMoney(user.getCash().getMoney() - item.getPrice());
+        cashService.subtractCash(user.getId(), item.getPrice());
 
         // 인벤토리에 추가
         InventoryItem inventory = InventoryItem.builder()
@@ -68,6 +71,7 @@ public class ItemService {
 
         inventoryItemRepository.save(inventory);
     }
+
 
     // 인벤토리 조회
     public List<InventoryResponseDTO> getUserInventory(User user) {
@@ -124,9 +128,9 @@ public class ItemService {
             throw new IllegalStateException("장착 중인 아이템은 판매할 수 없습니다.");
         }
 
-        // 환불 금액 계산 (가격의 50%)
-        long refund = Math.round(item.getPrice() * 0.8); // 80% 환급
-        user.getCash().setMoney(user.getCash().getMoney() + refund);
+        // 환불 금액 계산 (80% 환급)
+        long refund = Math.round(item.getPrice() * 0.8);
+        cashService.addCash(user.getId(), refund);
 
         // 인벤토리에서 제거
         inventoryItemRepository.delete(inventory);
