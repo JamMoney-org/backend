@@ -44,4 +44,5 @@ jobs:
               -e SPRING_DATASOURCE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
               -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
               -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS=${{ secrets.JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS }} \
               ${{ secrets.DOCKER_USERNAME }}/jammoney:latest
