@@ -9,10 +9,8 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout PR
+      - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -20,7 +18,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: docker build and push
+      - name: Build & Push Docker image
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           docker build -t ${{ secrets.DOCKER_USERNAME }}/jammoney:latest .
@@ -40,18 +38,17 @@ jobs:
             docker run -d \
               --name jammoney \
               -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.DATABASE_HOST }}:${{ secrets.DATABASE_PORT }}/${{ secrets.DATABASE_NAME }} \
-              -e SPRING_DATASOURCE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
-              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
-              -e SPRING_DATASOURCE_DRIVER-CLASS-NAME=com.mysql.cj.jdbc.Driver \
-              -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              -e JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS=${{ secrets.JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS }} \
-              -e JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS=${{ secrets.JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS }} \
-              -e KIS_APP_KEY=${{ secrets.KIS_APP_KEY }} \
-              -e KIS_APP_SECRET=${{ secrets.KIS_APP_SECRET }} \
-              -e GPT_API_KEY=${{ secrets.GPT_API_KEY }} \
-              -e AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
-              -e AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
+              -e SPRING_DATASOURCE_URL="jdbc:mysql://${{ secrets.DATABASE_HOST }}:${{ secrets.DATABASE_PORT }}/${{ secrets.DATABASE_NAME }}" \
+              -e SPRING_DATASOURCE_USERNAME="${{ secrets.DATABASE_USERNAME }}" \
+              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}" \
+              -e SPRING_DATASOURCE_DRIVER_CLASS_NAME="com.mysql.cj.jdbc.Driver" \
+              -e SPRING_JPA_HIBERNATE_DDL_AUTO="update" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS="${{ secrets.JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS }}" \
+              -e JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS="${{ secrets.JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS }}" \
+              -e KIS_APP_KEY="${{ secrets.KIS_APP_KEY }}" \
+              -e KIS_APP_SECRET="${{ secrets.KIS_APP_SECRET }}" \
+              -e GPT_API_KEY="${{ secrets.GPT_API_KEY }}" \
+              -e AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}" \
+              -e AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}" \
               ${{ secrets.DOCKER_USERNAME }}/jammoney:latest
-      
