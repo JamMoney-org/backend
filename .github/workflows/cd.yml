@@ -47,4 +47,4 @@ jobs:
               -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.DATABASE_HOST}}:${{ secrets.DATABASE_PORT}}/${{ secrets.DATABASE_NAME}} \
               -e SPRING_DATASOURCE_USERNAME=${{ secrets.DATABASE_USERNAME}} \
               -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DATABASE_PASSWORD}} \
-              ${{ secrets.DOCKER_USERNAME }}/carefire:latest
+              ${{ secrets.DOCKER_USERNAME }}/jammoney:latest
