@@ -54,6 +54,13 @@ public class OrderController {
         return new ResponseEntity<>(holdingStockResponseDtos, HttpStatus.OK);
     }
 
+    @GetMapping("/waiting")
+    public ResponseEntity<List<OrderResponseDto>> getWaitingOrders(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        List<Order> waitingOrders = orderService.getWaitingOrders(customUserDetails.getUser().getId());
+        List<OrderResponseDto> orderResponseDtos = stockMapper.ordersToDto(waitingOrders);
+        return ResponseEntity.ok(orderResponseDtos);
+    }
+
     //미 체결된 매수, 매도 삭제함
     @DeleteMapping("/orders")
     public void deleteOrders(@AuthenticationPrincipal CustomUserDetails customUserDetails,
