@@ -233,6 +233,9 @@ public class OrderService {
         }
         return false;
     }
+    public List<Order> getWaitingOrders(Long userId) {
+        return orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.WAITING);
+    }
 
     private void publishOrderEvent(Long userId) {
         List<OrderResponseDto> buyOrders = stockMapper.ordersToDto(orderRepository.findAllByUser_IdAndOrderType(userId, OrderType.BUY));
