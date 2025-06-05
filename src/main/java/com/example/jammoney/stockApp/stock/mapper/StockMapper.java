@@ -138,12 +138,13 @@ public interface StockMapper {
 
         OrderResponseDto dto = new OrderResponseDto();
         dto.setOrderId(order.getOrderId());
-        dto.setCompanyId(order.getCompany().getCompanyId());
+        dto.setCompanyKorName(order.getCompany().getKorName());
         dto.setUserId(order.getUser().getId());
         dto.setStockCount(order.getStockCount());
         dto.setPrice(order.getPrice());
         dto.setOrderStatus(order.getOrderStatus());
         dto.setOrderType(order.getOrderType());
+        dto.setModifiedAt(order.getModifiedAt());
         return dto;
     }
 
