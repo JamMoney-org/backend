@@ -26,7 +26,7 @@ public class OrderResponseDto {
     //user id
     private long userId;
 
-    //회사 id
+    //회사 이름
     private String companyKorName;
 
     //주문 상태 (COMPLETED, WAITING)
