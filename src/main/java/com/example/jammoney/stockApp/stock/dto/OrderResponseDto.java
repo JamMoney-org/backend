@@ -27,7 +27,7 @@ public class OrderResponseDto {
     private long userId;
 
     //회사 id
-    private long companyId;
+    private String companyKorName;
 
     //주문 상태 (COMPLETED, WAITING)
     private OrderStatus orderStatus;
@@ -39,5 +39,5 @@ public class OrderResponseDto {
     private long price;
 
     //주문 요청 시간
-    private LocalDateTime createdAt;
+    private LocalDateTime modifiedAt;
 }
