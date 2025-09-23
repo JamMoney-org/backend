@@ -1,6 +1,7 @@
 package com.example.jammoney.auth.jwt;
 
 import com.example.jammoney.auth.service.CustomUserDetailsService;
+import com.example.jammoney.auth.service.RefreshTokenService;
 import com.example.jammoney.exception.ErrorCode;
 import com.example.jammoney.exception.ErrorResponseDto;
 import com.example.jammoney.exception.InvalidJwtTokenException;
@@ -25,6 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -35,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String authHeader = request.getHeader("Authorization");
             String requestURI = request.getRequestURI();
 
+            // refresh 요청은 필터 통과
             if ("/auth/refresh".equals(requestURI)) {
                 filterChain.doFilter(request, response);
                 return;
@@ -43,13 +46,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
 
+                // 1. AccessToken 유효성 검증
                 if (!jwtTokenProvider.validateToken(token)) {
                     throw new InvalidJwtTokenException();
                 }
 
-                String userEmail = jwtTokenProvider.getEmailFromToken(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+                // 2. 블랙리스트 확인 (로그아웃된 토큰 방지)
+                if (refreshTokenService.isAccessTokenBlacklisted(token)) {
+                    throw new InvalidJwtTokenException();
+                }
 
+                // 3. 토큰에서 userId 추출
+                Long userId = jwtTokenProvider.getUserIdFromToken(token);
+
+                // 4. UserDetails 로드
+                UserDetails userDetails = userDetailsService.loadUserById(userId);
+
+                // 5. 인증 객체 생성 및 SecurityContextHolder 저장
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -60,13 +73,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (InvalidJwtTokenException ex) {
-            setErrorResponse(response, ErrorCode.INVALID_TOKEN);
+            setErrorResponse(response, ErrorCode.INVALID_TOKEN, request.getRequestURI());
         } catch (Exception ex) {
             ex.printStackTrace();
-            setErrorResponse(response, ErrorCode.INVALID_LOGIN);
+            setErrorResponse(response, ErrorCode.INVALID_LOGIN, request.getRequestURI());
         }
     }
-    private void setErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
+
+    private void setErrorResponse(HttpServletResponse response, ErrorCode errorCode, String path) throws IOException {
         response.setStatus(errorCode.getStatus());
         response.setContentType("application/json; charset=UTF-8");
 
@@ -74,7 +88,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 errorCode.getStatus(),
                 errorCode.name(),
                 errorCode.getMessage(),
-                "" // URI는 request.getRequestURI()를 파라미터로 받으면 넣을 수 있음
+                path
         );
 
         ObjectMapper mapper = new ObjectMapper();
@@ -82,4 +96,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.getWriter().write(responseBody);
     }
 }
-
