@@ -1,70 +1,80 @@
 package com.example.jammoney.auth.service;
 
-import com.example.jammoney.auth.entity.RefreshToken;
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
 import com.example.jammoney.auth.repository.RefreshTokenRepository;
-import com.example.jammoney.user.entity.User;
+import com.example.jammoney.exception.InvalidRefreshTokenException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.Optional;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTemplate<String, String> redisTemplate;
 
-    @Value("${jwt.refresh-token-validity-in-seconds}")
-    private long refreshTokenValidityInSeconds;
+    private static final Duration REFRESH_TOKEN_TTL = Duration.ofDays(7);
 
-    public RefreshToken createRefreshToken(User user) {
-        // 기존 토큰 삭제
-        refreshTokenRepository.findByUser(user).ifPresent(token -> {
-            refreshTokenRepository.delete(token);
-            refreshTokenRepository.flush();
-        });
-
-        // JWT 기반 refreshToken 생성
-        String token = jwtTokenProvider.generateRefreshToken(user.getEmail());
-
-        // JWT 토큰에도 만료시간이 있지만, DB에도 따로 expiryDate 저장
-        Date jwtExpiry = jwtTokenProvider.getExpirationFromToken(token); // 아래 참고
-
-        RefreshToken refreshToken = RefreshToken.builder()
-                .token(token)
-                .user(user)
-                .expiryDate(jwtExpiry.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime())
-                .build();
-
-        return refreshTokenRepository.save(refreshToken);
+    // Refresh Token 저장
+    public void saveRefreshToken(Long userId, String refreshToken) {
+        refreshTokenRepository.saveByUserId(userId, refreshToken, REFRESH_TOKEN_TTL);
     }
 
-    public boolean validate(String token) {
-        return refreshTokenRepository.findByToken(token)
-                .map(rt -> !rt.isExpired())
-                .orElse(false);
+    // Refresh Token 유효성 검증
+    public void assertTokenValid(Long userId, String providedToken) {
+        if (!jwtTokenProvider.validateToken(providedToken)) {
+            throw new InvalidRefreshTokenException();
+        }
+        if (!refreshTokenRepository.existsByUserIdAndToken(userId, providedToken)) {
+            throw new InvalidRefreshTokenException();
+        }
     }
 
-    public User getUserByToken(String token) {
-        return refreshTokenRepository.findByToken(token)
-                .map(RefreshToken::getUser)
-                .orElseThrow(() -> new RuntimeException("유효하지 않은 리프레시 토큰입니다."));
+    // Refresh Token 재발급
+    public String reissueRefreshToken(Long userId, String oldToken) {
+        assertTokenValid(userId, oldToken);
+        refreshTokenRepository.deleteByUserIdAndToken(userId, oldToken);
+        String newToken = jwtTokenProvider.generateRefreshToken(userId);
+        saveRefreshToken(userId, newToken);
+        return newToken;
     }
 
-    public Optional<RefreshToken> findByToken(String token) {
-        log.info("DB에서 찾은 refreshToken: {}", refreshTokenRepository.findByToken(token));
-        return refreshTokenRepository.findByToken(token);
+    // 단일 로그아웃 (특정 기기)
+    public void invalidateOne(Long userId, String providedToken) {
+        if (refreshTokenRepository.existsByUserIdAndToken(userId, providedToken)) {
+            refreshTokenRepository.deleteByUserIdAndToken(userId, providedToken);
+        }
     }
 
-    public void deleteByEmail(String email) {
-        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByUserEmail(email);
-        tokenOpt.ifPresent(refreshTokenRepository::delete);
+    // 전체 로그아웃 (모든 기기)
+    public void invalidateAll(Long userId) {
+        refreshTokenRepository.deleteAllByUserId(userId);
+    }
+
+    // Access Token 블랙리스트 등록
+    public void blacklistAccessToken(String accessToken) {
+        if (!jwtTokenProvider.validateToken(accessToken)) {
+            return; // 이미 만료된 토큰은 블랙리스트에 넣지 않음
+        }
+
+        long expiration = jwtTokenProvider.getExpiration(accessToken); // 만료 시각 (ms)
+        long now = System.currentTimeMillis();
+        long ttl = expiration - now;
+
+        if (ttl > 0) {
+            String key = "blacklist:access:" + accessToken;
+            redisTemplate.opsForValue().set(key, "true", ttl, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    // 🔹 Access Token 블랙리스트 확인
+    public boolean isAccessTokenBlacklisted(String accessToken) {
+        String key = "blacklist:access:" + accessToken;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 }
