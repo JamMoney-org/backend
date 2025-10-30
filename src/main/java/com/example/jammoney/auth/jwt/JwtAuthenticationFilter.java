@@ -1,98 +1,87 @@
 package com.example.jammoney.auth.jwt;
 
-import com.example.jammoney.auth.service.CustomUserDetailsService;
+import java.io.IOException;
+import java.util.List;
+
 import com.example.jammoney.auth.service.RefreshTokenService;
-import com.example.jammoney.exception.ErrorCode;
-import com.example.jammoney.exception.ErrorResponseDto;
-import com.example.jammoney.exception.InvalidJwtTokenException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService userDetailsService;
-    private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenService refreshTokenService; // 블랙리스트 확인 위해 주입
+
+    private static final List<String> EXCLUDE_PATTERNS = List.of(
+            "/auth/**",
+            "/api/auth/**"
+    );
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
-        try {
-            String authHeader = request.getHeader("Authorization");
-            String requestURI = request.getRequestURI();
-
-            // refresh 요청은 필터 통과
-            if ("/auth/refresh".equals(requestURI)) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-
-                // 1. AccessToken 유효성 검증
-                if (!jwtTokenProvider.validateToken(token)) {
-                    throw new InvalidJwtTokenException();
-                }
-
-                // 2. 블랙리스트 확인 (로그아웃된 토큰 방지)
-                if (refreshTokenService.isAccessTokenBlacklisted(token)) {
-                    throw new InvalidJwtTokenException();
-                }
-
-                // 3. 토큰에서 userId 추출
-                Long userId = jwtTokenProvider.getUserIdFromToken(token);
-
-                // 4. UserDetails 로드
-                UserDetails userDetails = userDetailsService.loadUserById(userId);
-
-                // 5. 인증 객체 생성 및 SecurityContextHolder 저장
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-
-            filterChain.doFilter(request, response);
-
-        } catch (InvalidJwtTokenException ex) {
-            setErrorResponse(response, ErrorCode.INVALID_TOKEN, request.getRequestURI());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            setErrorResponse(response, ErrorCode.INVALID_LOGIN, request.getRequestURI());
-        }
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true; // Preflight 통과
+        String path = request.getRequestURI();
+        for (String p : EXCLUDE_PATTERNS) if (pathMatcher.match(p, path)) return true;
+        return false;
     }
 
-    private void setErrorResponse(HttpServletResponse response, ErrorCode errorCode, String path) throws IOException {
-        response.setStatus(errorCode.getStatus());
-        response.setContentType("application/json; charset=UTF-8");
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain
+    ) throws ServletException, IOException {
 
-        ErrorResponseDto error = new ErrorResponseDto(
-                errorCode.getStatus(),
-                errorCode.name(),
-                errorCode.getMessage(),
-                path
-        );
+        String token = resolveBearer(request.getHeader(HttpHeaders.AUTHORIZATION));
 
-        ObjectMapper mapper = new ObjectMapper();
-        String responseBody = mapper.writeValueAsString(error);
-        response.getWriter().write(responseBody);
+        try {
+            if (token != null
+                    && SecurityContextHolder.getContext().getAuthentication() == null
+                    && jwtTokenProvider.validate(token)) {
+
+                // 로그아웃된 액세스 토큰 차단
+                if (refreshTokenService.isAccessTokenBlacklisted(token)) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
+
+                // 보호 경로에서 refresh 토큰 사용 시 401
+                if (jwtTokenProvider.isRefreshToken(token)) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
+
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (Exception e) {
+            log.debug("[JWT] authentication set failed: {}", e.getMessage());
+            // EntryPoint/AccessDeniedHandler에게 맡김
+        }
+
+        chain.doFilter(request, response);
+    }
+
+    private String resolveBearer(String header) {
+        if (header == null || header.isBlank()) return null;
+        // "Bearer " 대소문자 무시
+        if (!header.regionMatches(true, 0, "Bearer ", 0, 7)) return null;
+        String token = header.substring(7).trim();
+        return token.isEmpty() ? null : token;
     }
 }
