@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // ★ 공개 엔드포인트
+                        // 공개 엔드포인트
                         .requestMatchers("/auth/**", "/api/auth/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()        // ★ 필터는 통과하지만 인가도 열어야 401 안 남
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
