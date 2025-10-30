@@ -2,6 +2,7 @@ package com.example.jammoney.auth.repository;
 
 import com.example.jammoney.auth.jwt.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,7 +29,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
 
-    // ── Keys (단일 노드용 간단 네이밍) ─────────────────────────────────────────
+    // ── Keys ──────────────────────────────────────────────────────────────────
     private String tokenKey(Long userId, String jti) { return "refresh:uid:" + userId + ":token:" + jti; }
     private String hashKey(Long userId, String hash) { return "refresh:uid:" + userId + ":hash:" + hash; }
     private String hashSet(Long userId)             { return "refresh:uid:" + userId + ":hashes"; }
@@ -44,7 +45,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         private String familyId;  // optional
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
+
     private static String sha256(String in) {
         try {
             var md = MessageDigest.getInstance("SHA-256");
@@ -67,11 +68,16 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         return Math.min(req, remainSec);
     }
 
-    // ── Save (TTL 기반, 해시 매핑) ─────────────────────────────────────────────
     @Override
     public void saveByUserId(Long userId, String refreshTokenRaw, Duration ttl) {
-        String jti  = jwtTokenProvider.getJti(refreshTokenRaw);
-        long expMs  = jwtTokenProvider.getExpiration(refreshTokenRaw);
+        Claims c = jwtTokenProvider.parseClaims(refreshTokenRaw);
+        if (c == null || !jwtTokenProvider.isRefreshToken(c)) {
+            log.warn("[RT-SAVE] invalid token (null/not refresh). uid={}", userId);
+            return;
+        }
+
+        String jti  = jwtTokenProvider.getJti(c);
+        long expMs  = jwtTokenProvider.getExpirationMillis(c); // Claims 기반
         String hash = sha256(refreshTokenRaw);
 
         log.info("[RT-SAVE] uid={} jti={} expMs={} reqTtlSec={}",
@@ -88,7 +94,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
             return;
         }
 
-        RefreshMeta meta = new RefreshMeta(userId, expMs / 1000, "active", null, null, null);
+        RefreshMeta meta = new RefreshMeta(userId, expMs / 1000, "active", null, null, c.get("fam", String.class));
         final String json;
         try {
             json = objectMapper.writeValueAsString(meta);
@@ -122,7 +128,6 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         }
     }
 
-    // ── Exists (by hash) — TTL 존재 여부로 판단 ───────────────────────────────
     @Override
     public boolean existsByUserIdAndHash(Long userId, String refreshTokenHash) {
         try {
@@ -145,7 +150,6 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         }
     }
 
-    // ── Delete one (by hash) ──────────────────────────────────────────────────
     @Override
     public void deleteByUserIdAndHash(Long userId, String refreshTokenHash) {
         if (userId == null || refreshTokenHash == null || refreshTokenHash.isBlank()) return;
@@ -170,7 +174,6 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         });
     }
 
-    // ── Delete all (by user) — 세트 멤버 순회 + 세트 자체 삭제 ────────────────
     @Override
     public void deleteAllByUserId(Long userId) {
         if (userId == null) return;
@@ -178,16 +181,16 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         final String keyHashes = hashSet(userId);
         Set<String> hashes = redisTemplate.opsForSet().members(keyHashes);
 
-        redisTemplate.executePipelined(new SessionCallback<Object>() {
+        redisTemplate.execute(new SessionCallback<Void>() {
             @Override
             @SuppressWarnings("unchecked")
-            public Object execute(RedisOperations operations) throws DataAccessException {
+            public Void execute(RedisOperations operations) throws DataAccessException {
                 RedisOperations<String, String> ops = (RedisOperations<String, String>) operations;
                 ops.multi();
 
                 if (hashes != null) {
                     for (String h : hashes) {
-                        String jti = redisTemplate.opsForValue().get(hashKey(userId, h));
+                        String jti = ops.opsForValue().get(hashKey(userId, h)); // 같은 커넥션 사용
                         if (jti != null && !jti.isBlank()) {
                             ops.delete(tokenKey(userId, jti));
                         }
