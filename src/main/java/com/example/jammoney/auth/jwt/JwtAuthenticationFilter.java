@@ -1,22 +1,21 @@
 package com.example.jammoney.auth.jwt;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.example.jammoney.auth.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.web.filter.OncePerRequestFilter;
-
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 @Slf4j
 @Component
@@ -26,56 +25,68 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
 
-    private static final List<String> EXCLUDE_PATTERNS = List.of(
-            "/auth/**",
-            "/api/auth/**"
-    );
+    // 인증 불필요(익명 허용) 엔드포인트만 명시
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/auth/login",
+            "/api/auth/refresh",
+            "/api/auth/logout"
+    };
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    // Preflight, EXCLUDE_PATTERNS에 속하는 url들은 필터링 x
+    /** Preflight, 공개 엔드포인트는 필터 패스 */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true; // Preflight 통과
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
         String path = request.getRequestURI();
-        for (String p : EXCLUDE_PATTERNS) if (pathMatcher.match(p, path)) return true;
+        for (String p : PUBLIC_ENDPOINTS) {
+            if (pathMatcher.match(p, path)) return true;
+        }
         return false;
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain chain
-    ) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain) throws ServletException, IOException {
 
-        // Authorization 헤더에서 Bearer 토큰만 추출
-        String token = resolveBearer(request.getHeader(HttpHeaders.AUTHORIZATION));
+        final String token = resolveBearer(request.getHeader(HttpHeaders.AUTHORIZATION));
 
         try {
+            // 인증 객체가 아직 없고, 토큰이 있으면 검증 시작
             if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // 토큰으로 클레임 파싱
-                Claims claims = jwtTokenProvider.parseClaims(token);
-                if (claims == null) {
-                    unauthorized(response, "Invalid or expired token");
-                    return;
-                }
 
-                // 로그아웃/차단된 액세스 토큰이면 즉시 거절
+                // 블랙리스트 선차단
                 if (refreshTokenService.isAccessTokenBlacklisted(token)) {
                     unauthorized(response, "Token blacklisted");
                     return;
                 }
 
-                // 보호 경로에서 refresh 토큰 사용 시 401
+                // 파싱 및 검증
+                final Claims claims;
+                try {
+                    claims = jwtTokenProvider.parseClaims(token);
+                    if (claims == null) {
+                        unauthorized(response, "Invalid or expired token");
+                        return;
+                    }
+                } catch (JwtException je) {
+                    // 만료/서명 오류 등
+                    unauthorized(response, "Invalid or expired token");
+                    return;
+                }
+
+                // Authorization 헤더로 들어온 Refresh 토큰은 차단
                 if (jwtTokenProvider.isRefreshToken(claims)) {
                     unauthorized(response, "Refresh token not allowed");
                     return;
                 }
 
+                // 최종 인증 객체 세팅 (UserDetails 로드 포함)
                 SecurityContextHolder.getContext().setAuthentication(jwtTokenProvider.getAuthentication(claims));
             }
         } catch (Exception e) {
-            log.debug("[JWT] authentication set failed: {}", e.getMessage());
+            // 예상치 못한 예외는 401로 정리(민감정보 로깅 금지)
+            log.debug("[JWT] authentication failed: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -92,9 +103,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void unauthorized(HttpServletResponse res, String msg) throws IOException {
-        res.setHeader("WWW-Authenticate", "Bearer error=\"" + "invalid_token" + "\", error_description=\"" + msg + "\"");
+        res.setHeader("WWW-Authenticate",
+                "Bearer error=\"invalid_token\", error_description=\"" + msg + "\"");
         res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         res.setContentType("application/json;charset=UTF-8");
-        res.getWriter().write("{\"code\":\"" + "invalid_token" + "\",\"message\":\"" + msg + "\"}");
+        res.getWriter().write("{\"code\":\"invalid_token\",\"message\":\"" + msg + "\"}");
     }
 }
