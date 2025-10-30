@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.List;
 
 import com.example.jammoney.auth.service.RefreshTokenService;
+import io.jsonwebtoken.Claims;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final RefreshTokenService refreshTokenService; // 블랙리스트 확인 위해 주입
+    private final RefreshTokenService refreshTokenService;
 
     private static final List<String> EXCLUDE_PATTERNS = List.of(
             "/auth/**",
@@ -32,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     );
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
+    // Preflight, EXCLUDE_PATTERNS에 속하는 url들은 필터링 x
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true; // Preflight 통과
@@ -47,31 +48,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain chain
     ) throws ServletException, IOException {
 
+        // Authorization 헤더에서 Bearer 토큰만 추출
         String token = resolveBearer(request.getHeader(HttpHeaders.AUTHORIZATION));
 
         try {
-            if (token != null
-                    && SecurityContextHolder.getContext().getAuthentication() == null
-                    && jwtTokenProvider.validate(token)) {
+            if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // 토큰으로 클레임 파싱
+                Claims claims = jwtTokenProvider.parseClaims(token);
+                if (claims == null) {
+                    unauthorized(response, "Invalid or expired token");
+                    return;
+                }
 
-                // 로그아웃된 액세스 토큰 차단
+                // 로그아웃/차단된 액세스 토큰이면 즉시 거절
                 if (refreshTokenService.isAccessTokenBlacklisted(token)) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    unauthorized(response, "Token blacklisted");
                     return;
                 }
 
                 // 보호 경로에서 refresh 토큰 사용 시 401
-                if (jwtTokenProvider.isRefreshToken(token)) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                if (jwtTokenProvider.isRefreshToken(claims)) {
+                    unauthorized(response, "Refresh token not allowed");
                     return;
                 }
 
-                Authentication authentication = jwtTokenProvider.getAuthentication(token);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(jwtTokenProvider.getAuthentication(claims));
             }
         } catch (Exception e) {
             log.debug("[JWT] authentication set failed: {}", e.getMessage());
-            // EntryPoint/AccessDeniedHandler에게 맡김
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
         chain.doFilter(request, response);
@@ -83,5 +89,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!header.regionMatches(true, 0, "Bearer ", 0, 7)) return null;
         String token = header.substring(7).trim();
         return token.isEmpty() ? null : token;
+    }
+
+    private void unauthorized(HttpServletResponse res, String msg) throws IOException {
+        res.setHeader("WWW-Authenticate", "Bearer error=\"" + "invalid_token" + "\", error_description=\"" + msg + "\"");
+        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        res.setContentType("application/json;charset=UTF-8");
+        res.getWriter().write("{\"code\":\"" + "invalid_token" + "\",\"message\":\"" + msg + "\"}");
     }
 }
