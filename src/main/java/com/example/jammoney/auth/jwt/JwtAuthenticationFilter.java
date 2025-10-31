@@ -27,18 +27,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 인증 불필요(익명 허용) 엔드포인트만 명시
     private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/auth/signup",
             "/api/auth/login",
             "/api/auth/refresh",
-            "/api/auth/logout"
+            "/auth/logout",
+            "/auth/signup",
+            "/auth/login",
+            "/auth/refresh",
+            "/auth/logout"
+
     };
+    // 경로 패턴 매칭 유틸리티
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     /** Preflight, 공개 엔드포인트는 필터 패스 */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+        // 현재 요청한 url을 string으로 가져옴
         String path = request.getRequestURI();
         for (String p : PUBLIC_ENDPOINTS) {
+            // 현재 요청한 url이 인증 불필요 엔드포인트에 걸리면 필터 그냥 통과
             if (pathMatcher.match(p, path)) return true;
         }
         return false;
@@ -49,6 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
 
+        // 요청의 헤더에서 Authorization 필드 값을 가져옴
         final String token = resolveBearer(request.getHeader(HttpHeaders.AUTHORIZATION));
 
         try {
@@ -57,7 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // 블랙리스트 선차단
                 if (refreshTokenService.isAccessTokenBlacklisted(token)) {
-                    unauthorized(response, "Token blacklisted");
+                    unauthorized(response, "이미 로그아웃 처리 된 토큰입니다.");
                     return;
                 }
 
@@ -66,18 +76,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     claims = jwtTokenProvider.parseClaims(token);
                     if (claims == null) {
-                        unauthorized(response, "Invalid or expired token");
+                        unauthorized(response, "올바르지 않은 토큰입니다.");
                         return;
                     }
                 } catch (JwtException je) {
                     // 만료/서명 오류 등
-                    unauthorized(response, "Invalid or expired token");
+                    unauthorized(response, "올바르지 않은 토큰입니다.");
                     return;
                 }
 
                 // Authorization 헤더로 들어온 Refresh 토큰은 차단
                 if (jwtTokenProvider.isRefreshToken(claims)) {
-                    unauthorized(response, "Refresh token not allowed");
+                    unauthorized(response, "refresh_token은 검증 대상이 아닙니다");
                     return;
                 }
 
@@ -85,7 +95,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(jwtTokenProvider.getAuthentication(claims));
             }
         } catch (Exception e) {
-            // 예상치 못한 예외는 401로 정리(민감정보 로깅 금지)
+            // 예상치 못한 예외는 401로 정리
             log.debug("[JWT] authentication failed: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
