@@ -50,7 +50,7 @@ public class AuthController {
         return ResponseEntity.ok("회원가입 성공");
     }
 
-    /** 로그인: AT는 바디, RT는 HttpOnly 쿠키로 발급 */
+    /** 로그인: access_token은 바디, refresh_token은 HttpOnly 쿠키로 발급 */
     @PostMapping("/login")
     public ResponseEntity<TokenResponseDto> login(
             @Valid @RequestBody LoginRequestDto request,
@@ -73,6 +73,8 @@ public class AuthController {
 
         // 토큰 발급
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), roles);
+
+        // 로그인 직후 refresh_token 발급할 때는 family_id가 없음
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail(), null);
 
         // refresh_token 저장 + 쿠키 세팅
@@ -83,7 +85,7 @@ public class AuthController {
         return ResponseEntity.ok(new TokenResponseDto(accessToken, null));
     }
 
-    /** 재발급: RT는 쿠키에서 읽고, access_token만 바디로 내려줌. refresh_token은 회전 후 쿠키 갱신 */
+    /** 재발급: refresh_token은 쿠키에서 읽고, access_token만 바디로 내려줌. refresh_token은 회전 후 쿠키 갱신 */
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponseDto> refresh(
             @CookieValue(value = REFRESH_COOKIE, required = false) String refreshToken,
@@ -101,14 +103,14 @@ public class AuthController {
         Claims claims = jwtTokenProvider.parseClaims(refreshToken);
         if (claims == null) return ResponseEntity.status(401).build();
 
-        // refresh_token인지 확인
+        // 오직 refresh_token으로만 재발급을 할 수 있음
         if (!jwtTokenProvider.isRefreshToken(claims)) return ResponseEntity.status(400).build();
 
-        // userId 추출
+        // user_id 추출
         Long userId = jwtTokenProvider.getUserId(claims);
         if (userId == null) return ResponseEntity.status(401).build();
 
-        // 저장소 일치성/유효성 확인
+        // refresh_token 일치성/유효성 확인
         refreshTokenService.assertTokenValid(userId, refreshToken);
 
         // 사용자 & 권한 재구성
@@ -121,8 +123,9 @@ public class AuthController {
 
         // access_token 새로 발급
         String newAccess = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), roles);
-        // refresh_token 회전(가족 유지) + 쿠키 갱신
+        // refresh_token 회전(가족 유지)
         String newRefresh = refreshTokenService.reissueRefreshToken(userId, refreshToken);
+        // 쿠키에 새로운 refresh_token 저장
         setRefreshCookie(response, newRefresh);
 
         return ResponseEntity.ok(new TokenResponseDto(newAccess, null));
@@ -141,12 +144,12 @@ public class AuthController {
             refreshToken = body.getRefreshToken();
         }
 
-        // access_token 블랙리스트
+        // access_token을 더이상 사용할 수 없도록 블랙리스트 처리 왜? access_token은 서버에서 저장하지 않으니까
         if (accessToken != null && !accessToken.isBlank()) {
             refreshTokenService.blacklistAccessToken(accessToken);
         }
 
-        // refresh_token 무효화
+        // refresh_token 삭제
         if (refreshToken != null && !refreshToken.isBlank()) {
             Claims c = jwtTokenProvider.parseClaims(refreshToken);
             if (c != null) {
@@ -173,7 +176,7 @@ public class AuthController {
 
     // ── Cookie helpers ────────────────────────────────────────────────────────
 
-    /** RT 쿠키 세팅: SameSite=None + Secure + HttpOnly */
+    /** refresh_token 쿠키 세팅: SameSite=None + Secure + HttpOnly */
     private void setRefreshCookie(HttpServletResponse response, String refreshToken) {
         // 토큰에서 남은 수명(초) 계산: 1회 파싱 후 Claims 기반 계산
         long maxAgeSec = 0L;
@@ -192,7 +195,7 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
-    /** RT 쿠키 제거 */
+    /** refresh_token 쿠키 제거 */
     private void clearRefreshCookie(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE, "")
                 .httpOnly(true)
