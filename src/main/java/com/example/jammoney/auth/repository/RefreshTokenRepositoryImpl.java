@@ -29,9 +29,11 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
 
-    // ── Keys ──────────────────────────────────────────────────────────────────
+    // 특정 유저의 토큰 메타 데이터를 저장할 key 이름 - RefreshMeta를 value로서 저장
     private String tokenKey(Long userId, String jti) { return "refresh:uid:" + userId + ":token:" + jti; }
+    // 특정 유저의 특정 토큰 해시를 저장할 key 이름 - jti를 value로서 저장
     private String hashKey(Long userId, String hash) { return "refresh:uid:" + userId + ":hash:" + hash; }
+    // 특정 유저가 가진 모든 토큰들을 저장할 key 이름 - 특정 user의 모든 토큰 해시들을 저장
     private String hashSet(Long userId)             { return "refresh:uid:" + userId + ":hashes"; }
 
     // ── Meta DTO ───────────────────────────────────────────────────────────────
@@ -58,7 +60,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         }
     }
 
-    /** TTL(sec)을 만료시각과 정합성 있게 보정 (만료 초과 금지) */
+    /** TTL(sec)을 만료 시각과 정합성 있게 보정 (만료 초과 금지) */
     private long alignedTtlSec(Duration requestedTtl, long expMs) {
         if (expMs <= 0) return 0L;
         long nowMs = System.currentTimeMillis();
@@ -72,25 +74,27 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     public void saveByUserId(Long userId, String refreshTokenRaw, Duration ttl) {
         Claims c = jwtTokenProvider.parseClaims(refreshTokenRaw);
         if (c == null || !jwtTokenProvider.isRefreshToken(c)) {
-            log.warn("[RT-SAVE] invalid token (null/not refresh). uid={}", userId);
+            log.warn("[유효하지 않은 refresh_token] userId= {}", userId);
             return;
         }
 
         String jti  = jwtTokenProvider.getJti(c);
-        long expMs  = jwtTokenProvider.getExpirationMillis(c); // Claims 기반
+
+        // 만료 시간 계산
+        long expMs  = jwtTokenProvider.getExpirationMillis(c);
         String hash = sha256(refreshTokenRaw);
 
-        log.info("[RT-SAVE] uid={} jti={} expMs={} reqTtlSec={}",
+        log.info("[refresh_token 저장 완료] uid={} jti={} expMs={} reqTtlSec={}",
                 userId, jti, expMs, (ttl == null ? null : ttl.getSeconds()));
 
         if (userId == null || jti == null || jti.isBlank() || expMs <= 0) {
-            log.warn("[RT-SAVE] invalid args uid={} jti={} expMs={}", userId, jti, expMs);
+            log.warn("[입력 인자 누락] uid={} jti={} expMs={}", userId, jti, expMs);
             return;
         }
 
         long ttlSec = alignedTtlSec(ttl, expMs);
         if (ttlSec <= 0) {
-            log.warn("[RT-SAVE] ttlSec <= 0; skip save. uid={} jti={} expMs={}", userId, jti, expMs);
+            log.warn("[계산된 ttl이 0 이하임] uid={} jti={} expMs={}", userId, jti, expMs);
             return;
         }
 
@@ -99,9 +103,10 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         try {
             json = objectMapper.writeValueAsString(meta);
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to serialize refresh meta", e);
+            throw new IllegalStateException("refresh_token 직렬화 실패", e);
         }
 
+        // value를 저장할 key값들을 찾음
         final String keyToken  = tokenKey(userId, jti);
         final String keyHash   = hashKey(userId, hash);
         final String keyHashes = hashSet(userId);
@@ -112,19 +117,22 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
                 @SuppressWarnings("unchecked")
                 public java.util.List<Object> execute(RedisOperations operations) throws DataAccessException {
                     RedisOperations<String, String> ops = (RedisOperations<String, String>) operations;
+                    // 트랜잭션 시작 (명령어들 큐잉)
                     ops.multi();
-                    // 메타(JSON) - TTL
+                    // keyToken에 메타 데이터 저장
                     ops.opsForValue().set(keyToken, json, Duration.ofSeconds(ttlSec));
-                    // 해시→jti 매핑 - TTL
+                    // keyHash에 jti 값 저장
                     ops.opsForValue().set(keyHash, jti, Duration.ofSeconds(ttlSec));
-                    // 일괄 삭제용 해시 목록(Set) — 멤버 TTL 없음, 전체 삭제 시 세트 자체 제거
+                    // keyHashes set에 토큰 해시 추가
                     ops.opsForSet().add(keyHashes, hash);
+
+                    // 큐에 넣어둔 명령어들 한꺼번에 실행 (저장의 원자성 보장)
                     return ops.exec();
                 }
             });
-            log.info("[RT-SAVE] EXEC results={}", exec);
+            log.info("refresh_token 저장 성공. EXEC 결과={}", exec);
         } catch (Exception e) {
-            log.error("[RT-SAVE] EXEC failed", e);
+            log.error("refresh_token 저장 실패", e);
         }
     }
 
@@ -145,7 +153,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 
             return true;
         } catch (Exception e) {
-            log.warn("[RT-EXISTS] error: {}", e.getMessage());
+            log.warn("refresh_token 존재 확인 중 에러 발생: {}", e.getMessage());
             return false;
         }
     }
@@ -167,11 +175,12 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
                 ops.multi();
                 if (keyToken != null) ops.delete(keyToken);             // 메타 삭제(존재 시)
                 ops.delete(keyHash);                                     // 해시 매핑 삭제
-                ops.opsForSet().remove(keyHashes, refreshTokenHash);     // 세트 멤버 제거
+                ops.opsForSet().remove(keyHashes, refreshTokenHash);     // keyHashes 목록에서 이 hashToken 제거
                 ops.exec();
                 return null;
             }
         });
+        log.info("refresh_token 하나 삭제 완료 uid={} jti={}", userId, jti);
     }
 
     @Override
@@ -179,30 +188,42 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         if (userId == null) return;
 
         final String keyHashes = hashSet(userId);
+
+        // 해당 user의 토큰 해시들을 모두 모음 == 삭제해야할 토큰 해시들 모음
         Set<String> hashes = redisTemplate.opsForSet().members(keyHashes);
 
+
+        java.util.List<String> keysToDelete = new java.util.ArrayList<>();
+        if (hashes != null && !hashes.isEmpty()) {
+            for (String h : hashes) {
+                // keyHash들의 jti 값을 가져옴
+                String jti = redisTemplate.opsForValue().get(hashKey(userId, h));
+                if (jti != null && !jti.isBlank()) {
+                    // tokenKey의 메타 데이터 삭제를 위해 리스트업
+                    keysToDelete.add(tokenKey(userId, jti));
+                }
+                // hashKey의 jti 삭제를 위해 리스트업
+                keysToDelete.add(hashKey(userId, h)); // 해시 매핑 키
+            }
+        }
+        // keyHashes 삭제를 위해 리스트업
+        keysToDelete.add(keyHashes);
+
+        // keysToDelete에는 삭제해야할 모든 key값들이 저장돼있음
         redisTemplate.execute(new SessionCallback<Void>() {
             @Override
             @SuppressWarnings("unchecked")
             public Void execute(RedisOperations operations) throws DataAccessException {
                 RedisOperations<String, String> ops = (RedisOperations<String, String>) operations;
                 ops.multi();
-
-                if (hashes != null) {
-                    for (String h : hashes) {
-                        String jti = ops.opsForValue().get(hashKey(userId, h)); // 같은 커넥션 사용
-                        if (jti != null && !jti.isBlank()) {
-                            ops.delete(tokenKey(userId, jti));
-                        }
-                        ops.delete(hashKey(userId, h));
-                    }
+                for (String k : keysToDelete) {
+                    // 삭제해야할 모든 키들 다 삭제
+                    ops.delete(k);
                 }
-                // 세트 자체 삭제로 찌꺼기 멤버 문제 정리
-                ops.delete(keyHashes);
-
                 ops.exec();
                 return null;
             }
         });
+        log.info("uid={} 에 대한 모든 refresh_token /매핑/세트 키 삭제 완료. 삭제건수={}", userId, keysToDelete.size());
     }
 }
