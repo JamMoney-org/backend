@@ -27,6 +27,7 @@ public class RefreshTokenService {
         if (c == null || !jwtTokenProvider.isRefreshToken(c)) {
             throw new InvalidRefreshTokenException();
         }
+        // 남은 시간 계산
         Duration ttl = calculateRemainingTime(c);
         refreshTokenRepository.saveByUserId(userId, refreshToken, ttl);
     }
@@ -58,10 +59,11 @@ public class RefreshTokenService {
         String oldHash = sha256(oldToken);
         refreshTokenRepository.deleteByUserIdAndHash(userId, oldHash);
 
-        // 3) 새 토큰 발급 (family 유지: fam) — Claims에서 직접 추출
+        // 3) 새 토큰 발급
         Claims oldC = jwtTokenProvider.parseClaims(oldToken);
         String username = jwtTokenProvider.getUsername(oldC);
         String familyId = jwtTokenProvider.getFamilyId(oldC);
+        // 기존 토큰의 family_id를 그대로 가져와서 family_id로 등록
         String newToken = jwtTokenProvider.generateRefreshToken(userId, username, familyId);
 
         // 4) 저장 (exp 기반 TTL 반영)
@@ -74,11 +76,13 @@ public class RefreshTokenService {
     public void invalidateOne(Long userId, String providedToken) {
         if (providedToken == null || providedToken.isBlank()) return;
         String hash = sha256(providedToken);
+        // 레디스에서 refresh_token 삭제
         refreshTokenRepository.deleteByUserIdAndHash(userId, hash);
     }
 
     /** 전체 로그아웃 */
     public void invalidateAll(Long userId) {
+        // 레디스에서 같은 user_id를 가지는 모든 refresh_token 삭제
         refreshTokenRepository.deleteAllByUserId(userId);
     }
 
@@ -86,13 +90,14 @@ public class RefreshTokenService {
     public void blacklistAccessToken(String accessToken) {
         if (accessToken == null || accessToken.isBlank()) return;
 
-        // 1회 파싱으로 만료/서명 확인 + TTL 계산
+        // 클레임 파싱
         Claims c = jwtTokenProvider.parseClaims(accessToken);
         if (c == null) return; // 무효/만료 등
         long remainSec = jwtTokenProvider.getRemainingSeconds(c);
         if (remainSec <= 0) return;
 
         String key = "blacklist:access:" + sha256(accessToken);
+        // 토큰의 남은 만료 시간 뒤에는 자동으로 블랙리스트 목록에서 해당 토큰이 삭제됨
         redisTemplate.opsForValue().set(key, "1", remainSec, TimeUnit.SECONDS);
     }
 
