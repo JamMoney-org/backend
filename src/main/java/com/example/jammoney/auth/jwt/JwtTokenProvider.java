@@ -57,6 +57,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(username)
+                // 토큰 id
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(iat)
                 .setExpiration(exp)
@@ -74,6 +75,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(username)
+                // 토큰 id
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(iat)
                 .setExpiration(exp)
