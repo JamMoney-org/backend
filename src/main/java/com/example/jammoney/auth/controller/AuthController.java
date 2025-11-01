@@ -167,9 +167,10 @@ public class AuthController {
 
     /** 전체 로그아웃: 저장소 전체 무효화 + 쿠키 제거 */
     @PostMapping("/logout/all/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.user.id")
     public ResponseEntity<Void> logoutAll(@PathVariable Long userId, HttpServletResponse response) {
         refreshTokenService.invalidateAll(userId);
+        refreshTokenService.revokeAllAccessTokens(userId);
         clearRefreshCookie(response);
         return ResponseEntity.ok().build();
     }
