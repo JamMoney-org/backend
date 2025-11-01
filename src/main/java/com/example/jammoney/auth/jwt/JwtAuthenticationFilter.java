@@ -84,6 +84,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     unauthorized(response, "올바르지 않은 토큰입니다.");
                     return;
                 }
+                Long uid = jwtTokenProvider.getUserId(claims);
+                if (uid != null) {
+                    long iatMillis = claims.getIssuedAt() != null ? claims.getIssuedAt().getTime() : 0L;
+                    long epoch = refreshTokenService.getRevokedAt(uid);
+
+                    if (iatMillis < epoch) {
+                        unauthorized(response, "로그아웃 처리된 토큰입니다.");
+                        return;
+                    }
+                }
 
                 // Authorization 헤더로 들어온 Refresh 토큰은 차단
                 if (jwtTokenProvider.isRefreshToken(claims)) {
