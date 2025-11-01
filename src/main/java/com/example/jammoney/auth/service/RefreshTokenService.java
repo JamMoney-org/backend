@@ -107,6 +107,32 @@ public class RefreshTokenService {
         String key = "blacklist:access:" + sha256(accessToken);
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
+    /** 해당 유저의 epoch 키 생성 */
+    private String revokedAtKey(Long userId) { return "user:revocation_epoch:" + userId; }
+
+    /**
+     * 유저의 토큰 무효화 시점을 현재 시각으로 갱신.
+     * 이 시점 이전에 발급된 모든 Access Token은 즉시 무효 처리됨.
+     */
+    public void revokeAllAccessTokens(Long userId) {
+        if (userId == null) return;
+        String now = String.valueOf(System.currentTimeMillis());
+        redisTemplate.opsForValue().set(revokedAtKey(userId), now);
+    }
+
+    /**
+     * 유저의 토큰 무효화 시점을 조회 (기본값 0)
+     * 저장된 값이 없으면 0을 반환함.
+     */
+    public long getRevokedAt(Long userId) {
+        if (userId == null) return 0L;
+        String v = redisTemplate.opsForValue().get(revokedAtKey(userId));
+        try {
+            return (v == null ? 0L : Long.parseLong(v));
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+    }
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
