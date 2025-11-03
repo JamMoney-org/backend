@@ -4,17 +4,24 @@ on:
   push:
     branches: ["develop"]
 
+concurrency:
+  group: cd-deploy-develop
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
+        # 빌드 컨텍스트에 전체 리포지토리 필요 시 fetch-depth 0 권장
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Build & Push Docker image
         run: |
-          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker build -t "${{ secrets.DOCKER_USERNAME }}/jammoney:latest" .
           docker push "${{ secrets.DOCKER_USERNAME }}/jammoney:latest"
 
@@ -25,21 +32,21 @@ jobs:
           port: ${{ secrets.SERVER_SSH_PORT }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_KEY }}
+          command_timeout: 10m
           script: |
             set -e
 
-            # 0) 작업 디렉터리
-            APP_DIR=~/***
+            # 0) 작업 디렉터리 (명확한 이름 권장)
+            APP_DIR="$HOME/jammoney"
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
 
-            # 1) docker compose 준비 (v2 우선, 불가시 바이너리 설치, 최후엔 v1 호환)
+            # 1) docker compose 준비 (v2 우선, 불가시 바이너리 설치, 최후엔 v1)
             ensure_compose() {
-              if docker compose version >/dev/null 2>&1; then
-                return 0
-              fi
+              if docker compose version >/dev/null 2>&1; then return 0; fi
+
               if command -v apt-get >/dev/null 2>&1; then
-                sudo apt-get update -y && sudo apt-get install -y docker-compose-plugin
+                sudo apt-get update -y && sudo apt-get install -y docker-compose-plugin || true
               elif command -v dnf >/dev/null 2>&1; then
                 sudo dnf install -y docker-compose-plugin || true
               elif command -v yum >/dev/null 2>&1; then
@@ -50,11 +57,9 @@ jobs:
                 sudo zypper --non-interactive install docker-compose-plugin || true
               fi
 
-              if docker compose version >/dev/null 2>&1; then
-                return 0
-              fi
+              if docker compose version >/dev/null 2>&1; then return 0; fi
 
-              # 패키지 실패 → 바이너리 직접 설치
+              # 패키지 실패 → v2 바이너리 직접 설치
               COMPOSE_VERSION="v2.30.3"
               DEST="/usr/local/lib/docker/cli-plugins/docker-compose"
               OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -63,14 +68,12 @@ jobs:
               sudo curl -fsSL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-${OS}-${ARCH}" -o "$DEST"
               sudo chmod +x "$DEST"
 
-              if ! docker compose version >/dev/null 2>&1; then
-                if ! command -v docker-compose >/dev/null 2>&1; then
-                  echo "docker compose(v2) 설치 실패했고, docker-compose(v1)도 없음" >&2
-                  exit 1
-                fi
+              # 최후: v1 존재 확인
+              if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
+                echo "docker compose(v2) 설치 실패했고, docker-compose(v1)도 없음" >&2
+                exit 1
               fi
             }
-
             ensure_compose
 
             # docker compose 또는 docker-compose 선택자
@@ -80,9 +83,8 @@ jobs:
               DC="docker-compose"
             fi
 
-            # 2) compose 파일 작성
+            # 2) compose 파일 작성 (v2 권고에 따라 version 키 제거)
             cat > docker-compose.yml <<'YAML'
-            version: "3.9"
             services:
               redis:
                 image: redis:7-alpine
@@ -141,7 +143,8 @@ jobs:
             # 4) docker login (권장 방식)
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-            # 5) 배포
-            $DC pull app || true
-            $DC up -d
-            $DC ps
+            # 5) 배포 - 프로젝트명 강제 지정(빈 프로젝트명 오류 방지)
+            PROJECT_NAME="jammoney"
+            $DC -p "$PROJECT_NAME" pull app || true
+            $DC -p "$PROJECT_NAME" up -d
+            $DC -p "$PROJECT_NAME" ps
