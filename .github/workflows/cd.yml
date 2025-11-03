@@ -10,10 +10,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -24,7 +24,17 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/jammoney:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/jammoney:latest
 
-      - name: Deploy to EC2
+      - name: Upload docker-compose.yml
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_KEY }}
+          source: docker-compose.yml
+          target: /home/ubuntu/jammoney
+
+      - name: Deploy to EC2 (docker compose up -d)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -32,23 +42,37 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_KEY }}
           script: |
+            set -e
+            mkdir -p /home/ubuntu/jammoney
+            cd /home/ubuntu/jammoney
+
+            # docker compose 플러그인 없으면 설치
+            if ! docker compose version >/dev/null 2>&1; then
+              sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+            fi
+
+            # 레지스트리 로그인
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-            docker rm -f jammoney || true
-            docker pull ${{ secrets.DOCKER_USERNAME }}/jammoney:latest
-            docker run -d \
-              --name jammoney \
-              -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL="jdbc:mysql://${{ secrets.DATABASE_HOST }}:${{ secrets.DATABASE_PORT }}/${{ secrets.DATABASE_NAME }}" \
-              -e SPRING_DATASOURCE_USERNAME="${{ secrets.DATABASE_USERNAME }}" \
-              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}" \
-              -e SPRING_DATASOURCE_DRIVER_CLASS_NAME="com.mysql.cj.jdbc.Driver" \
-              -e SPRING_JPA_HIBERNATE_DDL_AUTO="update" \
-              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS="${{ secrets.JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS }}" \
-              -e JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS="${{ secrets.JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS }}" \
-              -e KIS_APP_KEY="${{ secrets.KIS_APP_KEY }}" \
-              -e KIS_APP_SECRET="${{ secrets.KIS_APP_SECRET }}" \
-              -e GPT_API_KEY="${{ secrets.GPT_API_KEY }}" \
-              -e AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}" \
-              -e AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}" \
-              ${{ secrets.DOCKER_USERNAME }}/jammoney:latest
+
+            # compose가 참조할 .env 생성 (값은 GitHub Secrets에서만 주입)
+            cat > .env <<'ENVVARS'
+            APP_IMAGE=${{ secrets.DOCKER_USERNAME }}/jammoney:latest
+
+            SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.DATABASE_HOST }}:${{ secrets.DATABASE_PORT }}/${{ secrets.DATABASE_NAME }}
+            SPRING_DATASOURCE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+            SPRING_DATASOURCE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+
+
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS=${{ secrets.JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS }}
+            JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS=${{ secrets.JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS }}
+            KIS_APP_KEY=${{ secrets.KIS_APP_KEY }}
+            KIS_APP_SECRET=${{ secrets.KIS_APP_SECRET }}
+            GPT_API_KEY=${{ secrets.GPT_API_KEY }}
+            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}
+            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}
+            ENVVARS
+
+            docker compose pull app || true
+            docker compose up -d
+            docker compose ps
