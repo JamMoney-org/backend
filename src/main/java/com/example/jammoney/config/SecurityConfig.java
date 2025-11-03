@@ -40,13 +40,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // 공개 엔드포인트
-                        .requestMatchers("/auth/**", "/api/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/redis-test/**").permitAll()
-                        .requestMatchers("/api/test/gpt/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/protected").authenticated()
+                        .requestMatchers("/api/test/gpt/**").permitAll()  // ✅ 여기가 핵심!
                         .requestMatchers("/test/**").permitAll()
 
                         // 보호 엔드포인트
