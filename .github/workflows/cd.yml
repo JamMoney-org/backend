@@ -28,7 +28,7 @@ jobs:
           script: |
             set -e
 
-            APP_DIR=/home/ubuntu/jammoney
+            APP_DIR=~/***
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
 
