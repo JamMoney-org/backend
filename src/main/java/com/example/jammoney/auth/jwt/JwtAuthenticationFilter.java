@@ -30,12 +30,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/signup",
             "/api/auth/login",
             "/api/auth/refresh",
-            "/auth/logout",
-            "/auth/signup",
-            "/auth/login",
-            "/auth/refresh",
-            "/auth/logout"
-
     };
     // 경로 패턴 매칭 유틸리티
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
