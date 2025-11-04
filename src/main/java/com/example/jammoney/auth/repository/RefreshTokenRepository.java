@@ -1,14 +1,17 @@
 package com.example.jammoney.auth.repository;
 
-import com.example.jammoney.auth.entity.RefreshToken;
-import com.example.jammoney.user.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.time.Duration;
 
-public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
-    Optional<RefreshToken> findByToken(String token);
-    Optional<RefreshToken> findByUser(User user);
-    Optional<RefreshToken> findByUserEmail(String email);
+@Repository
+public interface RefreshTokenRepository {
 
+    void saveByUserId(Long userId, String refreshTokenRaw, Duration ttl);
+
+    boolean existsByUserIdAndHash(Long userId, String hash);
+
+    void deleteByUserIdAndHash(Long userId, String hash);
+
+    void deleteAllByUserId(Long userId);
 }
