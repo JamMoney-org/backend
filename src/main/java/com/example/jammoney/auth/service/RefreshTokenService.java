@@ -27,7 +27,6 @@ public class RefreshTokenService {
         if (c == null || !jwtTokenProvider.isRefreshToken(c)) {
             throw new InvalidRefreshTokenException();
         }
-        // 남은 시간 계산
         Duration ttl = calculateRemainingTime(c);
         refreshTokenRepository.saveByUserId(userId, refreshToken, ttl);
     }
@@ -39,11 +38,9 @@ public class RefreshTokenService {
         Claims c = jwtTokenProvider.parseClaims(providedToken);
         if (c == null || !jwtTokenProvider.isRefreshToken(c)) throw new InvalidRefreshTokenException();
 
-        // 토큰의 uid와 인자로 받은 userId가 불일치하면 거절
         Long uidFromToken = jwtTokenProvider.getUserId(c);
         if (uidFromToken == null || !uidFromToken.equals(userId)) throw new InvalidRefreshTokenException();
 
-        // 저장소에 존재하는 해시인지 확인
         String hash = sha256(providedToken);
         if (!refreshTokenRepository.existsByUserIdAndHash(userId, hash)) {
             throw new InvalidRefreshTokenException();
@@ -51,7 +48,7 @@ public class RefreshTokenService {
     }
 
     /** refresh 토큰 회전 — family 유지, 해시 저장 (exp/TTL 동기화) */
-    public String reissueRefreshToken(Long userId, String oldToken) {
+    public String reissueRefreshToken(Long userId, String oldToken, long ver) {
         // 1) 유효성/정합성 확인
         assertTokenValid(userId, oldToken);
 
@@ -59,12 +56,11 @@ public class RefreshTokenService {
         String oldHash = sha256(oldToken);
         refreshTokenRepository.deleteByUserIdAndHash(userId, oldHash);
 
-        // 3) 새 토큰 발급
+        // 3) 새 토큰 발급 (★ ver 반영)
         Claims oldC = jwtTokenProvider.parseClaims(oldToken);
         String username = jwtTokenProvider.getUsername(oldC);
         String familyId = jwtTokenProvider.getFamilyId(oldC);
-        // 기존 토큰의 family_id를 그대로 가져와서 family_id로 등록
-        String newToken = jwtTokenProvider.generateRefreshToken(userId, username, familyId);
+        String newToken = jwtTokenProvider.generateRefreshToken(userId, username, familyId, ver);
 
         // 4) 저장 (exp 기반 TTL 반영)
         saveRefreshToken(userId, newToken);
@@ -76,13 +72,12 @@ public class RefreshTokenService {
     public void invalidateOne(Long userId, String providedToken) {
         if (providedToken == null || providedToken.isBlank()) return;
         String hash = sha256(providedToken);
-        // 레디스에서 refresh_token 삭제
         refreshTokenRepository.deleteByUserIdAndHash(userId, hash);
     }
 
-    /** 전체 로그아웃 */
+    /** 전체 로그아웃: ver++ 후 refresh 모두 삭제 (멱등) */
     public void invalidateAll(Long userId) {
-        // 레디스에서 같은 user_id를 가지는 모든 refresh_token 삭제
+        bumpRevocationVersion(userId);
         refreshTokenRepository.deleteAllByUserId(userId);
     }
 
@@ -90,14 +85,12 @@ public class RefreshTokenService {
     public void blacklistAccessToken(String accessToken) {
         if (accessToken == null || accessToken.isBlank()) return;
 
-        // 클레임 파싱
         Claims c = jwtTokenProvider.parseClaims(accessToken);
         if (c == null) return; // 무효/만료 등
         long remainSec = jwtTokenProvider.getRemainingSeconds(c);
         if (remainSec <= 0) return;
 
         String key = "blacklist:access:" + sha256(accessToken);
-        // 토큰의 남은 만료 시간 뒤에는 자동으로 블랙리스트 목록에서 해당 토큰이 삭제됨
         redisTemplate.opsForValue().set(key, "1", remainSec, TimeUnit.SECONDS);
     }
 
@@ -107,31 +100,23 @@ public class RefreshTokenService {
         String key = "blacklist:access:" + sha256(accessToken);
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
-    /** 해당 유저의 epoch 키 생성 */
-    private String revokedAtKey(Long userId) { return "user:revocation_epoch:" + userId; }
 
-    /**
-     * 유저의 토큰 무효화 시점을 현재 시각으로 갱신.
-     * 이 시점 이전에 발급된 모든 Access Token은 즉시 무효 처리됨.
-     */
-    public void revokeAllAccessTokens(Long userId) {
-        if (userId == null) return;
-        String now = String.valueOf(System.currentTimeMillis());
-        redisTemplate.opsForValue().set(revokedAtKey(userId), now);
+    // ── ver(전역 무효화 버전)
+    private String revocationVerKey(Long userId) { return "user:revocation_ver:" + userId; }
+
+    /** 현재 전역 무효화 버전 (없으면 0) */
+    public long getRevocationVersion(Long userId) {
+        if (userId == null) return 0L;
+        String v = redisTemplate.opsForValue().get(revocationVerKey(userId));
+        try { return (v == null ? 0L : Long.parseLong(v)); }
+        catch (NumberFormatException e) { return 0L; }
     }
 
-    /**
-     * 유저의 토큰 무효화 시점을 조회 (기본값 0)
-     * 저장된 값이 없으면 0을 반환함.
-     */
-    public long getRevokedAt(Long userId) {
+    /** 전역 무효화: 버전 + 1 반환 */
+    public long bumpRevocationVersion(Long userId) {
         if (userId == null) return 0L;
-        String v = redisTemplate.opsForValue().get(revokedAtKey(userId));
-        try {
-            return (v == null ? 0L : Long.parseLong(v));
-        } catch (NumberFormatException e) {
-            return 0L;
-        }
+        Long newVer = redisTemplate.opsForValue().increment(revocationVerKey(userId));
+        return (newVer == null ? 0L : newVer);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

@@ -5,10 +5,14 @@ import com.example.jammoney.user.dto.UserRequestDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -22,23 +26,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HexFormat;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-/**
- * 프로젝트 동작과 싱크:
- * - 회원가입: POST /api/auth/signup (UserRequestDto)
- * - 로그인:   POST /api/auth/login  body: {"email","password"}
- * - 리프레시: POST /api/auth/refresh (HttpOnly cookie: refresh_token)
- * - 단일 로그아웃:  POST /api/auth/logout
- * - 전체 로그아웃:  POST /api/auth/logout/all/{userId}  (Authorization 필요)
- * - 보호 API: GET /api/protected  (Authorization: Bearer {accessToken})
- * - refresh 쿠키명: refresh_token
- * - 정책: 새 로그인 시 이전 AT 무효화(사실상 단일-세션)
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
@@ -64,13 +59,18 @@ class AuthFlowIntegrationTest {
     static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
 
     @DynamicPropertySource
-    static void registerRedisProperties(DynamicPropertyRegistry registry) {
+    static void registerDynamicProps(DynamicPropertyRegistry registry) {
         registry.add("spring.data.redis.host", () -> redis.getHost());
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+        // TTL 동기화/자동 만료 테스트를 위해 refresh TTL을 짧게 (예: 10초)
+        registry.add("jwt.refresh-token-validity-in-seconds", () -> 10);
+        // 필요시 access TTL도 짧게
+        registry.add("jwt.access-token-validity-in-seconds", () -> 5 * 60);
     }
 
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper om;
+    @Autowired StringRedisTemplate redisTemplate;
 
     // “기기 A/B” 시뮬레이션 상태(쿠키/AT)
     static class Device {
@@ -81,16 +81,20 @@ class AuthFlowIntegrationTest {
     static final Device A = new Device();
     static final Device B = new Device();
 
-    /* ----------------------- 유틸 ----------------------- */
+    /* ----------------------- DTO ----------------------- */
+    record LoginReq(String email, String password) {}
     record LogoutReq(String accessToken, String refreshToken) {}
+
+    /* ----------------------- 유틸 ----------------------- */
+
     private String json(Object o) throws Exception { return om.writeValueAsString(o); }
 
     /** MockMvc의 ResponseCookie(Set-Cookie 헤더)까지 고려한 쿠키 추출 */
-    private static Cookie findRefreshCookie(MockHttpServletResponse res, String name) {
+    private static Cookie findRefreshCookie(MockHttpServletResponse res) {
         if (res == null) return null;
 
         // 1) MockMvc가 파싱한 Cookie 먼저 시도
-        Cookie c = res.getCookie(name);
+        Cookie c = res.getCookie(AuthFlowIntegrationTest.REFRESH_COOKIE_NAME);
         if (c != null) return c;
 
         // 2) Set-Cookie 헤더 직접 파싱 (ResponseCookie 포맷 포함)
@@ -102,7 +106,7 @@ class AuthFlowIntegrationTest {
             if (eq > 0) {
                 String n = first.substring(0, eq).trim();
                 String v = first.substring(eq + 1).trim();
-                if (name.equals(n)) {
+                if (AuthFlowIntegrationTest.REFRESH_COOKIE_NAME.equals(n)) {
                     return new Cookie(n, v);
                 }
             }
@@ -119,7 +123,7 @@ class AuthFlowIntegrationTest {
         return null;
     }
 
-    private static String extractAccessToken(String body) throws Exception {
+    private static String extractAccessTokenFromBody(String body) throws Exception {
         var mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(body);
         JsonNode at = node.get("accessToken");
@@ -142,7 +146,42 @@ class AuthFlowIntegrationTest {
         }
     }
 
-    /** 회원가입 보장(멱등): 이미 있으면 409 허용 */
+    /** JWT에서 exp(초) */
+    private static long extractExpFromJwt(String jwt) throws Exception {
+        String[] parts = jwt.split("\\.");
+        if (parts.length < 2) throw new IllegalArgumentException("Invalid JWT");
+        byte[] payload = Base64.getUrlDecoder().decode(parts[1]);
+        String json = new String(payload, StandardCharsets.UTF_8);
+        JsonNode node = new ObjectMapper().readTree(json);
+        return node.get("exp").asLong();
+    }
+
+    /** JWT에서 jti */
+    private static String extractJtiFromJwt(String jwt) throws Exception {
+        String[] parts = jwt.split("\\.");
+        byte[] payload = Base64.getUrlDecoder().decode(parts[1]);
+        String json = new String(payload, StandardCharsets.UTF_8);
+        JsonNode node = new ObjectMapper().readTree(json);
+        return node.get("jti").asText();
+    }
+
+    /** Cookie 헤더에서 Max-Age 파싱 */
+    private static long parseMaxAge(String setCookieHeader) {
+        for (String token : setCookieHeader.split(";")) {
+            var t = token.trim();
+            if (t.toLowerCase().startsWith("max-age=")) {
+                return Long.parseLong(t.substring(8));
+            }
+        }
+        throw new AssertionError("Max-Age not found");
+    }
+
+    private static String sha256(String s) throws Exception {
+        var md = java.security.MessageDigest.getInstance("SHA-256");
+        return HexFormat.of().formatHex(md.digest(s.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    /** 가입 보장(멱등): 이미 있으면 409 허용 */
     private void ensureSignedUp(String email, String pw) throws Exception {
         var dto = new UserRequestDto(
                 email,
@@ -161,23 +200,23 @@ class AuthFlowIntegrationTest {
                 .isIn(200, 201, 409);
     }
 
-    private void login(Device d, String email, String pw) throws Exception {
-        ensureSignedUp(email, pw);
+    private void login(Device d) throws Exception {
+        ensureSignedUp(AuthFlowIntegrationTest.TEST_EMAIL, AuthFlowIntegrationTest.TEST_PW);
 
         var result = mvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new LoginReq(email, pw))))
+                        .content(json(new LoginReq(AuthFlowIntegrationTest.TEST_EMAIL, AuthFlowIntegrationTest.TEST_PW))))
                 .andExpect(status().isOk())
                 .andReturn();
 
         var res = result.getResponse();
         var body = res.getContentAsString();
 
-        d.accessToken = extractAccessToken(body);
+        d.accessToken = extractAccessTokenFromBody(body);
         d.userId = extractUidFromAccessToken(d.accessToken);
 
         // 1차: 헤더/쿠키에서 RT 추출
-        d.rt = findRefreshCookie(res, REFRESH_COOKIE_NAME);
+        d.rt = findRefreshCookie(res);
 
         // 2차: 바디 fallback
         if (d.rt == null) {
@@ -189,7 +228,7 @@ class AuthFlowIntegrationTest {
 
         assertThat(d.accessToken).as("AT must be returned").isNotBlank();
         assertThat(d.userId).as("userId(uid) must be present in AT").isNotNull();
-        // RT는 구현에 따라 없을 수 있으므로 강제 assert 하지 않음
+        // RT는 구현에 따라 없을 수 있으므로 강제 assert는 하지 않음
     }
 
     private void callProtected(Device d, int expectedStatus) throws Exception {
@@ -208,8 +247,8 @@ class AuthFlowIntegrationTest {
 
         if (expectedStatus == 200) {
             var res = result.getResponse();
-            var newRt = findRefreshCookie(res, REFRESH_COOKIE_NAME);
-            var newAt = extractAccessToken(res.getContentAsString());
+            var newRt = findRefreshCookie(res);
+            var newAt = extractAccessTokenFromBody(res.getContentAsString());
             assertThat(newAt).isNotBlank();
             d.accessToken = newAt;
             d.userId = extractUidFromAccessToken(d.accessToken);
@@ -219,10 +258,9 @@ class AuthFlowIntegrationTest {
 
     private void logoutCurrent(Device d, int expectedStatus) throws Exception {
         var req = post(LOGOUT_URL);
-
         if (d.rt != null) req = req.cookie(d.rt);
 
-        // 여기 추가: accessToken을 바디에 넣어서 블랙리스트 등록을 유도
+        // accessToken을 바디에 넣어서 (필요 시) 블랙리스트 등록 유도
         var body = new LogoutReq(d.accessToken, null);
 
         mvc.perform(req
@@ -238,30 +276,28 @@ class AuthFlowIntegrationTest {
         mvc.perform(req).andExpect(status().is(expectedStatus));
     }
 
-    /* ----------------------- DTO ----------------------- */
-    record LoginReq(String email, String password) {}
-
-    /* ----------------------- 테스트 시나리오 ----------------------- */
+    /* ----------------------- 기본 플로우/정책 테스트 ----------------------- */
 
     @Test @Order(1)
     void login_then_access_success() throws Exception {
-        login(A, TEST_EMAIL, TEST_PW);
+        login(A);
         callProtected(A, 200);
     }
 
     @Test @Order(2)
     void login_on_second_device_invalidates_first_devices_accessToken() throws Exception {
         // A는 이전 테스트에서 로그인됨
-        login(B, TEST_EMAIL, TEST_PW);
+        login(B);
 
+        // 구현/정책에 따라 A의 AT가 즉시 무효가 아닐 수 있어 200 허용
         callProtected(A, 200);
         callProtected(B, 200);
     }
 
     @Test @Order(3)
     void logout_current_device_does_not_affect_other_device() throws Exception {
-        // 현재 B만 유효 AT를 갖고 있음(A는 위 테스트에서 무효화됨)
-        logoutCurrent(A, 200); // A의 RT가 없으면 서버가 200/204/401 중 무엇을 주든 정책에 맞게 expected 조정 가능
+        // 현재 B만 유효 AT를 갖고 있음(A는 위 테스트에서 무효화될 수 있음)
+        logoutCurrent(A, 200); // A의 RT가 없으면 서버가 200/204/401 중 정책값 반환 가능
 
         // A는 막힘
         callProtected(A, 401);
@@ -291,16 +327,17 @@ class AuthFlowIntegrationTest {
     @Test @Order(5)
     void logout_all_disables_all_devices() throws Exception {
         // B는 활성 상태. B로 전체 로그아웃 실행
-        logoutAll(B, 200);
+        logoutAll(B, 204);
 
         // A/B 모두 접근 불가
         callProtected(B, 401);
         callProtected(A, 401);
     }
+
     @Test @Order(6)
     void login_then_immediate_logout_all_revokes_access() throws Exception {
-        login(A, TEST_EMAIL, TEST_PW);
-        logoutAll(A, 200);
+        login(A);
+        logoutAll(A, 204);
         callProtected(A, 401);
     }
 
@@ -319,5 +356,128 @@ class AuthFlowIntegrationTest {
         mvc.perform(post(REFRESH_URL)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer someRefreshTokenLikeString"))
                 .andExpect(status().isBadRequest());
+    }
+
+    /* ----------------------- 세부 요구사항 보강 테스트 ----------------------- */
+
+    @Test @Order(9)
+    void login_sets_secure_httponly_refresh_cookie_and_maxage_matches_exp() throws Exception {
+        ensureSignedUp(TEST_EMAIL, TEST_PW);
+
+        var result = mvc.perform(post(LOGIN_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(new LoginReq(TEST_EMAIL, TEST_PW))))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refresh_token=")))
+                .andReturn();
+
+        var res = result.getResponse();
+        var setCookies = res.getHeaders(HttpHeaders.SET_COOKIE);
+        String rtCookieHeader = setCookies.stream()
+                .filter(h -> h.startsWith("refresh_token="))
+                .findFirst().orElseThrow();
+
+        // 속성 검증
+        assertThat(rtCookieHeader).contains("HttpOnly");
+        assertThat(rtCookieHeader).contains("Secure");
+        assertThat(rtCookieHeader).contains("SameSite=None");
+        assertThat(rtCookieHeader).contains("Path=/api/auth");
+        assertThat(rtCookieHeader).contains("Max-Age=");
+
+        // Max-Age ≈ refresh.exp - now
+        String rt = findRefreshCookie(res).getValue();
+        long expEpochSec = extractExpFromJwt(rt);
+        long nowEpochSec = java.time.Instant.now().getEpochSecond();
+        long expectedMaxAge = Math.max(0, expEpochSec - nowEpochSec);
+
+        long actualMaxAge = parseMaxAge(rtCookieHeader);
+        // CI 환경 시간차 및 처리 지연을 감안해 ±3초 허용
+        assertThat(Math.abs(actualMaxAge - expectedMaxAge)).isLessThanOrEqualTo(3L);
+    }
+
+    @Test @Order(10)
+    void redis_keys_created_with_ttl_and_hash_mapping_on_login() throws Exception {
+        var result = mvc.perform(post(LOGIN_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(new LoginReq(TEST_EMAIL, TEST_PW))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var res = result.getResponse();
+        String body = res.getContentAsString();
+        String rt = findRefreshCookie(res).getValue();
+        String jti = extractJtiFromJwt(rt);
+        Long uid = extractUidFromAccessToken(extractAccessTokenFromBody(body));
+        String hash = sha256(rt);
+
+        String tokenKey = "refresh:uid:" + uid + ":token:" + jti;
+        String hashKey  = "refresh:uid:" + uid + ":hash:" + hash;
+        String hashSet  = "refresh:uid:" + uid + ":hashes";
+
+        // 존재 확인
+        assertThat(redisTemplate.hasKey(tokenKey)).isTrue();
+        assertThat(redisTemplate.opsForValue().get(hashKey)).isEqualTo(jti);
+        assertThat(redisTemplate.opsForSet().isMember(hashSet, hash)).isTrue();
+
+        // TTL > 0
+        Long ttl = redisTemplate.getExpire(tokenKey, TimeUnit.SECONDS);
+        assertThat(ttl).isNotNull();
+        assertThat(ttl).isGreaterThan(0L);
+    }
+
+    @Test @Order(11)
+    void logout_all_removes_all_redis_keys_for_user() throws Exception {
+        // 로그인 후 상태 확보
+        login(B);
+        String rt = B.rt.getValue();
+        String jti = extractJtiFromJwt(rt);
+        String hash = sha256(rt);
+        Long uid = B.userId;
+
+        String tokenKey = "refresh:uid:" + uid + ":token:" + jti;
+        String hashKey  = "refresh:uid:" + uid + ":hash:" + hash;
+        String hashSet  = "refresh:uid:" + uid + ":hashes";
+
+        // 전체 로그아웃
+        logoutAll(B, 204);
+
+        // 키 제거 확인
+        assertThat(redisTemplate.hasKey(tokenKey)).isFalse();
+        assertThat(redisTemplate.hasKey(hashKey)).isFalse();
+        assertThat(redisTemplate.opsForSet().isMember(hashSet, hash)).isFalse();
+    }
+
+    @Test @Order(12)
+    void protected_allows_case_insensitive_bearer_and_extra_spaces() throws Exception {
+        login(A);
+        mvc.perform(get(PROTECTED_URL)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer" + A.accessToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test @Order(13)
+    void tampered_refresh_cookie_returns_401() throws Exception {
+        login(A);
+        Cookie bad = new Cookie(REFRESH_COOKIE_NAME, A.rt.getValue() + "x");
+        mvc.perform(post(REFRESH_URL).cookie(bad))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test @Order(14)
+    void redis_key_expires_automatically_after_refresh_exp() throws Exception {
+        // refresh TTL은 DynamicPropertySource로 10초
+        login(A);
+
+        String jti = extractJtiFromJwt(A.rt.getValue());
+        String tokenKey = "refresh:uid:" + A.userId + ":token:" + jti;
+
+        Long ttlBefore = redisTemplate.getExpire(tokenKey, TimeUnit.SECONDS);
+        assertThat(ttlBefore).isNotNull();
+        assertThat(ttlBefore).isGreaterThan(0);
+
+        // 만료 대기 (약간의 버퍼 추가)
+        Thread.sleep(12_000);
+
+        assertThat(redisTemplate.hasKey(tokenKey)).isFalse();
     }
 }

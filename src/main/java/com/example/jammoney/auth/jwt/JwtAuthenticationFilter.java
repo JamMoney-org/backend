@@ -30,7 +30,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/signup",
             "/api/auth/login",
             "/api/auth/refresh",
+            // 로그아웃 계열은 멱등 처리/쿠키 삭제용으로 필터 우회
+            "/api/auth/logout",
+            "/api/auth/logout/all/**"
     };
+
     // 경로 패턴 매칭 유틸리티
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
@@ -38,10 +42,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
-        // 현재 요청한 url을 string으로 가져옴
         String path = request.getRequestURI();
         for (String p : PUBLIC_ENDPOINTS) {
-            // 현재 요청한 url이 인증 불필요 엔드포인트에 걸리면 필터 그냥 통과
             if (pathMatcher.match(p, path)) return true;
         }
         return false;
@@ -52,11 +54,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
 
-        // 요청의 헤더에서 Authorization 필드 값을 가져옴
         final String token = resolveBearer(request.getHeader(HttpHeaders.AUTHORIZATION));
 
         try {
-            // 인증 객체가 아직 없고, 토큰이 있으면 검증 시작
             if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 // 블랙리스트 선차단
@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // 파싱 및 검증
+                // 파싱 및 기본 검증
                 final Claims claims;
                 try {
                     claims = jwtTokenProvider.parseClaims(token);
@@ -74,19 +74,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         return;
                     }
                 } catch (JwtException je) {
-                    // 만료/서명 오류 등
                     unauthorized(response, "올바르지 않은 토큰입니다.");
                     return;
-                }
-                Long uid = jwtTokenProvider.getUserId(claims);
-                if (uid != null) {
-                    long iatMillis = claims.getIssuedAt() != null ? claims.getIssuedAt().getTime() : 0L;
-                    long epoch = refreshTokenService.getRevokedAt(uid);
-
-                    if (iatMillis < epoch) {
-                        unauthorized(response, "로그아웃 처리된 토큰입니다.");
-                        return;
-                    }
                 }
 
                 // Authorization 헤더로 들어온 Refresh 토큰은 차단
@@ -95,11 +84,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
+                // ★ ver 비교: token.ver < currentVer → 무효
+                Long uid = jwtTokenProvider.getUserId(claims);
+                if (uid != null) {
+                    long tokenVer = jwtTokenProvider.getTokenVersion(claims);
+                    long currentVer = refreshTokenService.getRevocationVersion(uid);
+                    if (tokenVer < currentVer) {
+                        unauthorized(response, "로그아웃 처리된 토큰입니다.");
+                        return;
+                    }
+                }
+
                 // 최종 인증 객체 세팅 (UserDetails 로드 포함)
                 SecurityContextHolder.getContext().setAuthentication(jwtTokenProvider.getAuthentication(claims));
             }
         } catch (Exception e) {
-            // 예상치 못한 예외는 401로 정리
             log.debug("[JWT] authentication failed: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
@@ -110,9 +109,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String resolveBearer(String header) {
         if (header == null || header.isBlank()) return null;
-        // "Bearer " 대소문자 무시
-        if (!header.regionMatches(true, 0, "Bearer ", 0, 7)) return null;
-        String token = header.substring(7).trim();
+        // "Bearer " 대소문자 무시 + 여분 공백 허용
+        if (!header.regionMatches(true, 0, "Bearer", 0, 6)) return null;
+        String token = header.substring(6).trim();
         return token.isEmpty() ? null : token;
     }
 

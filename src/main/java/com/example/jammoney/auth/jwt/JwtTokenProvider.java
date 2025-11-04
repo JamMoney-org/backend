@@ -4,7 +4,6 @@ import com.example.jammoney.auth.service.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -13,11 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
+
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Collection;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -29,62 +28,59 @@ public class JwtTokenProvider {
     private static final String CLAIM_UID   = "uid";
     private static final String CLAIM_ROLES = "roles";
     private static final String CLAIM_TYPE  = "token_type";
+    private static final String CLAIM_FAM  = "fam";
+    private static final String CLAIM_VER  = "ver";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
 
     @Value("${jwt.secret}")
     private String secretKey; // 비밀키
+    @Value("${jwt.access-token-validity-in-seconds}")
+    private long accessValiditySec;
+    @Value("${jwt.refresh-token-validity-in-seconds}")
+    private long refreshValiditySec;
 
     private final CustomUserDetailsService userDetailsService;
 
-    private static final long ACCESS_TOKEN_VALIDITY  = 1000L * 60 * 30;      // 30분
-    private static final long REFRESH_TOKEN_VALIDITY = 1000L * 60 * 60 * 24 * 7; // 7일
-
     private Key getSigningKey() {
         byte[] keyBytes;
-        if (secretKey != null && secretKey.startsWith("base64:")) {
-            keyBytes = Decoders.BASE64.decode(secretKey.substring("base64:".length()));
+        if (secretKey != null && secretKey.startsWith("Base64:")) {
+            keyBytes = Decoders.BASE64.decode(secretKey.substring("Base64:".length()));
         } else {
             keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
         }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateAccessToken(Long userId, String username, List<String> roles) {
-        long now = System.currentTimeMillis();
-        Date iat = new Date(now);
-        Date exp = new Date(now + ACCESS_TOKEN_VALIDITY);
-
+    public String generateAccessToken(Long userId, String username, Collection<String> roles, long ver) {
+        Date now = new Date();
+        Date exp = new Date(now.getTime() + accessValiditySec * 1000L);
         return Jwts.builder()
                 .setSubject(username)
-                // 토큰 id
+                .claim(CLAIM_UID, userId)
+                .claim(CLAIM_ROLES, roles)
+                .claim(CLAIM_TYPE, TYPE_ACCESS)
+                .claim(CLAIM_VER, ver)
                 .setId(UUID.randomUUID().toString())
-                .setIssuedAt(iat)
+                .setIssuedAt(now)
                 .setExpiration(exp)
-                .claim(CLAIM_UID,userId)
-                .claim(CLAIM_ROLES,roles)
-                .claim(CLAIM_TYPE,TYPE_ACCESS)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(getSigningKey())
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId, String username, String familyId) {
-        long now = System.currentTimeMillis();
-        Date iat = new Date(now);
-        Date exp = new Date(now + REFRESH_TOKEN_VALIDITY);
-
+    public String generateRefreshToken(Long userId, String username, String familyId, long ver) {
+        Date now = new Date();
+        Date exp = new Date(now.getTime() + refreshValiditySec * 1000L);
         return Jwts.builder()
                 .setSubject(username)
-                // 토큰 id
+                .claim(CLAIM_UID, userId)
+                .claim(CLAIM_FAM, familyId)
+                .claim(CLAIM_TYPE, TYPE_REFRESH)
+                .claim(CLAIM_VER, ver)
                 .setId(UUID.randomUUID().toString())
-                .setIssuedAt(iat)
+                .setIssuedAt(now)
                 .setExpiration(exp)
-                .addClaims(Map.of(
-                        CLAIM_UID, userId,
-                        CLAIM_TYPE, TYPE_REFRESH,
-                        "fam", (familyId == null ? UUID.randomUUID().toString() : familyId)
-                ))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -114,7 +110,7 @@ public class JwtTokenProvider {
     }
 
     public String getFamilyId(Claims c) {
-        Object fam = c.get("fam");
+        Object fam = c.get(CLAIM_FAM);
         return fam == null ? null : fam.toString();
     }
 
@@ -152,5 +148,12 @@ public class JwtTokenProvider {
                 null,
                 principal.getAuthorities()
         );
+    }
+
+    public long getTokenVersion(Claims c) {
+        Object v = c.get(CLAIM_VER);
+        if (v == null) return 0L;
+        if (v instanceof Number n) return n.longValue();
+        try { return Long.parseLong(String.valueOf(v)); } catch (Exception e) { return 0L; }
     }
 }

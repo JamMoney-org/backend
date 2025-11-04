@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,6 +26,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -71,15 +71,18 @@ public class AuthController {
                 .distinct()
                 .toList();
 
-        // 토큰 발급
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), roles);
+        Long uid = user.getId();
+        long ver = refreshTokenService.getRevocationVersion(uid);
 
-        // 로그인 직후 refresh_token 발급할 때는 family_id가 없음
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail(), null);
+        // 토큰 발급
+        String accessToken = jwtTokenProvider.generateAccessToken(uid, user.getEmail(), roles, ver);
+
+        String familyId = UUID.randomUUID().toString();
+        String refreshToken = jwtTokenProvider.generateRefreshToken(uid, user.getEmail(), familyId, ver);
 
         // refresh_token 저장 + 쿠키 세팅
-        refreshTokenService.saveRefreshToken(user.getId(), refreshToken);
-        setRefreshCookie(response, refreshToken); //
+        refreshTokenService.saveRefreshToken(uid, refreshToken);
+        setRefreshCookie(response, refreshToken);
 
         // refresh_token은 바디에 굳이 반환하지 않음(쿠키로 운용)
         return ResponseEntity.ok(new TokenResponseDto(accessToken, null));
@@ -103,7 +106,7 @@ public class AuthController {
         Claims claims = jwtTokenProvider.parseClaims(refreshToken);
         if (claims == null) return ResponseEntity.status(401).build();
 
-        // 오직 refresh_token으로만 재발급을 할 수 있음
+        // 오직 refresh_token으로만 재발급
         if (!jwtTokenProvider.isRefreshToken(claims)) return ResponseEntity.status(400).build();
 
         // user_id 추출
@@ -121,17 +124,22 @@ public class AuthController {
                 .distinct()
                 .toList();
 
-        // access_token 새로 발급
-        String newAccess = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), roles);
-        // refresh_token 회전(가족 유지)
-        String newRefresh = refreshTokenService.reissueRefreshToken(userId, refreshToken);
+        // 현재 ver 기준으로 AT/RT 재발급
+        long ver = refreshTokenService.getRevocationVersion(userId);
+
+        // access_token 새로 발급 (ver 포함)
+        String newAccess = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), roles, ver);
+
+        // refresh_token 회전(가족 유지) + ver 반영
+        String newRefresh = refreshTokenService.reissueRefreshToken(userId, refreshToken, ver);
+
         // 쿠키에 새로운 refresh_token 저장
         setRefreshCookie(response, newRefresh);
 
         return ResponseEntity.ok(new TokenResponseDto(newAccess, null));
     }
 
-    /** 로그아웃(단일 기기): access_token 블랙리스트 + refresh_token 저장소 무효화 + 쿠키 제거 */
+    /** 로그아웃(단일 기기): access_token 블랙리스트 + refresh_token 무효화 + 쿠키 제거 */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @CookieValue(value = REFRESH_COOKIE, required = false) String refreshFromCookie,
@@ -144,7 +152,7 @@ public class AuthController {
             refreshToken = body.getRefreshToken();
         }
 
-        // access_token을 더이상 사용할 수 없도록 블랙리스트 처리 왜? access_token은 서버에서 저장하지 않으니까
+        // access_token 블랙리스트 처리
         if (accessToken != null && !accessToken.isBlank()) {
             refreshTokenService.blacklistAccessToken(accessToken);
         }
@@ -165,21 +173,18 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    /** 전체 로그아웃: 저장소 전체 무효화 + 쿠키 제거 */
+    /** 전체 로그아웃: 모든 refresh 삭제 + 쿠키 제거 (멱등, 204) */
     @PostMapping("/logout/all/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.user.id")
     public ResponseEntity<Void> logoutAll(@PathVariable Long userId, HttpServletResponse response) {
         refreshTokenService.invalidateAll(userId);
-        refreshTokenService.revokeAllAccessTokens(userId);
         clearRefreshCookie(response);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build(); // 204
     }
 
     // ── Cookie helpers ────────────────────────────────────────────────────────
 
     /** refresh_token 쿠키 세팅: SameSite=None + Secure + HttpOnly */
     private void setRefreshCookie(HttpServletResponse response, String refreshToken) {
-        // 토큰에서 남은 수명(초) 계산: 1회 파싱 후 Claims 기반 계산
         long maxAgeSec = 0L;
         Claims c = jwtTokenProvider.parseClaims(refreshToken);
         if (c != null) {
