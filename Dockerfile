@@ -28,7 +28,7 @@ EXPOSE 8080
 # - chromium, chromium-chromedriver: 브라우저/드라이버
 # - nss, freetype, harfbuzz, fontconfig, ttf-freefont, ttf-dejavu: 폰트/텍스트 렌더링
 # - alsa-lib: 일부 오디오 의존성 (필요 시)
-RUN apk add --no-cache \
+RUN apk update && apk add --no-cache \
       chromium \
       chromium-chromedriver \
       nss \
@@ -37,7 +37,10 @@ RUN apk add --no-cache \
       fontconfig \
       ttf-freefont \
       ttf-dejavu \
-      alsa-lib
+      alsa-lib \
+      udev \
+      mesa-gl \
+      mesa-dri-gallium
 
 # 환경변수 (일부 라이브러리/테스트 러너가 참조)
 ENV CHROME_BIN=/usr/bin/chromium \
