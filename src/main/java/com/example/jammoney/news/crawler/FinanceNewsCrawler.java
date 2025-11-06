@@ -26,14 +26,25 @@ public class FinanceNewsCrawler {
 
     @PostConstruct
     public void initChromeDriverPath() {
-        String driverPath = System.getenv("CHROMEDRIVER_BIN");
-        if (driverPath != null && !driverPath.isBlank()) {
-            System.setProperty("webdriver.chrome.driver", driverPath);
-            log.info("[ChromeDriver 경로 설정 완료] {}", driverPath);
+        List<String> candidates = List.of(
+                System.getenv("CHROMEDRIVER_BIN"),
+                "/usr/bin/chromedriver",
+                "/usr/lib/chromium/chromedriver"
+        );
+        String chosen = candidates.stream()
+                .filter(p -> p != null && !p.isBlank() && Files.exists(Paths.get(p)))
+                .findFirst().orElse(null);
+
+        if (chosen != null) {
+            System.setProperty("webdriver.chrome.driver", chosen);
+            log.info("[ChromeDriver 사용] {}", chosen);
         } else {
             WebDriverManager.chromedriver().setup();
             log.info("[WebDriverManager로 ChromeDriver 다운로드]");
         }
+
+        // 드라이버 로그 축소
+        System.setProperty("webdriver.chrome.silentOutput", "true");
     }
 
     public List<NewsRequestDto> fetchTodayNews() {
@@ -72,10 +83,21 @@ public class FinanceNewsCrawler {
                     "--window-size=1366,900",
                     "--lang=ko-KR",
                     "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "--disable-gpu-shader-disk-cache"
+                    "--disable-gpu-shader-disk-cache",
+                    // ↓ I/O/잡음 최소화
+                    "--disable-background-networking",
+                    "--metrics-recording-only",
+                    "--disable-sync",
+                    "--disable-component-update",
+                    "--safebrowsing-disable-auto-update",
+                    "--no-first-run",
+                    "--no-default-browser-check",
+                    "--password-store=basic",
+                    "--use-mock-keychain"
             );
-            // 필요할 때만 디버깅 포트 사용
-            // options.addArguments("--remote-debugging-port=9222");
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("profile.managed_default_content_settings.images", 2);
+            options.setExperimentalOption("prefs", prefs);
 
             // 3) /dev/shm에 프로필/캐시 경로 고정 → 디스크 I/O↓
             String uuid = UUID.randomUUID().toString();
