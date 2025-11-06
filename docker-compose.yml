@@ -14,7 +14,7 @@ services:
       retries: 10
 
   app:
-    shm_size: 1gb
+    shm_size: 512m
     tmpfs:
       - /tmp:size=512m
     image: ${APP_IMAGE}
