@@ -9,7 +9,6 @@ import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -63,13 +62,12 @@ public class FinanceNewsCrawler {
         return newsList;
     }
 
-    // RSS에서 최신 링크 수집 (RSS2/Atom 겸용) - 도메인 필터 제거, 경로 패턴만 사용
+    /** RSS에서 최신 링크를 수집한다 (메인 목록 대체). */
     private List<String> fetchLinksFromRss(int limit) {
         List<String> acc = new ArrayList<>();
-
         for (String rss : RSS_URLS) {
             try {
-                var res = connectForRss(rss).execute(); // 상태코드 확인
+                var res = connectForRss(rss).execute();
                 int sc = res.statusCode();
                 if (sc < 200 || sc >= 300) {
                     log.warn("[RSS HTTP {}] {}", sc, rss);
@@ -77,43 +75,34 @@ public class FinanceNewsCrawler {
                 }
                 Document doc = res.parse();
 
-                // RSS2: <item><link>
+                // RSS2 <item><link>
                 doc.select("item > link").stream()
                         .map(Element::text)
                         .filter(u -> u != null && u.startsWith("http"))
                         .forEach(acc::add);
 
-                // Atom: <entry><link href="...">
+                // Atom <entry><link href="...">
                 doc.select("entry > link[href]").stream()
                         .map(e -> e.attr("href"))
                         .filter(u -> u != null && u.startsWith("http"))
                         .forEach(acc::add);
-
             } catch (Exception e) {
                 log.warn("[RSS 실패] {} - {}", rss, e.toString());
             }
-            if (acc.size() >= limit * 3) break; // 여유 있게 모아두고 나중에 필터
+            if (acc.size() >= limit * 3) break; // 여유 수집
         }
-
-        // 🔎 경로 패턴으로만 필터링 (도메인 제한 X)
-        // - 재무/증권/경제 카테고리 위주로 흔히 쓰이는 경로들
         var filtered = acc.stream()
-                .filter(u ->
-                        u.contains("/stock/finance/") ||
-                                u.contains("/finance/") ||
-                                u.contains("/economy/") ||
-                                u.contains("/money/") ||
-                                u.contains("/market/"))
+                .filter(u -> u.contains("/economy/stock-finance/")) // <- 여기만 허용
                 .distinct()
                 .limit(limit)
                 .collect(Collectors.toList());
 
-        // 디버깅용: 처음 몇 개만 샘플로 찍기
         if (filtered.isEmpty()) {
-            log.warn("[RSS] 필터 후 0건 — 첫 5개 원본 링크 샘플: {}",
+            log.warn("[RSS] stock-finance 매칭 0건 — 샘플: {}",
                     acc.stream().limit(5).collect(Collectors.toList()));
         } else {
-            log.info("[RSS] 필터 후 {}건, 샘플: {}", filtered.size(),
+            log.info("[RSS] stock-finance {}건, 샘플: {}",
+                    filtered.size(),
                     filtered.stream().limit(3).collect(Collectors.toList()));
         }
 
