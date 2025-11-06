@@ -18,25 +18,4 @@ public class JammoneyApplication {
 		SpringApplication.run(JammoneyApplication.class, args);
 	}
 
-	@Bean
-	public CommandLineRunner run(FinanceNewsCrawler crawler) {
-		return args -> {
-			List<NewsRequestDto> newsList = crawler.fetchTodayNews();
-			System.out.println("크롤링된 뉴스 개수: " + newsList.size());
-			for (NewsRequestDto dto : newsList) {
-				System.out.println("제목: " + dto.getTitle());
-				System.out.println("출처: " + dto.getSource());
-				System.out.println("날짜: " + dto.getPublishDate());
-
-				// 본문 일부 출력
-				String snippet = dto.getContent().length() > 100
-						? dto.getContent().substring(0, 100) + "..."
-						: dto.getContent();
-				System.out.println("내용: " + snippet);
-
-				// 요약 기능 제거됨
-				System.out.println("------");
-			}
-		};
-	}
 }
