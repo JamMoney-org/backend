@@ -50,20 +50,20 @@ public class FinanceNewsCrawler {
             log.info("[Chrome 바이너리 경로 사용] {}", chromeBin);
 
             options.addArguments(
-                    "--headless=new",
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                    "--use-gl=swiftshader",
-                    "--use-angle=swiftshader",
-                    "--disable-features=Vulkan,UseDBus",
+                    "--headless=new",                 // 최신 Headless 모드
+                    "--no-sandbox",                   // Docker 컨테이너 필수
+                    "--incognito",                    // 프로필/캐시 최소화
+                    "--blink-settings=imagesEnabled=false", // 이미지 비활성화
+                    "--disable-plugins",              // 플러그인 비활성화
+                    "--disable-features=Translate,BackForwardCache,DownloadableFonts",
+                    "--disable-blink-features=AutomationControlled",
                     "--remote-debugging-port=0",
                     "--window-size=1280,800",
-                    "--user-data-dir=/tmp/chrome-data",
                     "--lang=ko-KR",
-                    "--disable-blink-features=AutomationControlled",
-                    "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+                    "--disk-cache-size=0",            // 캐시 최소화
+                    "--media-cache-size=0"            // 미디어 캐시 최소화
             );
+
 
             options.setPageLoadStrategy(PageLoadStrategy.EAGER);
 
@@ -119,10 +119,29 @@ public class FinanceNewsCrawler {
         } catch (Exception e) {
             log.error("[크롤링 전체 실패] {}: {}", e.getClass().getSimpleName(), e.getMessage(), e);
         } finally {
-            if (driver != null) driver.quit();
+            safeQuit(driver);
         }
 
         log.info("[최종] 크롤링된 뉴스 개수: {}", newsList.size());
         return newsList;
     }
+    private void safeQuit(WebDriver driver) {
+        if (driver == null) return;
+        try {
+            for (String h : driver.getWindowHandles()) {
+                try { driver.switchTo().window(h).close(); } catch (Exception ignore) {}
+            }
+        } catch (Exception ignore) {}
+
+        try { driver.quit(); } catch (Exception ignore) {}
+
+        try {
+            new ProcessBuilder("sh","-lc",
+                    "pkill -f 'chromium.*--headless' || true; " +
+                            "pkill -f 'chrome.*--headless' || true; " +
+                            "pkill -f chromedriver || true"
+            ).start().waitFor();
+        } catch (Exception ignore) {}
+    }
+
 }
