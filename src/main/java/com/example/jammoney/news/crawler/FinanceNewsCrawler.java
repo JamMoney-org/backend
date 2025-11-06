@@ -120,37 +120,72 @@ public class FinanceNewsCrawler {
         return filtered;
     }
 
-    /** 상세 페이지에서 제목/본문/발행일을 파싱해 DTO로 만든다. */
     private NewsRequestDto parseArticle(String url) throws Exception {
+        // 1) 일반 페이지 시도 (기존 셀렉터 우선)
         Document doc = connectHtml(url).get();
 
-        // 제목: 사이트 전용 셀렉터 우선 → og:title 백업
         String title = optText(doc, "h1.article-header__headline")
-                .orElseGet(() -> meta(doc, "meta[property=og:title]").orElse(null));
-        if (blank(title)) return null;
-
-        // 본문: 기존 CSS 기준 유지
+                .orElseGet(() -> optText(doc, "h1.article-title").orElse(null)); // 조선/비즈 일부 템플릿
         String content = doc.select("p.article-body__content, div.article-body p, article p, div[itemprop=articleBody] p")
-                .stream()
-                .map(Element::text)
-                .filter(s -> !blank(s))
-                .collect(Collectors.joining("\n\n"));
-        if (blank(content)) return null;
+                .stream().map(Element::text).filter(s -> !blank(s)).collect(Collectors.joining("\n\n"));
+        LocalDate published = extractPublished(doc).orElse(LocalDate.now());
 
-        // 발행일: 메타 → 수정일 → (백업) 오늘
-        LocalDate published = LocalDate.now();
-        String iso = meta(doc, "meta[property=article:published_time]")
-                .orElseGet(() -> meta(doc, "meta[property=article:modified_time]").orElse(null));
-        if (!blank(iso)) {
-            try { published = OffsetDateTime.parse(iso).toLocalDate(); } catch (Exception ignore) {}
+        if (!blank(title) && !blank(content)) {
+            NewsRequestDto dto = new NewsRequestDto();
+            dto.setTitle(title.trim());
+            dto.setContent(content.trim());
+            dto.setSource("조선비즈");
+            dto.setPublishDate(published);
+            return dto;
         }
 
-        NewsRequestDto dto = new NewsRequestDto();
-        dto.setTitle(title.trim());
-        dto.setContent(content.trim());
-        dto.setSource("조선비즈");
-        dto.setPublishDate(published);
-        return dto;
+        // 2) AMP 뷰로 재시도 (조선닷컴은 AMP가 안정적으로 제공됨)
+        String ampUrl = url.contains("outputType=amp") ? url
+                : url + (url.contains("?") ? "&" : "?") + "outputType=amp";
+
+        Document amp = connectHtml(ampUrl).get();
+
+        // AMP는 보통 그냥 <h1>에 제목이 들어간다
+        String ampTitle = optText(amp, "h1")
+                .orElseGet(() -> optText(amp, "header h1").orElse(null));
+
+        // AMP 본문: article 내 모든 p를 모은다 (광고/내비는 p가 거의 없음)
+        String ampContent = amp.select("article p, .article-body p, .story p")
+                .stream().map(Element::text).filter(s -> !blank(s)).collect(Collectors.joining("\n\n"));
+
+        LocalDate ampPublished = extractPublished(amp).orElse(published);
+
+        if (!blank(ampTitle) && !blank(ampContent)) {
+            NewsRequestDto dto = new NewsRequestDto();
+            dto.setTitle(ampTitle.trim());
+            dto.setContent(ampContent.trim());
+            dto.setSource("조선비즈");
+            dto.setPublishDate(ampPublished);
+            return dto;
+        }
+
+        // 두 번 모두 실패하면 null
+        return null;
+    }
+
+    /** 발행일 공통 추출: 메타 → time 태그 → empty */
+    private Optional<LocalDate> extractPublished(Document d) {
+        // og/arc 메타
+        Optional<String> iso = meta(d, "meta[property=article:published_time]");
+        if (iso.isEmpty()) iso = meta(d, "meta[name=article:published_time]");
+        if (iso.isEmpty()) iso = meta(d, "meta[property=og:pubdate]");
+        if (iso.isPresent()) {
+            try { return Optional.of( java.time.OffsetDateTime.parse(iso.get()).toLocalDate() ); }
+            catch (Exception ignore) {}
+        }
+        // <time datetime="...">
+        Element t = d.selectFirst("time[datetime]");
+        if (t != null) {
+            String v = t.attr("datetime");
+            try { return Optional.of( java.time.OffsetDateTime.parse(v).toLocalDate() ); }
+            catch (Exception ignore) {}
+        }
+        return Optional.empty();
     }
 
     // RSS 전용 커넥션 (헤더 강화)
