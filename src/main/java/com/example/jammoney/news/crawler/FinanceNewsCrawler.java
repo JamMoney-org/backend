@@ -19,10 +19,10 @@ import java.util.stream.Collectors;
 @Component
 public class FinanceNewsCrawler {
 
-    // 메인은 JS 렌더 → 공식 Arc RSS를 씨드로 사용
+    // Arc RSS 사용 (경제 + 전체)
     private static final List<String> RSS_URLS = List.of(
-            "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml", // 경제
-            "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml"                  // 전체
+            "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml",
+            "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml"
     );
 
     private static final int TIMEOUT_MS = 10_000;
@@ -63,13 +63,13 @@ public class FinanceNewsCrawler {
         return newsList;
     }
 
-    /** RSS에서 최신 링크 수집 (Arc RSS 호환: RSS2/Atom 모두 처리). */
+    // RSS에서 최신 링크 수집 (RSS2/Atom 겸용) - 도메인 필터 제거, 경로 패턴만 사용
     private List<String> fetchLinksFromRss(int limit) {
         List<String> acc = new ArrayList<>();
+
         for (String rss : RSS_URLS) {
             try {
-                Connection conn = connectForRss(rss);
-                Connection.Response res = conn.execute(); // 상태코드 확인
+                var res = connectForRss(rss).execute(); // 상태코드 확인
                 int sc = res.statusCode();
                 if (sc < 200 || sc >= 300) {
                     log.warn("[RSS HTTP {}] {}", sc, rss);
@@ -92,16 +92,32 @@ public class FinanceNewsCrawler {
             } catch (Exception e) {
                 log.warn("[RSS 실패] {} - {}", rss, e.toString());
             }
-            if (acc.size() >= limit) break;
+            if (acc.size() >= limit * 3) break; // 여유 있게 모아두고 나중에 필터
         }
 
-        // 원하는 섹션만 필터링 → 중복 제거 → 상한
-        return acc.stream()
-                .filter(u -> u.contains("biz.chosun.com"))
-                .filter(u -> u.contains("/stock/finance/") || u.contains("/finance/"))
+        // 🔎 경로 패턴으로만 필터링 (도메인 제한 X)
+        // - 재무/증권/경제 카테고리 위주로 흔히 쓰이는 경로들
+        var filtered = acc.stream()
+                .filter(u ->
+                        u.contains("/stock/finance/") ||
+                                u.contains("/finance/") ||
+                                u.contains("/economy/") ||
+                                u.contains("/money/") ||
+                                u.contains("/market/"))
                 .distinct()
                 .limit(limit)
                 .collect(Collectors.toList());
+
+        // 디버깅용: 처음 몇 개만 샘플로 찍기
+        if (filtered.isEmpty()) {
+            log.warn("[RSS] 필터 후 0건 — 첫 5개 원본 링크 샘플: {}",
+                    acc.stream().limit(5).collect(Collectors.toList()));
+        } else {
+            log.info("[RSS] 필터 후 {}건, 샘플: {}", filtered.size(),
+                    filtered.stream().limit(3).collect(Collectors.toList()));
+        }
+
+        return filtered;
     }
 
     /** 상세 페이지에서 제목/본문/발행일을 파싱해 DTO로 만든다. */
@@ -137,14 +153,14 @@ public class FinanceNewsCrawler {
         return dto;
     }
 
-    /** RSS 요청용 커넥션(헤더 최적화). */
+    // RSS 전용 커넥션 (헤더 강화)
     private static Connection connectForRss(String url) {
         return Jsoup.connect(url)
                 .userAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari")
                 .referrer("https://www.google.com")
                 .header("Accept", "application/rss+xml, application/xml;q=0.9, */*;q=0.8")
                 .header("Accept-Language", "ko-KR,ko;q=0.9")
-                .timeout(TIMEOUT_MS)
+                .timeout(10_000)
                 .followRedirects(true)
                 .ignoreHttpErrors(true)
                 .maxBodySize(0);
