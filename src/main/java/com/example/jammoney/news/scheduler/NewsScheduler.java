@@ -17,7 +17,7 @@ public class NewsScheduler {
     private final FinanceNewsCrawler crawler;
     private final NewsService newsService;
 
-    @Scheduled(cron = "0 0 8 * * *") // 매일 오전 8시 실행
+    @Scheduled(cron = "0 25 10 * * *") // 매일 오전 8시 실행
     public void crawlAndSave() {
         newsService.deleteOldNews(); // 7일 초과 뉴스 삭제
         List<NewsRequestDto> todayNews = crawler.fetchTodayNews();
