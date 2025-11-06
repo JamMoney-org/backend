@@ -1,16 +1,17 @@
 package com.example.jammoney.news.crawler;
 
 import com.example.jammoney.news.dto.NewsRequestDto;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,13 +24,11 @@ public class FinanceNewsCrawler {
     @PostConstruct
     public void initChromeDriverPath() {
         String driverPath = System.getenv("CHROMEDRIVER_BIN");
-        if (driverPath != null && !driverPath.isBlank()) {
-            System.setProperty("webdriver.chrome.driver", driverPath);
-            log.info("[ChromeDriver 경로 설정 완료] {}", driverPath);
-        } else {
-            WebDriverManager.chromedriver().setup();
-            log.info("[WebDriverManager로 ChromeDriver 다운로드]");
+        if (driverPath == null || driverPath.isBlank()) {
+            driverPath = "/usr/bin/chromedriver";
         }
+        System.setProperty("webdriver.chrome.driver", driverPath);
+        log.info("[ChromeDriver 경로 설정 완료] {}", driverPath);
     }
 
     public List<NewsRequestDto> fetchTodayNews() {
@@ -40,35 +39,47 @@ public class FinanceNewsCrawler {
         try {
             ChromeOptions options = new ChromeOptions();
 
-            // ENV 에서 Chromium 경로 읽기
+            // Chromium 바이너리 경로 설정
             String chromeBin = System.getenv("CHROME_BIN");
-            if (chromeBin != null && !chromeBin.isBlank()) {
-                options.setBinary(chromeBin);
-                log.info("[Chrome 바이너리 경로 사용] {}", chromeBin);
-            } else {
-                options.setBinary("/usr/bin/chromium-browser");
-                log.info("[Chrome 바이너리 경로 fallback] /usr/bin/chromium-browser");
+            if (chromeBin == null || chromeBin.isBlank()) {
+                chromeBin = new File("/usr/bin/chromium").exists()
+                        ? "/usr/bin/chromium"
+                        : "/usr/bin/chromium-browser";
             }
+            options.setBinary(chromeBin);
+            log.info("[Chrome 바이너리 경로 사용] {}", chromeBin);
 
             options.addArguments(
-                    "--headless",
+                    "--headless=new",
                     "--no-sandbox",
                     "--disable-dev-shm-usage",
                     "--disable-gpu",
-                    "--single-process",
-                    "--remote-debugging-port=9222",
-                    "--user-data-dir=/tmp"
+                    "--use-gl=swiftshader",
+                    "--use-angle=swiftshader",
+                    "--disable-features=Vulkan,UseDBus",
+                    "--remote-debugging-port=0",
+                    "--window-size=1280,800",
+                    "--user-data-dir=/tmp/chrome-data",
+                    "--lang=ko-KR",
+                    "--disable-blink-features=AutomationControlled",
+                    "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
             );
 
-            driver = new ChromeDriver(options);
+            options.setPageLoadStrategy(PageLoadStrategy.EAGER);
 
-            // --- 이하 기존 로직 유지 ---
+            driver = new ChromeDriver(options);
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(25));
+            driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(20));
+
+            // 크롤링 로직
             driver.get("https://biz.chosun.com/finance/");
-            WebDriverWait waitMain = new WebDriverWait(driver, Duration.ofSeconds(20));
+
+            WebDriverWait waitMain = new WebDriverWait(driver, Duration.ofSeconds(25));
             waitMain.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
                     By.cssSelector("a.story-card__headline")));
-            log.info("[메인] 검색된 기사 개수: {}",
-                    driver.findElements(By.cssSelector("a.story-card__headline")).size());
+
+            int count = driver.findElements(By.cssSelector("a.story-card__headline")).size();
+            log.info("[메인] 검색된 기사 개수: {}", count);
 
             List<String> links = driver.findElements(By.cssSelector("a.story-card__headline")).stream()
                     .map(e -> e.getAttribute("href"))
@@ -80,17 +91,15 @@ public class FinanceNewsCrawler {
                 log.info("[{}] 상세 페이지 이동 → {}", idx, link);
                 driver.navigate().to(link);
 
-                WebDriverWait waitDetail = new WebDriverWait(driver, Duration.ofSeconds(10));
+                WebDriverWait waitDetail = new WebDriverWait(driver, Duration.ofSeconds(20));
                 try {
                     String title = waitDetail.until(
-                                    ExpectedConditions.presenceOfElementLocated(
-                                            By.cssSelector("h1.article-header__headline")))
-                            .getText();
+                            ExpectedConditions.presenceOfElementLocated(
+                                    By.cssSelector("h1.article-header__headline"))).getText();
 
                     String content = waitDetail.until(
                                     ExpectedConditions.presenceOfAllElementsLocatedBy(
-                                            By.cssSelector("p.article-body__content")))
-                            .stream()
+                                            By.cssSelector("p.article-body__content"))).stream()
                             .map(WebElement::getText)
                             .reduce((a, b) -> a + "\n\n" + b)
                             .orElse("");
@@ -103,12 +112,12 @@ public class FinanceNewsCrawler {
                     newsList.add(dto);
                     log.info("[{}] 크롤링 완료 항목 수: {}", idx, newsList.size());
                 } catch (TimeoutException te) {
-                    log.warn("[{}] 요소를 찾지 못해 스킵합니다.", idx);
+                    log.warn("[{}] 요소를 찾지 못해 스킵합니다. ({})", idx, te.getMessage());
                 }
                 Thread.sleep(1000);
             }
         } catch (Exception e) {
-            log.error("[크롤링 전체 실패]", e);
+            log.error("[크롤링 전체 실패] {}: {}", e.getClass().getSimpleName(), e.getMessage(), e);
         } finally {
             if (driver != null) driver.quit();
         }
