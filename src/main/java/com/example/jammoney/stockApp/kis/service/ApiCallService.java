@@ -196,7 +196,9 @@ public class ApiCallService {
         headers.set("appkey", appKey);
         headers.set("appsecret", appSecret);
         headers.set("tr_id", trId);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("custtype", "P");
+        headers.set("Content-Type", "application/json; charset=utf-8");
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         return headers;
     }
 }
