@@ -3,6 +3,7 @@ package com.example.jammoney.stockApp.kis.service;
 import com.example.jammoney.stockApp.kis.dto.*;
 import com.example.jammoney.stockApp.stock.dto.KospiResponseDto;
 import com.example.jammoney.stockApp.stock.dto.StockMetaDataResponseDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -22,7 +24,8 @@ import java.util.*;
 public class ApiCallService {
 
     private final KisAuthService kisAuthService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate; // 이름 매칭
+    private final ObjectMapper objectMapper;
 
     @Value("${kis.app.key}")
     private String appKey;
@@ -167,36 +170,61 @@ public class ApiCallService {
      * 공통 GET 요청 처리
      */
     private <T> T sendGet(String uri, HttpHeaders headers, Class<T> clazz) {
-        HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        // GET: Content-Type 제거 (일부 WAF/프록시가 오동작)
+        headers.remove(HttpHeaders.CONTENT_TYPE);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        headers.set(HttpHeaders.USER_AGENT, "JamMoneyBot/1.0");
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<T> response = restTemplate.exchange(uri, HttpMethod.GET, entity, clazz);
-            return response.getBody();
-        } catch (RestClientResponseException e) { // 모든 4xx/5xx 포함
-            String responseBody = e.getResponseBodyAsString();
-            log.error("KIS API 요청 실패: {}", responseBody);
+            // 1) RAW로 받기
+            ResponseEntity<byte[]> res = restTemplate.exchange(uri, HttpMethod.GET, entity, byte[].class);
 
-            if (responseBody != null && responseBody.contains("EGW00123")) {
-                log.warn("KIS API: 토큰 만료 감지 → 새 토큰 발급 후 재시도");
-                String newToken = kisAuthService.requestNewToken();
-                headers.set("Authorization", "Bearer " + newToken);
-                entity = new HttpEntity<>("parameters", headers);
-                ResponseEntity<T> retryResponse = restTemplate.exchange(uri, HttpMethod.GET, entity, clazz);
-                return retryResponse.getBody();
+            int code = res.getStatusCode().value();
+            MediaType ct = res.getHeaders().getContentType();
+            byte[] body = res.getBody() == null ? new byte[0] : res.getBody();
+            String peek = new String(body, StandardCharsets.UTF_8);
+
+            log.info("[KIS RAW] status={} ct={} len={} peek={}",
+                    code, ct, body.length, peek.substring(0, Math.min(peek.length(), 500)).replace("\n"," "));
+
+            // 2) JSON 아닌 응답은 즉시 예외(HTML 등)
+            if (ct == null || !MediaType.APPLICATION_JSON.isCompatibleWith(ct)) {
+                throw new IllegalStateException("KIS 응답이 JSON이 아님: status=" + code
+                        + ", ct=" + ct + ", bodyPeek=" + peek.substring(0, Math.min(peek.length(), 500)));
             }
 
+            // 3) JSON -> DTO
+            return objectMapper.readValue(body, clazz);
+
+        } catch (org.springframework.web.client.RestClientResponseException e) {
+            // 4xx/5xx인 경우
+            log.error("KIS 실패 status={}, contentType={}, headers={}",
+                    e.getRawStatusCode(),
+                    e.getResponseHeaders() != null ? e.getResponseHeaders().getFirst(HttpHeaders.CONTENT_TYPE) : null,
+                    e.getResponseHeaders());
+            String b = e.getResponseBodyAsString();
+            if (b != null) log.error("KIS 실패 body(first 1000): {}", b.length() > 1000 ? b.substring(0, 1000) : b);
             throw e;
+        } catch (org.springframework.web.client.UnknownContentTypeException e) {
+            // 혹시라도 또 오면 스택 남김
+            log.error("KIS UnknownContentType: {}", e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("KIS 호출 중 예외: {}", e.toString(), e);
+            throw new RuntimeException(e);
         }
     }
 
     private HttpHeaders createHeaders(String trId) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + kisAuthService.getAccessToken());
+        headers.setBearerAuth(kisAuthService.getAccessToken());
         headers.set("appkey", appKey);
         headers.set("appsecret", appSecret);
         headers.set("tr_id", trId);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("custtype", "P");
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         return headers;
     }
 }

@@ -1,119 +1,194 @@
 package com.example.jammoney.news.crawler;
 
 import com.example.jammoney.news.dto.NewsRequestDto;
-import io.github.bonigarcia.wdm.WebDriverManager;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class FinanceNewsCrawler {
 
-    @PostConstruct
-    public void initChromeDriverPath() {
-        String driverPath = System.getenv("CHROMEDRIVER_BIN");
-        if (driverPath != null && !driverPath.isBlank()) {
-            System.setProperty("webdriver.chrome.driver", driverPath);
-            log.info("[ChromeDriver 경로 설정 완료] {}", driverPath);
-        } else {
-            WebDriverManager.chromedriver().setup();
-            log.info("[WebDriverManager로 ChromeDriver 다운로드]");
-        }
-    }
+    // Arc RSS (경제 섹션 + 전체)
+    private static final List<String> RSS_URLS = List.of(
+            "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml",
+            "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml"
+    );
+
+    private static final int TIMEOUT_MS = 10_000;
+    private static final int MAX_ITEMS  = 3;
+    private static final int NEWS_POOL = 10; // 후보 풀 규모: 3*10=30개
 
     public List<NewsRequestDto> fetchTodayNews() {
         log.info("[크롤링 시작]");
-        List<NewsRequestDto> newsList = new ArrayList<>();
-        WebDriver driver = null;
+        List<NewsRequestDto> out = new ArrayList<>();
 
         try {
-            ChromeOptions options = new ChromeOptions();
+            // 1) 후보 링크 넉넉히 수집
+            List<String> links = fetchLinksFromRss(MAX_ITEMS * NEWS_POOL);
+            log.info("[RSS] 후보 링크 수: {}", links.size());
 
-            // ENV 에서 Chromium 경로 읽기
-            String chromeBin = System.getenv("CHROME_BIN");
-            if (chromeBin != null && !chromeBin.isBlank()) {
-                options.setBinary(chromeBin);
-                log.info("[Chrome 바이너리 경로 사용] {}", chromeBin);
-            } else {
-                options.setBinary("/usr/bin/chromium-browser");
-                log.info("[Chrome 바이너리 경로 fallback] /usr/bin/chromium-browser");
-            }
-
-            options.addArguments(
-                    "--headless",
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                    "--single-process",
-                    "--remote-debugging-port=9222",
-                    "--user-data-dir=/tmp"
-            );
-
-            driver = new ChromeDriver(options);
-
-            // --- 이하 기존 로직 유지 ---
-            driver.get("https://biz.chosun.com/finance/");
-            WebDriverWait waitMain = new WebDriverWait(driver, Duration.ofSeconds(20));
-            waitMain.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-                    By.cssSelector("a.story-card__headline")));
-            log.info("[메인] 검색된 기사 개수: {}",
-                    driver.findElements(By.cssSelector("a.story-card__headline")).size());
-
-            List<String> links = driver.findElements(By.cssSelector("a.story-card__headline")).stream()
-                    .map(e -> e.getAttribute("href"))
-                    .filter(h -> h != null && h.startsWith("http"))
-                    .toList();
-
-            for (int idx = 0; idx < links.size() && newsList.size() < 3; idx++) {
-                String link = links.get(idx);
-                log.info("[{}] 상세 페이지 이동 → {}", idx, link);
-                driver.navigate().to(link);
-
-                WebDriverWait waitDetail = new WebDriverWait(driver, Duration.ofSeconds(10));
+            // 2) 순서대로 시도 → 성공 3건 되면 즉시 종료
+            for (String link : links) {
+                if (out.size() >= MAX_ITEMS) break;
                 try {
-                    String title = waitDetail.until(
-                                    ExpectedConditions.presenceOfElementLocated(
-                                            By.cssSelector("h1.article-header__headline")))
-                            .getText();
-
-                    String content = waitDetail.until(
-                                    ExpectedConditions.presenceOfAllElementsLocatedBy(
-                                            By.cssSelector("p.article-body__content")))
-                            .stream()
-                            .map(WebElement::getText)
-                            .reduce((a, b) -> a + "\n\n" + b)
-                            .orElse("");
-
-                    NewsRequestDto dto = new NewsRequestDto();
-                    dto.setTitle(title);
-                    dto.setContent(content);
-                    dto.setSource("조선비즈");
-                    dto.setPublishDate(LocalDate.now());
-                    newsList.add(dto);
-                    log.info("[{}] 크롤링 완료 항목 수: {}", idx, newsList.size());
-                } catch (TimeoutException te) {
-                    log.warn("[{}] 요소를 찾지 못해 스킵합니다.", idx);
+                    NewsRequestDto dto = parseArticle(link);
+                    if (dto == null) {
+                        log.warn("[스킵] 요소 파싱 실패 {}", link);
+                        continue;
+                    }
+                    out.add(dto);
+                    log.info("[수집] {} (총 {}개)", dto.getTitle(), out.size());
+                } catch (Exception e) {
+                    log.warn("[스킵] 단건 실패 {} - {}", link, e.toString());
                 }
-                Thread.sleep(1000);
             }
         } catch (Exception e) {
             log.error("[크롤링 전체 실패]", e);
-        } finally {
-            if (driver != null) driver.quit();
         }
 
-        log.info("[최종] 크롤링된 뉴스 개수: {}", newsList.size());
-        return newsList;
+        log.info("[최종] 크롤링된 뉴스 개수: {}", out.size());
+        return out;
     }
+
+    /** RSS에서 링크를 넉넉히 모은 뒤, 금융/증권 섹션만 유지하고 중복 제거. */
+    private List<String> fetchLinksFromRss(int want) {
+        List<String> acc = new ArrayList<>();
+        for (String rss : RSS_URLS) {
+            try {
+                var res = connectForRss(rss).execute();
+                if (res.statusCode() / 100 != 2) {
+                    log.warn("[RSS HTTP {}] {}", res.statusCode(), rss);
+                    continue;
+                }
+                Document doc = res.parse();
+
+                // RSS2
+                doc.select("item > link").stream()
+                        .map(Element::text)
+                        .filter(u -> u != null && u.startsWith("http"))
+                        .forEach(acc::add);
+
+                // Atom
+                doc.select("entry > link[href]").stream()
+                        .map(e -> e.attr("href"))
+                        .filter(u -> u != null && u.startsWith("http"))
+                        .forEach(acc::add);
+
+            } catch (Exception e) {
+                log.warn("[RSS 실패] {} - {}", rss, e.toString());
+            }
+            if (acc.size() >= want * 2) break; // 충분히 모였으면 중단
+        }
+
+        // 단순 필터: 금융/증권만, 미디어성 경로 제외(사진/영상 등)
+        return acc.stream()
+                .filter(u -> u.contains("/economy/stock-finance/"))
+                .filter(u -> !u.matches(".*/(photo|video|multimedia|vod|gallery|image)/.*"))
+                .distinct()
+                .limit(want)
+                .collect(Collectors.toList());
+    }
+
+    /** 상세: 기본 셀렉터 시도 → 실패 시 AMP 한 번만 재시도. */
+    private NewsRequestDto parseArticle(String url) throws Exception {
+        // 기본 뷰
+        Document doc = connectHtml(url).get();
+        String title = optText(doc, "h1.article-header__headline")
+                .orElseGet(() -> optText(doc, "h1.article-title").orElse(null));
+        String content = doc.select("p.article-body__content, div.article-body p, article p, div[itemprop=articleBody] p")
+                .stream().map(Element::text).filter(s -> !blank(s)).collect(Collectors.joining("\n\n"));
+        LocalDate published = extractPublished(doc).orElse(LocalDate.now());
+
+        if (!blank(title) && !blank(content)) {
+            NewsRequestDto dto = new NewsRequestDto();
+            dto.setTitle(title.trim());
+            dto.setContent(content.trim());
+            dto.setSource("조선비즈");
+            dto.setPublishDate(published);
+            return dto;
+        }
+
+        // AMP 폴백 (단 한 번)
+        String ampUrl = url.contains("outputType=amp") ? url
+                : url + (url.contains("?") ? "&" : "?") + "outputType=amp";
+        Document amp = connectHtml(ampUrl).get();
+
+        String ampTitle = optText(amp, "h1")
+                .orElseGet(() -> optText(amp, "header h1").orElse(title));
+        String ampContent = amp.select("article p, .article-body p, .story p")
+                .stream().map(Element::text).filter(s -> !blank(s)).collect(Collectors.joining("\n\n"));
+        LocalDate ampPublished = extractPublished(amp).orElse(published);
+
+        if (!blank(ampTitle) && !blank(ampContent)) {
+            NewsRequestDto dto = new NewsRequestDto();
+            dto.setTitle(ampTitle.trim());
+            dto.setContent(ampContent.trim());
+            dto.setSource("조선비즈");
+            dto.setPublishDate(ampPublished);
+            return dto;
+        }
+        return null;
+    }
+
+    /** 메타에서 발행일 추출(없으면 empty). */
+    private Optional<LocalDate> extractPublished(Document d) {
+        Optional<String> iso = meta(d, "meta[property=article:published_time]");
+        if (iso.isEmpty()) iso = meta(d, "meta[name=article:published_time]");
+        if (iso.isEmpty()) iso = meta(d, "meta[property=og:pubdate]");
+        if (iso.isPresent()) {
+            try { return Optional.of(OffsetDateTime.parse(iso.get()).toLocalDate()); }
+            catch (Exception ignore) {}
+        }
+        Element t = d.selectFirst("time[datetime]");
+        if (t != null) {
+            String v = t.attr("datetime");
+            try { return Optional.of(OffsetDateTime.parse(v).toLocalDate()); }
+            catch (Exception ignore) {}
+        }
+        return Optional.empty();
+    }
+
+    private static Connection connectForRss(String url) {
+        return Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari")
+                .referrer("https://www.google.com")
+                .header("Accept", "application/rss+xml, application/xml;q=0.9, */*;q=0.8")
+                .header("Accept-Language", "ko-KR,ko;q=0.9")
+                .timeout(TIMEOUT_MS)
+                .followRedirects(true)
+                .ignoreHttpErrors(true)
+                .maxBodySize(0);
+    }
+
+    private static Connection connectHtml(String url) {
+        return Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari")
+                .referrer("https://www.google.com")
+                .header("Accept-Language", "ko-KR,ko;q=0.9")
+                .timeout(TIMEOUT_MS)
+                .followRedirects(true)
+                .ignoreHttpErrors(true)
+                .maxBodySize(0);
+    }
+
+    private static Optional<String> optText(Document d, String css) {
+        Element e = d.selectFirst(css);
+        return Optional.ofNullable(e == null ? null : e.text()).filter(s -> !blank(s));
+    }
+    private static Optional<String> meta(Document d, String css) {
+        Element e = d.selectFirst(css);
+        return Optional.ofNullable(e == null ? null : e.attr("content")).filter(s -> !blank(s));
+    }
+    private static boolean blank(String s) { return s == null || s.trim().isEmpty(); }
 }

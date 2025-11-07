@@ -38,7 +38,7 @@ public class JammoneyApplication {
 				// 요약 기능 제거됨
 				System.out.println("------");
 			}
-            newsService.saveNewsList(newsList);
+      newsService.saveNewsList(newsList);
 		};
 	}
 }

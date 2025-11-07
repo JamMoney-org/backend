@@ -23,13 +23,13 @@ public class NewsStartupRunner implements ApplicationListener<ApplicationReadyEv
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        LocalDate today = LocalDate.now();
-        long countToday = newsService.countByPublishDate(today);
-
-        // 오전 8시 이후에, 오늘 크롤된 뉴스가 3개 미만이면 보충
-        if (LocalTime.now().isAfter(LocalTime.of(8, 0)) && countToday < 3) {
-            List<NewsRequestDto> missing = crawler.fetchTodayNews();
-            newsService.saveNewsList(missing);
-        }
+//        LocalDate today = LocalDate.now();
+//        long countToday = newsService.countByPublishDate(today);
+//
+//        // 오전 8시 이후에, 오늘 크롤된 뉴스가 3개 미만이면 보충
+//        if (LocalTime.now().isAfter(LocalTime.of(8, 0)) && countToday < 3) {
+//            List<NewsRequestDto> missing = crawler.fetchTodayNews();
+//            newsService.saveNewsList(missing);
+//        }
     }
 }

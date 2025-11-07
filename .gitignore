@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 /src/main/java/com/example/jammoney/uml/
+
+
+### docker ###
+/docker-compose.dev.yml
+/Dockerfile
