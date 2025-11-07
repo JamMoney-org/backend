@@ -25,6 +25,7 @@ public class ApiCallService {
 
     private final KisAuthService kisAuthService;
     private final RestTemplate restTemplate; // 이름 매칭
+    private final ObjectMapper objectMapper;
 
     @Value("${kis.app.key}")
     private String appKey;
@@ -168,8 +169,6 @@ public class ApiCallService {
     /**
      * 공통 GET 요청 처리
      */
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     private <T> T sendGet(String uri, HttpHeaders headers, Class<T> clazz) {
         // GET: Content-Type 제거 (일부 WAF/프록시가 오동작)
         headers.remove(HttpHeaders.CONTENT_TYPE);

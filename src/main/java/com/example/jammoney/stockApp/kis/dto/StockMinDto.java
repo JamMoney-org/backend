@@ -1,4 +1,5 @@
 package com.example.jammoney.stockApp.kis.dto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,7 @@ import java.util.List;
  * - ChartData: 시가, 고가, 저가, 종가, 거래량 포함
  * - 분봉 차트 구성 시 사용 (예: 1분봉, 3분봉 차트)
  */
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StockMinDto {
     private StockMinOutput1 output1;
     private List<StockMinOutput2> output2;
@@ -21,6 +22,7 @@ public class StockMinDto {
     @Getter
     @Setter
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class StockMinOutput1 {
         //한글 종목 명
         private String hts_kor_isnm;
@@ -39,6 +41,7 @@ public class StockMinDto {
     @Getter
     @Setter
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class StockMinOutput2 {
         //주식 체결 시간
         private String stck_cntg_hour;
