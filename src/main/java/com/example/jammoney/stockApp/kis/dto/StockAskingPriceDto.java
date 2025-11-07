@@ -1,4 +1,5 @@
 package com.example.jammoney.stockApp.kis.dto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 @Data
@@ -10,11 +11,12 @@ import lombok.Data;
  * - bidp_rsqn: 매수 잔량 (1~10)
  * - 실시간 호가판 구성에 사용
  */
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StockAskingPriceDto {
     private Output output1;
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Output {
         // 호가 접수 시간
         private String aspr_acpt_hour;
