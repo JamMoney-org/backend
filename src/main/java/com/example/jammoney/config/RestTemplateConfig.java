@@ -46,8 +46,14 @@ public class RestTemplateConfig {
 
         // 공통 인터셉터(선택): 진단/헤더 보완
         rt.getInterceptors().add((req, body, exec) -> {
-            req.getHeaders().set("User-Agent", "JamMoney/1.0");
+            req.getHeaders().set(
+                    "User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                            "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                            "Chrome/120.0.0.0 Safari/537.36"
+            );
             req.getHeaders().setAccept(List.of(MediaType.APPLICATION_JSON));
+
             return exec.execute(req, body);
         });
 
