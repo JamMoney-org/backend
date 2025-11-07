@@ -22,7 +22,7 @@ import java.util.*;
 public class ApiCallService {
 
     private final KisAuthService kisAuthService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate; // 이름 매칭
 
     @Value("${kis.app.key}")
     private String appKey;
