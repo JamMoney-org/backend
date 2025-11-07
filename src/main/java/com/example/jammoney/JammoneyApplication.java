@@ -2,6 +2,7 @@ package com.example.jammoney;
 
 import com.example.jammoney.news.crawler.FinanceNewsCrawler;
 import com.example.jammoney.news.dto.NewsRequestDto;
+import com.example.jammoney.news.service.NewsService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,7 +20,7 @@ public class JammoneyApplication {
 	}
 
 	@Bean
-	public CommandLineRunner run(FinanceNewsCrawler crawler) {
+	public CommandLineRunner run(FinanceNewsCrawler crawler, NewsService newsService) {
 		return args -> {
 			List<NewsRequestDto> newsList = crawler.fetchTodayNews();
 			System.out.println("크롤링된 뉴스 개수: " + newsList.size());
@@ -37,6 +38,7 @@ public class JammoneyApplication {
 				// 요약 기능 제거됨
 				System.out.println("------");
 			}
+            newsService.saveNewsList(newsList);
 		};
 	}
 }
