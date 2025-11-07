@@ -173,19 +173,15 @@ public class ApiCallService {
         try {
             ResponseEntity<T> response = restTemplate.exchange(uri, HttpMethod.GET, entity, clazz);
             return response.getBody();
-        } catch (RestClientResponseException e) { // 모든 4xx/5xx 포함
-            String responseBody = e.getResponseBodyAsString();
-            log.error("KIS API 요청 실패: {}", responseBody);
-
-            if (responseBody != null && responseBody.contains("EGW00123")) {
-                log.warn("KIS API: 토큰 만료 감지 → 새 토큰 발급 후 재시도");
-                String newToken = kisAuthService.requestNewToken();
-                headers.set("Authorization", "Bearer " + newToken);
-                entity = new HttpEntity<>("parameters", headers);
-                ResponseEntity<T> retryResponse = restTemplate.exchange(uri, HttpMethod.GET, entity, clazz);
-                return retryResponse.getBody();
+        } catch (RestClientResponseException e) {
+            log.error("KIS 실패 status={}, contentType={}, headers={}",
+                    e.getRawStatusCode(),
+                    e.getResponseHeaders() != null ? e.getResponseHeaders().getFirst("Content-Type") : null,
+                    e.getResponseHeaders());
+            String body = e.getResponseBodyAsString();
+            if (body != null) {
+                log.error("KIS 실패 body(first 1000): {}", body.length() > 1000 ? body.substring(0, 1000) : body);
             }
-
             throw e;
         }
     }
