@@ -36,25 +36,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // CORS preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 공개 엔드포인트
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/protected").authenticated()
-                        .requestMatchers("/api/test/gpt/**").permitAll()  // ✅ 여기가 핵심!
+                        .requestMatchers("/api/test/gpt/**").permitAll()
                         .requestMatchers("/test/**").permitAll()
 
                         // 보호 엔드포인트
                         .requestMatchers("/api/protected").authenticated()
                         .requestMatchers("/api/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint((request, response, ex) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
-                        .accessDeniedHandler((request, response, ex) ->
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden"))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) ->
+                                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                        .accessDeniedHandler((req, res, e) ->
+                                res.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden"))
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -64,26 +68,41 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of(
+
+        // 정확한 오리진을 HTTPS/HTTP 모두 추가
+        cfg.setAllowedOrigins(List.of(
                 "http://127.0.0.1:3000",
                 "http://127.0.0.1:8080",
                 "http://127.0.0.1:5500",
                 "http://127.0.0.1:5501",
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "http://localhost:5500",
+                "http://localhost:5501",
+                "https://127.0.0.1:3000",
+                "https://127.0.0.1:8080",
+                "https://127.0.0.1:5500",
+                "https://127.0.0.1:5501",
+                "https://localhost:3000",
+                "https://localhost:8080",
+                "https://localhost:5500",
+                "https://localhost:5501",
                 "https://jm-money.com",
                 "https://www.jm-money.com",
                 "https://jammoney.netlify.app"
         ));
-        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        // 프론트에서 자주 쓰는 헤더들 추가
+
+        cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
         cfg.setAllowedHeaders(List.of(
-                "Authorization", "Content-Type", "X-Requested-With",
-                "Accept", "Origin", "Cache-Control", "Pragma"
+                "Authorization","Content-Type","X-Requested-With",
+                "Accept","Origin","Cache-Control","Pragma"
         ));
-        // 응답에서 읽어야 할 헤더가 있으면 노출
-        cfg.setExposedHeaders(List.of(
-                "Authorization", "Location" // 필요 시 추가
-        ));
-        cfg.setAllowCredentials(true); // 특정 오리진과만 함께 사용(OK) — 패턴 사용 중
+
+        // 응답 헤더 노출(토큰을 헤더로 돌릴 때만 필요)
+        cfg.setExposedHeaders(List.of("Authorization","Location"));
+
+        // 쿠키/인증 포함 요청 허용
+        cfg.setAllowCredentials(true);
 
         cfg.setMaxAge(3600L);
 
@@ -92,13 +111,4 @@ public class SecurityConfig {
         return source;
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 }
