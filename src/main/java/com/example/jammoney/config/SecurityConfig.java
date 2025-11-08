@@ -36,11 +36,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(c -> c.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 공개 엔드포인트
@@ -54,11 +53,11 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((req, res, e) ->
-                                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
-                        .accessDeniedHandler((req, res, e) ->
-                                res.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden"))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, ex) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                        .accessDeniedHandler((request, response, ex) ->
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden"))
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -69,37 +68,24 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
 
-        // 정확한 오리진을 HTTPS/HTTP 모두 추가
-        cfg.setAllowedOrigins(List.of(
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:8080",
-                "http://127.0.0.1:5500",
-                "http://127.0.0.1:5501",
-                "http://localhost:3000",
-                "http://localhost:8080",
-                "http://localhost:5500",
-                "http://localhost:5501",
-                "https://127.0.0.1:3000",
-                "https://127.0.0.1:8080",
-                "https://127.0.0.1:5500",
-                "https://127.0.0.1:5501",
-                "https://localhost:3000",
-                "https://localhost:8080",
-                "https://localhost:5500",
-                "https://localhost:5501",
+        cfg.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "https://localhost:*",
+                "http://127.0.0.1:*",
+                "https://127.0.0.1:*",
+                "https://[::1]:*",
                 "https://jm-money.com",
                 "https://www.jm-money.com",
-                "https://jammoney.netlify.app"
+                "https://jammoney.netlify.app",
+                "https://*.netlify.app"
         ));
 
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
-        cfg.setAllowedHeaders(List.of(
-                "Authorization","Content-Type","X-Requested-With",
-                "Accept","Origin","Cache-Control","Pragma"
-        ));
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
-        // 응답 헤더 노출(토큰을 헤더로 돌릴 때만 필요)
-        cfg.setExposedHeaders(List.of("Authorization","Location"));
+        cfg.setAllowedHeaders(List.of("*"));
+
+        // 응답에서 읽어야 할 헤더가 있으면 노출
+        cfg.setExposedHeaders(List.of("Authorization", "Location"));
 
         // 쿠키/인증 포함 요청 허용
         cfg.setAllowCredentials(true);
@@ -111,4 +97,13 @@ public class SecurityConfig {
         return source;
     }
 
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
