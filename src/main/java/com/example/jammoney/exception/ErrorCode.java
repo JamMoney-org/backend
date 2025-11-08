@@ -1,4 +1,5 @@
 package com.example.jammoney.exception;
+
 import lombok.Getter;
 
 @Getter

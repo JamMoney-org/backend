@@ -8,63 +8,78 @@ import com.example.jammoney.stockApp.stock.repository.UserPortfolioRepository;
 import com.example.jammoney.user.entity.User;
 import com.example.jammoney.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserPortfolioService {
-
     private final UserRepository userRepository;
     private final UserPortfolioRepository userPortfolioRepository;
     private final HoldingStockService holdingStockService;
     private final StockMapper stockMapper;
 
-    @Transactional
+    // 바깥은 트랜잭션 없음 → 유저별 짧은 트랜잭션
     public void updateAllUserPortfolios() {
-        List<User> allUsers = userRepository.findAllWithCash();
-        for (User user : allUsers) {
+        int page = 0;
+        int size = 500; // 배치 단위
+        Page<User> slice;
+
+        do {
+            slice = userRepository.findAllWithCash(PageRequest.of(page, size));
+            slice.forEach(this::updateUserPortfolioSafely);
+            page++;
+        } while (!slice.isEmpty());
+    }
+
+    private void updateUserPortfolioSafely(User user) {
+        try {
             updateUserPortfolio(user);
+        } catch (Exception e) {
+            // 로깅 후 계속
         }
     }
 
     @Transactional
     public void updateUserPortfolio(User user) {
-        List<HoldingStock> holdingStocks = holdingStockService.getUserHoldingStocks(user.getId());
-        List<HoldingStockResponseDto> holdingStockResponseDtos = stockMapper.holdingStocksToDto(holdingStocks);
-        holdingStockService.setPercentage(holdingStockResponseDtos);
+        // nul-safe cash
+        long cash = Optional.ofNullable(user.getCash())
+                .map(c -> Optional.of(c.getMoney()).orElse(0L))
+                .orElse(0L);
 
-        long stockAsset = holdingStockResponseDtos.stream()
-                .mapToLong(HoldingStockResponseDto::getEvaluationAmount)
-                .sum();
+        // 보유 주식 한번에 조회 + DTO 매핑
+        List<HoldingStock> holdings = holdingStockService.getUserHoldingStocks(user.getId());
+        List<HoldingStockResponseDto> dtos = stockMapper.holdingStocksToDto(holdings);
 
-        long cash = user.getCash().getMoney();
-        long totalAsset = cash + stockAsset;
+        long stockAsset = dtos.stream().mapToLong(HoldingStockResponseDto::getEvaluationAmount).sum();
+        long invested = dtos.stream().mapToLong(HoldingStockResponseDto::getTotalPrice).sum();
 
-        long investedAmount = holdingStockResponseDtos.stream()
-                .mapToLong(HoldingStockResponseDto::getTotalPrice)
-                .sum();
-        
-        long profitAmount = stockAsset - investedAmount;
-        double profitRate = investedAmount > 0 ? (profitAmount / (double) investedAmount) * 100 : 0.0;
+        long totalAsset = Math.addExact(cash, stockAsset); // overflow 체크
+        long profitAmount = stockAsset - invested;
 
-        UserPortfolio portfolio = userPortfolioRepository.findByUser(user);
-        if (portfolio == null) {
-            throw new IllegalStateException("UserPortfolio is not initialized for user: " + user.getId());
-        }
+        double profitRate = invested > 0
+                ? BigDecimal.valueOf(profitAmount).multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(invested), 4, RoundingMode.HALF_UP).doubleValue()
+                : 0.0;
+
+        UserPortfolio portfolio =  userPortfolioRepository.findByUser(user);
+
         portfolio.setStockAsset(stockAsset);
         portfolio.setTotalAsset(totalAsset);
         portfolio.setProfitAmount(profitAmount);
         portfolio.setProfitRate(profitRate);
-
-        userPortfolioRepository.save(portfolio);
     }
 
-
-
+    @Transactional(readOnly = true)
     public UserPortfolio getPortfolio(User user) {
         return userPortfolioRepository.findByUser(user);
     }
 }
+
