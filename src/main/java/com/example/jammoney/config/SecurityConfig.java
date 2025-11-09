@@ -76,8 +76,7 @@ public class SecurityConfig {
                 "https://[::1]:*",
                 "https://jm-money.com",
                 "https://www.jm-money.com",
-                "https://subdomain.jm-money.com",
-                "https://*.netlify.app"
+                "https://subdomain.jm-money.com"
         ));
 
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
