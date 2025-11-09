@@ -195,7 +195,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)                 // HTTPS 필수
                 .sameSite("None")             // FE/BE 다른 도메인일 때
-                .path("/api/auth")            // 재발급/로그아웃 경로로만 전송
+                .path("/")
                 .maxAge(maxAgeSec)
                 .domain(".jm-money.com")
                 .build();
@@ -208,7 +208,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
-                .path("/api/auth")
+                .path("/")
                 .maxAge(0)
                 .domain(".jm-money.com")
                 .build();
