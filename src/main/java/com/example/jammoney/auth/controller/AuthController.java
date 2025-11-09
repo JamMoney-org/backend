@@ -197,6 +197,7 @@ public class AuthController {
                 .sameSite("None")             // FE/BE 다른 도메인일 때
                 .path("/api/auth")            // 재발급/로그아웃 경로로만 전송
                 .maxAge(maxAgeSec)
+                .domain(".jm-money.com")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
@@ -209,6 +210,7 @@ public class AuthController {
                 .sameSite("None")
                 .path("/api/auth")
                 .maxAge(0)
+                .domain(".jm-money.com")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
