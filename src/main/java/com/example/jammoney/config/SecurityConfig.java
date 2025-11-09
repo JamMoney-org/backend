@@ -77,6 +77,7 @@ public class SecurityConfig {
                 "https://jm-money.com",
                 "https://www.jm-money.com",
                 "https://jammoney.netlify.app",
+                "https://subdomain.jm-money.com",
                 "https://*.netlify.app"
         ));
 
