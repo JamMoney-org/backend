@@ -132,6 +132,7 @@ public class JwtTokenProvider {
         try {
             return TYPE_REFRESH.equals(c.get(CLAIM_TYPE));
         } catch (Exception e) {
+            log.debug("[JWT] not a refresh_token: {}", e.getMessage());
             return false;
         }
     }
