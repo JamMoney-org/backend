@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 public class PetService {
 
     private final PetRepository petRepository;
-    private final UserRepository userRepository;
 
     public void renamePet(User user, String newName) {
         Pet pet = user.getPet();

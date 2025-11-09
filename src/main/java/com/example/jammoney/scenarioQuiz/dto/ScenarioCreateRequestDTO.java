@@ -12,10 +12,10 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ScenarioCreateRequestDTO {
-    private String title;               // 예: 자취방 계약
-    private String description;         // 예: 대학생이 자취를 시작하는 상황
-    private ScenarioCategory category;  // 예: 소비
-    private String firstAiMessage;      // 예: "어떤 조건의 자취방을 찾으시나요?"
+    private String title;
+    private String description;         // 상황 묘사
+    private ScenarioCategory category;  // 카테고리
+    private String firstAiMessage;      // 첫 질문
     @Enumerated(EnumType.STRING)
-    private Difficulty difficulty; // 난이도 (EASY, NORMAL, HARD)
+    private Difficulty difficulty;      // 난이도
 }

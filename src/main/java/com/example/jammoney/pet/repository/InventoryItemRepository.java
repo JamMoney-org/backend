@@ -10,10 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface InventoryItemRepository extends JpaRepository<InventoryItem, Long> {
-
     List<InventoryItem> findByPet(Pet pet);
-
     Optional<InventoryItem> findByPetAndItem(Pet pet, Item item);
-
-    List<InventoryItem> findByPetAndEquippedTrue(Pet pet);
 }

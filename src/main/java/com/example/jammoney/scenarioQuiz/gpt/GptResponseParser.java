@@ -14,7 +14,7 @@ public class GptResponseParser {
 
     private final ObjectMapper objectMapper;
 
-    // 1️⃣ 선택지 + 피드백 파싱
+    // 1. 선택지 + 피드백 파싱
     public GptScenarioChoiceResponse parseChoiceResponse(GptChatResponse raw) {
         String content = raw.getChoices().get(0).getMessage().getContent();
 
@@ -31,13 +31,13 @@ public class GptResponseParser {
         }
     }
 
-    // 2️⃣ 다음 질문 파싱
+    // 2. 다음 질문 파싱
     public GptNextMessageResponse parseNextMessage(GptChatResponse raw) {
         String message = raw.getChoices().get(0).getMessage().getContent();
         return new GptNextMessageResponse(message.trim()); // 순수 문자열
     }
 
-    // 3️⃣ 총평 파싱
+    // 3. 총평 파싱
     public GptScenarioSummaryResponse parseSummary(GptChatResponse raw) {
         String summary = raw.getChoices().get(0).getMessage().getContent();
         return new GptScenarioSummaryResponse(summary.trim());
