@@ -32,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/refresh",
             // 로그아웃 계열은 멱등 처리/쿠키 삭제용으로 필터 우회
             "/api/auth/logout",
+            "/test/**",
             "/api/auth/logout/all/**"
     };
 
