@@ -197,6 +197,7 @@ public class AuthController {
                 .secure(true)                 // HTTPS 필수
                 .sameSite("None")             // FE/BE 다른 도메인일 때
                 .path("/")
+                .domain("jm-money.com")
                 .maxAge(maxAgeSec)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -209,6 +210,7 @@ public class AuthController {
                 .secure(true)
                 .sameSite("None")
                 .path("/")
+                .domain("jm-money.com")
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
