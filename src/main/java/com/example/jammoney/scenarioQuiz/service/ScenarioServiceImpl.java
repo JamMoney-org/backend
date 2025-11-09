@@ -33,7 +33,7 @@ public class ScenarioServiceImpl implements ScenarioService {
         Scenario scenario = scenarioRepository.findById(scenarioId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 시나리오가 존재하지 않습니다."));
 
-        // 🔥 기존 플레이 기록 삭제 (같은 유저가 다시 시나리오 시작 시)
+        // 기존 플레이 기록 삭제 (같은 유저가 다시 시나리오 시작 시)
         playLogRepository.deleteByScenarioAndUser(scenario, user);
 
         ScenarioStep firstStep = stepRepository.findByScenarioAndStepOrder(scenario, 1)
@@ -88,7 +88,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 .map(pl -> "AI: " + pl.getAiMessage() + "\n사용자: " + pl.getChoiceContent())
                 .collect(Collectors.joining("\n\n"));
 
-        // ✅ 4단계까지는 질문 생성, 5단계면 종료
+        // 4단계까지는 질문 생성, 5단계면 종료
         if (currentStep == 4) {
             int rewardExp = calculateRewardExp(scenario.getDifficulty());
             petService.addExp(user, rewardExp);

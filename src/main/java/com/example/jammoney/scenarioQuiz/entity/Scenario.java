@@ -15,11 +15,11 @@ public class Scenario { //시나리오 기본 정보
     @GeneratedValue
     private Long id;
 
-    private String title;       // 예: "자취방 계약"
-    private String description; // 첫 시작 설명
+    private String title;
+    private String description;
 
     @Enumerated(EnumType.STRING)
-    private ScenarioCategory category; //카테고리
+    private ScenarioCategory category;
 
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;

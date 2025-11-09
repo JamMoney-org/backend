@@ -19,7 +19,7 @@ public class Item {
     private String name;                        // 아이템 이름
 
     @Enumerated(EnumType.STRING)
-    private ItemType type;                      // HAT, BACKGROUND, ACCESSORY 등
+    private ItemType type;
 
     private long price;                          // 가상 머니 가격
     private String imageUrl;                    // 착용 이미지 (투명 PNG 등)

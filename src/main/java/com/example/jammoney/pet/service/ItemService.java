@@ -28,9 +28,7 @@ public class ItemService {
     private final S3Uploader s3Uploader;
     private final CashService cashService;
 
-    /**
-     * 상점 아이템 목록 조회
-     */
+    // 상점 아이템 목록 조회
     public List<ItemShopResponseDTO> getAllShopItems() {
         return itemRepository.findAll().stream()
                 .map(item -> ItemShopResponseDTO.builder()

@@ -63,6 +63,7 @@ public class ItemController { //아이템 관련
         return ResponseEntity.ok(ApiResponse.success("아이템 판매 완료", null));
     }
 
+    // 아이템 추가
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Void>> registerItem(
             @RequestBody ItemRegisterRequestDTO request

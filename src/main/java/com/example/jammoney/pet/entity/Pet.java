@@ -19,9 +19,9 @@ public class Pet {
     private User user;
 
     @Column(length = 20)
-    private String name;  // 캐릭터 이름 (예: “공룡이”, “나의친구”)
-    private int level;              // 현재 레벨 (1~10)
-    private int exp;                // 현재 경험치
+    private String name;
+    private int level;
+    private int exp;
 
-    private String mood;           // 예: Happy, Hungry, Sleepy
+    private String mood;
 }
