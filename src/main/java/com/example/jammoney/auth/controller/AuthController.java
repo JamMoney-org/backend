@@ -100,6 +100,7 @@ public class AuthController {
             refreshToken = fallbackBody.getRefreshToken();
         }
         if (refreshToken == null || refreshToken.isBlank()) {
+            log.info("can not read refresh_token");
             return ResponseEntity.badRequest().build();
         }
 
@@ -197,7 +198,6 @@ public class AuthController {
                 .sameSite("None")             // FE/BE 다른 도메인일 때
                 .path("/")
                 .maxAge(maxAgeSec)
-                .domain(".jm-money.com")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
@@ -210,7 +210,6 @@ public class AuthController {
                 .sameSite("None")
                 .path("/")
                 .maxAge(0)
-                .domain(".jm-money.com")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
