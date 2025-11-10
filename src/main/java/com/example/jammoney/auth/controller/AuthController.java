@@ -100,6 +100,7 @@ public class AuthController {
             refreshToken = fallbackBody.getRefreshToken();
         }
         if (refreshToken == null || refreshToken.isBlank()) {
+            log.info("can not read refresh_token");
             return ResponseEntity.badRequest().build();
         }
 
@@ -195,7 +196,8 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)                 // HTTPS 필수
                 .sameSite("None")             // FE/BE 다른 도메인일 때
-                .path("/api/auth")            // 재발급/로그아웃 경로로만 전송
+                .path("/")
+                .domain("jm-money.com")
                 .maxAge(maxAgeSec)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -207,7 +209,8 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
-                .path("/api/auth")
+                .path("/")
+                .domain("jm-money.com")
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());

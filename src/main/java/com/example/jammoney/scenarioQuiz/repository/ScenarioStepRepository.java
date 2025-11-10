@@ -10,6 +10,5 @@ import java.util.Optional;
 
 @Repository
 public interface ScenarioStepRepository extends JpaRepository<ScenarioStep, Long> {
-    List<ScenarioStep> findByScenarioOrderByStepOrderAsc(Scenario scenario);
     Optional<ScenarioStep> findByScenarioAndStepOrder(Scenario scenario, int stepOrder);
 }

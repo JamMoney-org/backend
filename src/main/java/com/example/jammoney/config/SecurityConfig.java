@@ -40,14 +40,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 공개 엔드포인트
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/protected").authenticated()
-                        .requestMatchers("/api/test/gpt/**").permitAll()  // ✅ 여기가 핵심!
+                        .requestMatchers("/api/test/gpt/**").permitAll()
                         .requestMatchers("/test/**").permitAll()
 
                         // 보호 엔드포인트
                         .requestMatchers("/api/protected").authenticated()
                         .requestMatchers("/api/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -64,26 +67,28 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
+
         cfg.setAllowedOriginPatterns(List.of(
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:8080",
-                "http://127.0.0.1:5500",
-                "http://127.0.0.1:5501",
+                "http://localhost:*",
+                "https://localhost:*",
+                "http://127.0.0.1:*",
+                "https://127.0.0.1:*",
+                "https://[::1]:*",
                 "https://jm-money.com",
                 "https://www.jm-money.com",
-                "https://jammoney.netlify.app"
+                "https://jammoney.netlify.app",
+                "https://subdomain.jm-money.com"
         ));
+
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        // 프론트에서 자주 쓰는 헤더들 추가
-        cfg.setAllowedHeaders(List.of(
-                "Authorization", "Content-Type", "X-Requested-With",
-                "Accept", "Origin", "Cache-Control", "Pragma"
-        ));
+
+        cfg.setAllowedHeaders(List.of("*"));
+
         // 응답에서 읽어야 할 헤더가 있으면 노출
-        cfg.setExposedHeaders(List.of(
-                "Authorization", "Location" // 필요 시 추가
-        ));
-        cfg.setAllowCredentials(true); // 특정 오리진과만 함께 사용(OK) — 패턴 사용 중
+        cfg.setExposedHeaders(List.of("Authorization", "Location"));
+
+        // 쿠키/인증 포함 요청 허용
+        cfg.setAllowCredentials(true);
 
         cfg.setMaxAge(3600L);
 

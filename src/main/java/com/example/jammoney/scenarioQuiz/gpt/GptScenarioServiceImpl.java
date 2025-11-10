@@ -18,9 +18,7 @@ public class GptScenarioServiceImpl implements GptScenarioService {
     private final GptPromptBuilder promptBuilder;
     private final GptResponseParser responseParser;
 
-    /**
-     * 질문에 대한 선택지 + 피드백 생성
-     */
+    // 질문에 대한 선택지 + 피드백 생성
     @Override
     public Mono<GptScenarioChoiceResponse> generateChoices(String topic, String aiMessage, List<String> history, Difficulty difficulty) {
         String prompt = promptBuilder.buildChoicesPrompt(topic, aiMessage, history, difficulty);
@@ -28,9 +26,7 @@ public class GptScenarioServiceImpl implements GptScenarioService {
                 .map(responseParser::parseChoiceResponse);
     }
 
-    /**
-     * 선택 이후 → 전체 대화 흐름 기반 다음 질문 생성
-     */
+    // 선택 이후 → 전체 대화 흐름 기반 다음 질문 생성
     @Override
     public Mono<GptNextMessageResponse> generateNextStep(String conversationHistory, String selectedChoice, Difficulty difficulty) {
         String prompt = promptBuilder.buildNextMessagePrompt(conversationHistory, selectedChoice, difficulty);
@@ -38,9 +34,7 @@ public class GptScenarioServiceImpl implements GptScenarioService {
                 .map(responseParser::parseNextMessage);
     }
 
-    /**
-     * 총평 생성
-     */
+    // 총평 생성
     @Override
     public Mono<GptScenarioSummaryResponse> generateSummary(List<String> selectedChoices) {
         String prompt = promptBuilder.buildSummaryPrompt(selectedChoices);

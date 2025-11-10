@@ -8,7 +8,7 @@ import java.util.List;
 @Component
 public class GptPromptBuilder {
 
-    // 1️⃣ 선택지 생성용 프롬프트
+    // 1. 선택지 생성용 프롬프트
     public String buildChoicesPrompt(String topic, String aiMessage, List<String> history, Difficulty difficulty) {
         StringBuilder sb = new StringBuilder();
 
@@ -55,7 +55,7 @@ public class GptPromptBuilder {
         return sb.toString();
     }
 
-    // 2️⃣ 다음 질문 생성용 프롬프트
+    // 2. 다음 질문 생성용 프롬프트
     public String buildNextMessagePrompt(String conversationHistory, String selectedChoice, Difficulty difficulty) {
         StringBuilder sb = new StringBuilder();
         sb.append("당신은 ").append(difficulty.name()).append(" 난이도의 금융 시나리오 AI입니다.\n")
@@ -73,7 +73,7 @@ public class GptPromptBuilder {
         return sb.toString();
     }
 
-    // 3️⃣ 총평 생성용 프롬프트
+    // 3. 총평 생성용 프롬프트
     public String buildSummaryPrompt(List<String> history) {
         StringBuilder sb = new StringBuilder();
         sb.append("아래는 사용자의 금융 시나리오 선택 이력입니다:\n\n");

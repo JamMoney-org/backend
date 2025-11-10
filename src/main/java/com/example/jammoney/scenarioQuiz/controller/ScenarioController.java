@@ -59,7 +59,8 @@ public class ScenarioController {
         return scenarioService.summarizeScenario(scenarioId, user);
     }
 
-    @GetMapping("/category/list") //카테고리별로 상황 조회
+    //카테고리별로 상황 조회
+    @GetMapping("/category/list")
     public List<ScenarioListResponseDTO> getScenariosByCategory(@RequestParam ScenarioCategory category) {
         List<Scenario> scenarios = scenarioService.getScenariosByCategory(category);
         return scenarios.stream()
@@ -72,7 +73,8 @@ public class ScenarioController {
                 .toList();
     }
 
-    @GetMapping("/category") //카테고리 조회
+    //카테고리 조회
+    @GetMapping("/category")
     public List<String> listCategories() {
         return Arrays.stream(ScenarioCategory.values())
                 .map(ScenarioCategory::getLabel)
