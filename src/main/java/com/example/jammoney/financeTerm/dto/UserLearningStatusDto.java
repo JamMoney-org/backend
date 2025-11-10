@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class UserLearningStatusDto { //학습률
+public class UserLearningStatusDto {
     private int totalLearnedCount;
 }

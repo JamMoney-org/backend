@@ -1,4 +1,3 @@
-// src/main/java/com/example/jammoney/news/controller/EasyWordController.java
 package com.example.jammoney.news.controller;
 
 import com.example.jammoney.auth.entity.CustomUserDetails;
@@ -21,9 +20,8 @@ import java.util.List;
 public class EasyWordController {
 
     private final EasyWordTranslationService translationService;
-    private final UserRepository             userRepo;
+    private final UserRepository userRepo;
 
-    //1) 쉬운말 번역 + 예문 생성
     @GetMapping
     public ResponseEntity<List<EasyWordTranslationDto>> getEasyWords(
             @PathVariable Long newsId
@@ -32,7 +30,6 @@ public class EasyWordController {
         return ResponseEntity.ok(result);
     }
 
-    // 2) 단어장에 추가
     @PostMapping
     public ResponseEntity<Void> saveSingleTermToMyTerms(
             @PathVariable Long newsId,
@@ -44,7 +41,4 @@ public class EasyWordController {
         translationService.saveSingleTermToMyTerms(newsId, dto, user);
         return ResponseEntity.ok().build();
     }
-
-
-
 }

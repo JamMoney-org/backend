@@ -46,7 +46,7 @@ public class NewsQuizServiceImpl implements NewsQuizService {
                         .option4(quiz.getOption4())
                         .correctAnswerIndex(null)
                         .build())
-                .orElseGet(() -> generateAndSaveQuiz(newsId));  // 없으면 생성
+                .orElseGet(() -> generateAndSaveQuiz(newsId));
     }
 
 
@@ -120,6 +120,4 @@ public class NewsQuizServiceImpl implements NewsQuizService {
         petService.addExp(user, 10);
         return new QuizResultDto(correct, quiz.getCorrectAnswerIndex());
     }
-
-
 }

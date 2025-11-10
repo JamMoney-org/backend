@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class TermCreateDto { //단어 등룍용
+public class TermCreateDto {
     private String term;
     private String definition;
     private List<String> exampleSentences;

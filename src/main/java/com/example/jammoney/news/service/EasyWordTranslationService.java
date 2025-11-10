@@ -36,8 +36,6 @@ public class EasyWordTranslationService {
     @Transactional
     public List<EasyWordTranslationDto> generateTranslations(Long newsId) throws Exception {
         log.info("[STEP 0] generateTranslations 시작, newsId={}", newsId);
-
-        // STEP 1: 뉴스 로드
         News news = newsRepo.findById(newsId)
                 .orElseThrow(() -> {
                     log.error("[STEP 1] 뉴스 없음, id={}", newsId);
@@ -50,7 +48,6 @@ public class EasyWordTranslationService {
                         : news.getContent().substring(0, Math.min(100, news.getContent().length()))
         );
 
-        // STEP 2: 기존 번역 확인
         List<EasyWordTranslation> existing = translationRepo.findByNewsId(newsId);
         log.info("[STEP 2] existing size={}", existing.size());
         if (!existing.isEmpty()) {
@@ -65,8 +62,6 @@ public class EasyWordTranslationService {
                     .toList();
         }
 
-        // STEP 3: system/user 메시지 구성
-        // STEP 3: system/user 메시지 구성 (금융·경제 용어 전용)
         List<ChatMessage> messages = List.of(
                 new ChatMessage("system", """
         You are a financial terminology translator.
@@ -100,9 +95,6 @@ public class EasyWordTranslationService {
         );
         log.info("[STEP 3] messages prepared, count={}", messages.size());
 
-
-
-        // STEP 4: GPT 호출
         String raw = gptClient.callChatCompletionRaw(messages).block();
         log.info("[STEP 4] GPT raw response={}", raw);
         if (raw == null || raw.isBlank()) {
@@ -110,7 +102,6 @@ public class EasyWordTranslationService {
             throw new RuntimeException("GPT로부터 빈 응답을 받았습니다.");
         }
 
-        // STEP 5: JSON → DTO 역직렬화
         List<EasyWordTranslationDto> dtos;
         try {
             dtos = mapper.readValue(raw.trim(),
@@ -121,7 +112,6 @@ public class EasyWordTranslationService {
         }
         log.info("[STEP 5] 파싱된 dtos size={}", dtos.size());
 
-        // STEP 6: DB 저장
         for (EasyWordTranslationDto dto : dtos) {
             log.info("[STEP 6] 저장 original='{}'", dto.getOriginalWord());
             translationRepo.save(EasyWordTranslation.builder()

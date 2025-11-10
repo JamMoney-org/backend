@@ -7,7 +7,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-//쉬운말 번역
 public class EasyWordTranslationDto {
     private Long newsId;
     private String originalWord;

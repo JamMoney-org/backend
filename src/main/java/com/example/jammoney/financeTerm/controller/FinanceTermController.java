@@ -65,7 +65,7 @@ public class FinanceTermController {
         return ResponseEntity.ok(financeTermService.submitQuizAnswer(user, submitDto));
     }
 
-    //단어 카드에서 북마크 누를 때
+    //단어 카드에서 북마크 클릭
     @PostMapping("/bookmark/{termId}")
     public ResponseEntity<Void> bookmarkTerm(
             @AuthenticationPrincipal CustomUserDetails userDetails,

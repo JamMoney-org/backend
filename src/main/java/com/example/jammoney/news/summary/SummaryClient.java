@@ -18,17 +18,16 @@ public class SummaryClient {
     private String apiKey;
 
     @Value("${gpt.base-url}")
-    private String endpoint;       // https://api.openai.com/v1/chat/completions
+    private String endpoint;
 
     @Value("${gpt.model}")
-    private String model;          // gpt-3.5-turbo
+    private String model;
 
     public String summarize(String text) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // 요청 페이로드
         Map<String,Object> payload = Map.of(
                 "model", model,
                 "temperature", 0.7,
@@ -55,7 +54,6 @@ public class SummaryClient {
                 .trim();
     }
 
-    // 응답 바인딩용 DTO
     public static class ChatResponse {
         public List<Choice> choices;
         public static class Choice {

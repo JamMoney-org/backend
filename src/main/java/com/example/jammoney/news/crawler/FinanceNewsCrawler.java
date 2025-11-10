@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class FinanceNewsCrawler {
-
-    // Arc RSS (경제 섹션 + 전체)
     private static final List<String> RSS_URLS = List.of(
             "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml",
             "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml"
@@ -27,18 +25,16 @@ public class FinanceNewsCrawler {
 
     private static final int TIMEOUT_MS = 10_000;
     private static final int MAX_ITEMS  = 3;
-    private static final int NEWS_POOL = 10; // 후보 풀 규모: 3*10=30개
+    private static final int NEWS_POOL = 10;
 
     public List<NewsRequestDto> fetchTodayNews() {
         log.info("[크롤링 시작]");
         List<NewsRequestDto> out = new ArrayList<>();
 
         try {
-            // 1) 후보 링크 넉넉히 수집
             List<String> links = fetchLinksFromRss(MAX_ITEMS * NEWS_POOL);
             log.info("[RSS] 후보 링크 수: {}", links.size());
 
-            // 2) 순서대로 시도 → 성공 3건 되면 즉시 종료
             for (String link : links) {
                 if (out.size() >= MAX_ITEMS) break;
                 try {
@@ -60,8 +56,6 @@ public class FinanceNewsCrawler {
         log.info("[최종] 크롤링된 뉴스 개수: {}", out.size());
         return out;
     }
-
-    /** RSS에서 링크를 넉넉히 모은 뒤, 금융/증권 섹션만 유지하고 중복 제거. */
     private List<String> fetchLinksFromRss(int want) {
         List<String> acc = new ArrayList<>();
         for (String rss : RSS_URLS) {
@@ -72,14 +66,10 @@ public class FinanceNewsCrawler {
                     continue;
                 }
                 Document doc = res.parse();
-
-                // RSS2
                 doc.select("item > link").stream()
                         .map(Element::text)
                         .filter(u -> u != null && u.startsWith("http"))
                         .forEach(acc::add);
-
-                // Atom
                 doc.select("entry > link[href]").stream()
                         .map(e -> e.attr("href"))
                         .filter(u -> u != null && u.startsWith("http"))
@@ -88,10 +78,8 @@ public class FinanceNewsCrawler {
             } catch (Exception e) {
                 log.warn("[RSS 실패] {} - {}", rss, e.toString());
             }
-            if (acc.size() >= want * 2) break; // 충분히 모였으면 중단
+            if (acc.size() >= want * 2) break;
         }
-
-        // 단순 필터: 금융/증권만, 미디어성 경로 제외(사진/영상 등)
         return acc.stream()
                 .filter(u -> u.contains("/economy/stock-finance/"))
                 .filter(u -> !u.matches(".*/(photo|video|multimedia|vod|gallery|image)/.*"))
@@ -100,7 +88,6 @@ public class FinanceNewsCrawler {
                 .collect(Collectors.toList());
     }
 
-    /** 상세: 기본 셀렉터 시도 → 실패 시 AMP 한 번만 재시도. */
     private NewsRequestDto parseArticle(String url) throws Exception {
         // 기본 뷰
         Document doc = connectHtml(url).get();
@@ -119,7 +106,6 @@ public class FinanceNewsCrawler {
             return dto;
         }
 
-        // AMP 폴백 (단 한 번)
         String ampUrl = url.contains("outputType=amp") ? url
                 : url + (url.contains("?") ? "&" : "?") + "outputType=amp";
         Document amp = connectHtml(ampUrl).get();
@@ -141,7 +127,6 @@ public class FinanceNewsCrawler {
         return null;
     }
 
-    /** 메타에서 발행일 추출(없으면 empty). */
     private Optional<LocalDate> extractPublished(Document d) {
         Optional<String> iso = meta(d, "meta[property=article:published_time]");
         if (iso.isEmpty()) iso = meta(d, "meta[name=article:published_time]");
