@@ -19,7 +19,6 @@ public class NewsScheduler {
 
     @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Seoul") // 매일 오전 8시 실행
     public void crawlAndSave() {
-        newsService.deleteOldNews(); // 7일 초과 뉴스 삭제
         List<NewsRequestDto> todayNews = crawler.fetchTodayNews();
         newsService.saveNewsList(todayNews);
     }
