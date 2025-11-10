@@ -10,4 +10,5 @@ public class TopicCreateDto { //토픽 생성용 DTO
     private String title;
     private String description;
     private String tag;
+    private String imageUrl;
 }

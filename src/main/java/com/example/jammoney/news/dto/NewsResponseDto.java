@@ -7,7 +7,6 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-//사용자가 뉴스를 클릭해서 상세 내용을 볼 때 사용
 public class NewsResponseDto {
     private Long id;
     private String title;

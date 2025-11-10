@@ -7,7 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-//뉴스에 포함된 퀴즈 내용 전용 DTO
 public class NewsQuizDto {
     private Long quizId;
     private String question;

@@ -27,7 +27,8 @@ public class LearningTopicService {
                     TopicListDto dto = new TopicListDto();
                     dto.setTopicId(topic.getId());
                     dto.setTitle(topic.getTitle());
-                    dto.setTag(topic.getTag()); // tag 포함
+                    dto.setTag(topic.getTag());
+                    dto.setImageUrl(topic.getImageUrl());
                     return dto;
                 })
                 .toList();
@@ -41,7 +42,7 @@ public class LearningTopicService {
         dto.setTopicId(topic.getId());
         dto.setTitle(topic.getTitle());
         dto.setDescription(topic.getDescription());
-        dto.setTag(topic.getTag()); // tag 포함
+        dto.setTag(topic.getTag());
         return dto;
     }
 
@@ -52,7 +53,8 @@ public class LearningTopicService {
         LearningTopic topic = LearningTopic.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
-                .tag(dto.getTag()) // tag 포함
+                .tag(dto.getTag())
+                .imageUrl(dto.getImageUrl())
                 .theme(theme)
                 .build();
 

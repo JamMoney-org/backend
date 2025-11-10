@@ -29,7 +29,6 @@ public class FinanceTermService {
     private final TermQuizRepository termQuizRepository;
     private final PetRepository petRepository;
 
-    // 1. 카테고리 전체 조회 (지정된 순서대로 정렬)
     public List<CategoryDto> getAllCategories() {
         List<String> fixedOrder = List.of(
                 "소비", "저축", "대출", "투자", "보험", "세금", "금융기관&제도"
@@ -65,8 +64,6 @@ public class FinanceTermService {
                 .collect(Collectors.toList());
     }
 
-
-    // 2. 특정 카테고리 + DayIndex 단어 조회
     public List<TermDto> getTermsByCategoryAndDay(String categoryName, int dayIndex, User user) {
         FinancialCategory category = categoryRepository.findByCategory(categoryName)
                 .orElseThrow(() -> new RuntimeException("카테고리 없음"));
@@ -94,7 +91,6 @@ public class FinanceTermService {
         }).collect(Collectors.toList());
     }
 
-    // 3-1. 퀴즈 목록 조회 (dayIndex 단위 전체)
     public List<TermQuizDto> getQuizzesByCategoryAndDay(String categoryName, int dayIndex) {
         FinancialCategory category = categoryRepository.findByCategory(categoryName)
                 .orElseThrow(() -> new RuntimeException("카테고리 없음"));
@@ -173,9 +169,6 @@ public class FinanceTermService {
         return results;
     }
 
-
-
-    // 5. 즐겨찾기 등록
     public void bookmarkTerm(User user, Long termId) {
         FinancialTerm term = termRepository.findById(termId)
                 .orElseThrow(() -> new RuntimeException("단어 없음"));
@@ -189,8 +182,6 @@ public class FinanceTermService {
         }
     }
 
-
-    // 6. 즐겨찾기 해제
     public void unbookmarkTerm(User user, Long termId) {
         FinancialTerm term = termRepository.findById(termId)
                 .orElseThrow(() -> new RuntimeException("단어 없음"));
@@ -199,7 +190,6 @@ public class FinanceTermService {
                 .ifPresent(savedTermRepository::delete);
     }
 
-    // 7. 나만의 단어장 조회
     public List<UserSavedTermDto> getMySavedTerms(User user) {
         return savedTermRepository.findAllByUser(user).stream().map(s -> {
             UserSavedTermDto dto = new UserSavedTermDto();
@@ -211,7 +201,6 @@ public class FinanceTermService {
         }).collect(Collectors.toList());
     }
 
-    // 8. 학습률 조회
     public UserLearningStatusDto getUserLearningStatus(User user) {
         long count = userLearningRepository.countByUserAndLearnedTrue(user);
         UserLearningStatusDto dto = new UserLearningStatusDto();

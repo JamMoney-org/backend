@@ -25,6 +25,8 @@ public class LearningTopic {
 
     private String tag;
 
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "theme_id")
     private Theme theme;
