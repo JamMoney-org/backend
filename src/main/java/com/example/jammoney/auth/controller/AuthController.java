@@ -85,7 +85,7 @@ public class AuthController {
         setRefreshCookie(response, refreshToken);
 
         // refresh_token은 바디에 굳이 반환하지 않음(쿠키로 운용)
-        return ResponseEntity.ok(new TokenResponseDto(accessToken, null));
+        return ResponseEntity.ok(new TokenResponseDto(accessToken));
     }
 
     /** 재발급: refresh_token은 쿠키에서 읽고, access_token만 바디로 내려줌. refresh_token은 회전 후 쿠키 갱신 */
@@ -132,7 +132,7 @@ public class AuthController {
         // 쿠키에 새로운 refresh_token 저장
         setRefreshCookie(response, newRefresh);
 
-        return ResponseEntity.ok(new TokenResponseDto(newAccess, null));
+        return ResponseEntity.ok(new TokenResponseDto(newAccess));
     }
 
     /** 로그아웃(단일 기기): access_token 블랙리스트 + refresh_token 무효화 + 쿠키 제거 */
@@ -144,9 +144,6 @@ public class AuthController {
     ) {
         String accessToken = (body != null ? body.getAccessToken() : null);
         String refreshToken = refreshFromCookie;
-        if ((refreshToken == null || refreshToken.isBlank()) && body != null) {
-            refreshToken = body.getRefreshToken();
-        }
 
         // access_token 블랙리스트 처리
         if (accessToken != null && !accessToken.isBlank()) {
