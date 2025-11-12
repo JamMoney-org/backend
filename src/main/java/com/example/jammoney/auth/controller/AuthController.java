@@ -92,13 +92,8 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponseDto> refresh(
             @CookieValue(value = REFRESH_COOKIE, required = false) String refreshToken,
-            @RequestBody(required = false) TokenRequestDto fallbackBody, // 과도기 대응(없어도 됨)
             HttpServletResponse response
     ) {
-        // 쿠키 우선, 없으면 바디에서(점진 전환용)
-        if ((refreshToken == null || refreshToken.isBlank()) && fallbackBody != null) {
-            refreshToken = fallbackBody.getRefreshToken();
-        }
         if (refreshToken == null || refreshToken.isBlank()) {
             log.info("can not read refresh_token");
             return ResponseEntity.badRequest().build();
