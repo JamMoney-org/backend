@@ -1,8 +1,6 @@
 package com.example.jammoney.stockApp.stock.repository;
 
-import com.example.jammoney.stockApp.stock.entity.Company;
 import com.example.jammoney.stockApp.stock.entity.HoldingStock;
-import com.example.jammoney.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
