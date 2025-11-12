@@ -1,6 +1,9 @@
 package com.example.jammoney.stockApp.kis.service;
 
-import com.example.jammoney.stockApp.kis.dto.*;
+import com.example.jammoney.stockApp.kis.dto.KospiDto;
+import com.example.jammoney.stockApp.kis.dto.StockAskingPriceDto;
+import com.example.jammoney.stockApp.kis.dto.StockMetaDataDto;
+import com.example.jammoney.stockApp.kis.dto.StockMinDto;
 import com.example.jammoney.stockApp.stock.dto.KospiResponseDto;
 import com.example.jammoney.stockApp.stock.dto.StockMetaDataResponseDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,14 +12,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor

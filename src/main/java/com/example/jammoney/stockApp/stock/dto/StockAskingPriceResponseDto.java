@@ -1,6 +1,5 @@
 package com.example.jammoney.stockApp.stock.dto;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
